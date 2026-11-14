@@ -1,15 +1,14 @@
 # Builds the signed release .apk (SahuaritaSmashSE-android.apk). Called by every Release, or run on its
 # own from Actions > Android > Run workflow to get a test build.
 #
-# Signing (same setup as Bored Games, KidRampage and Race Track Mayhem): Android only installs an
-# update over an older copy if both were signed with the same key. To use a key of your own, set these
-# repository secrets once (Settings > Secrets and variables > Actions):
-#   ANDROID_KEYSTORE_BASE64   the .keystore file, base64-encoded
-#   ANDROID_KEYSTORE_ALIAS    the key's alias
-#   ANDROID_KEYSTORE_PASSWORD its password
-# Without them (only while the repository is private), a key is made on the first build and kept in the Actions
-# cache (keep-android-key.yml stops GitHub from clearing it; backup-android-key.yml turns it into those secrets).
-# A public repository signs only with the secrets: other people's pull requests can reach the cache.
+# Signing: Android only installs an update over an older copy if both were signed with the same key. Where the key
+# comes from, first found:
+#   1. the ANDROID_KEYSTORE_BASE64 / _ALIAS / _PASSWORD secrets, if someone set them;
+#   2. keys/sahuaritasmash-release.keystore.enc, the key locked with the BACKUP_PASSPHRASE secret ('Keep the Android
+#      key in the repository' puts it there, from the cache, and deletes the cached copy);
+#   3. only while the repository is private: the key the first build made, kept in the Actions cache.
+# A public repository never uses the cache (other people's pull requests can reach it), and no unlocked key is ever
+# cached or uploaded.
 name: Android
 
 on:
@@ -60,22 +59,30 @@ jobs:
       - uses: actions/download-artifact@v4
         with: { name: android-unsigned }
 
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: keys, path: repo }
+
       - name: Which key
         id: which
         env:
           KEY_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           IS_PRIVATE: ${{ github.event.repository.private }}
         run: |
-          if [ -n "$KEY_B64" ]; then echo "secrets=true" >> "$GITHUB_OUTPUT"
-          elif [ "$IS_PRIVATE" = "true" ]; then echo "secrets=false" >> "$GITHUB_OUTPUT"
+          if [ -n "$KEY_B64" ]; then echo "key=secrets" >> "$GITHUB_OUTPUT"
+          elif [ -f repo/keys/sahuaritasmash-release.keystore.enc ] && [ -n "$PASSPHRASE" ]; then echo "key=locked" >> "$GITHUB_OUTPUT"
+          elif [ -f repo/keys/sahuaritasmash-release.keystore.enc ]; then
+            echo "::error::The signing key is in keys/ but the BACKUP_PASSPHRASE secret that unlocks it isn't set (pull requests from other people's copies never get it, so they can't sign)."
+            exit 1
+          elif [ "$IS_PRIVATE" = "true" ]; then echo "key=cache" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::This repository is public and the ANDROID_KEYSTORE_* secrets aren't set. A public repository signs only with the key in the secrets (the Actions cache can be reached from other people's pull requests). Run 'Back up the Android key' and add the three secrets first."
+            echo "::error::This repository is public and has no signing key it can use: run 'Keep the Android key in the repository' first (it needs the BACKUP_PASSPHRASE secret)."
             exit 1
           fi
 
-      # only while the repository is private and has no secrets: the key made by the first build, kept in the cache
+      # only while the repository is private and the key isn't kept anywhere else: the one the first build made
       - name: Keep the signing key between builds
-        if: steps.which.outputs.secrets != 'true'
+        if: steps.which.outputs.key == 'cache'
         uses: actions/cache@v4
         with:
           path: ~/android-key
@@ -83,17 +90,24 @@ jobs:
 
       - name: Set up signing
         env:
+          WHICH: ${{ steps.which.outputs.key }}
           KEY_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
           KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
           set -e
-          if [ -n "$KEY_B64" ]; then
-            # outside the cached folder, so the secret key is never written into a cache
+          # the unlocked key goes to the runner's temp folder, never into a cache or an upload
+          if [ "$WHICH" = "secrets" ]; then
             KS="$RUNNER_TEMP/secret.keystore"
             echo "$KEY_B64" | base64 -d > "$KS"
             ALIAS="$KEY_ALIAS"; PASS="$KEY_PASS"
             echo "Using the signing key from the repository secrets."
+          elif [ "$WHICH" = "locked" ]; then
+            KS="$RUNNER_TEMP/release.keystore"
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in repo/keys/sahuaritasmash-release.keystore.enc -out "$KS" -pass env:PASSPHRASE
+            ALIAS="sahuaritasmash"; PASS="sahuaritasmash"
+            echo "Using the signing key kept (locked) in keys/."
           else
             mkdir -p ~/android-key
             KS=~/android-key/release.keystore; ALIAS="sahuaritasmash"; PASS="sahuaritasmash"

@@ -1,0 +1,60 @@
+# Keep the Android key in the repository (run once, by Claude or from Actions > Run workflow). The signing key the first
+# build made lives only in the Actions cache, which GitHub may clear and which other people's pull requests can reach
+# on a public repository. This locks it with the BACKUP_PASSPHRASE secret (AES-256, 200,000 rounds of PBKDF2), checks
+# it unlocks to the same key, commits the locked file to keys/ on main (it is also the backup: keep the passphrase in
+# a password manager) and deletes the cached copy. android.yml then unlocks it for each release.
+#
+# Before running it: Settings > Secrets and variables > Actions > New repository secret
+#   BACKUP_PASSPHRASE   a long random passphrase from your password manager (30+ characters)
+#
+# To unlock it yourself one day (Git Bash comes with Git for Windows):
+#   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in keys/sahuaritasmash-release.keystore.enc -out release.keystore
+#   (alias and password: sahuaritasmash)
+name: Keep the Android key in the repository
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit keys/ to main
+  actions: write    # delete the cached key
+
+jobs:
+  store:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - name: Get the signing key from the cache
+        id: key
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/android-key
+          key: sahuaritasmash-android-signing-key-v1
+      - name: Lock it, check it, commit it
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -e
+          KS=~/android-key/release.keystore
+          OUT=keys/sahuaritasmash-release.keystore.enc
+          if [ -f "$OUT" ]; then echo "The locked key is already in keys/: nothing to do."; exit 0; fi
+          if [ ${#PASSPHRASE} -lt 20 ]; then echo "::error::Add the BACKUP_PASSPHRASE secret first, at least 20 characters (a long random one from a password manager)."; exit 1; fi
+          if [ "${{ steps.key.outputs.cache-hit }}" != "true" ] || [ ! -f "$KS" ]; then echo "::error::No cached signing key found."; exit 1; fi
+          mkdir -p keys
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$KS" -out "$OUT" -pass env:PASSPHRASE
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in "$OUT" -out "$RUNNER_TEMP/check.keystore" -pass env:PASSPHRASE
+          cmp "$KS" "$RUNNER_TEMP/check.keystore"
+          keytool -list -v -keystore "$KS" -storepass sahuaritasmash | grep -E "SHA256:" | head -1 | sed 's/^ *//' > keys/fingerprint.txt
+          cat keys/fingerprint.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add keys
+          git commit -m "Keep the Android signing key in keys/, locked with BACKUP_PASSPHRASE"
+          git push origin HEAD:main
+          echo "STORED=1" >> "$GITHUB_ENV"
+      - name: Delete the cached copy
+        if: env.STORED == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh cache delete sahuaritasmash-android-signing-key-v1 --repo "$GITHUB_REPOSITORY"
