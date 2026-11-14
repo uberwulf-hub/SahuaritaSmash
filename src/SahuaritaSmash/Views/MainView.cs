@@ -1,8 +1,9 @@
-// The app's one screen. For now (the first step of the move from App Hub) it shows two computer players fighting on
-// the mesa with plain shapes, so the match engine can be seen running on Windows and Android; the real pictures,
-// menus, keys, touch controls and sounds come next (docs/PLAN.md).
+// The app's one screen. For now (while the game moves over from App Hub, docs/PLAN.md) it shows four computer players
+// fighting, stage after stage, with the game's real pictures (BrawlView); the menus, keys, touch controls and sounds
+// come next. The game draws a 1280 x 720 picture, scaled to fit the window with bars at the sides or top.
 using System;
 using System.Diagnostics;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -12,19 +13,36 @@ namespace SahuaritaSmash.Views;
 
 public sealed class MainView : Control
 {
+    public const double GameW = 1280, GameH = 720;
+    /// <summary>App Hub's BrawlGame.BotLevels (Easy, Normal, Hard, Champion), until the game itself moves over.</summary>
+    static readonly int[] BotLevels = { 1, 3, 6, 9 };
     public BrawlSim Sim { get; private set; }
-    bool attached;
-    readonly BrawlBot[] bots;
-    readonly BrInput[] inputs;
+    public readonly BrawlView View = new BrawlView();
+    BrawlBot[] bots;
+    BrInput[] inputs;
+    string[] names;
     readonly Stopwatch clock = Stopwatch.StartNew();
-    double done;
+    double done, t;
+    int match;
+    bool attached;
 
     public MainView()
     {
-        Sim = new BrawlSim(BrawlData.Stages[0], new[] { BrawlData.Fighters[0], BrawlData.Fighters[4] }, 3, 0, 7);
-        bots = new[] { new BrawlBot(0, 3), new BrawlBot(1, 3) };
-        inputs = new BrInput[2];
         ClipToBounds = true;
+        NewMatch();
+    }
+
+    /// <summary>The next showcase match: the next stage, four fighters in turn, computer players of mixed levels.</summary>
+    public void NewMatch()
+    {
+        var stage = BrawlData.Stages[match % BrawlData.Stages.Count];
+        var fighters = Enumerable.Range(0, 4).Select(i => BrawlData.Fighters[(match * 3 + i * 2 + i / 2) % BrawlData.Fighters.Count]).ToList();
+        Sim = new BrawlSim(stage, fighters, 2, 0, (uint)(11 + match * 7));
+        bots = Enumerable.Range(0, 4).Select(i => new BrawlBot(i, BotLevels[(i + match) % 4])).ToArray();
+        inputs = new BrInput[4];
+        names = fighters.Select(f => f.Name).ToArray();
+        View.Fx.Clear(); View.Follow(Sim, true);
+        match++;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -39,64 +57,51 @@ public sealed class MainView : Control
     void Frame(TimeSpan _)
     {
         double now = clock.Elapsed.TotalSeconds;
-        int steps = 0;
-        while (done + 1 / 60.0 <= now && steps < 5) { Step(); done += 1 / 60.0; steps++; }
-        if (steps == 5) done = now;
+        double dt = Math.Min(0.1, now - t);
+        Tick(dt);
         InvalidateVisual();
         if (attached) TopLevel.GetTopLevel(this)?.RequestAnimationFrame(Frame);
     }
 
-    /// <summary>One 60 Hz step; a finished match starts again.</summary>
-    public void Step()
+    /// <summary>Moves the match on by dt seconds (fixed 60 Hz steps, as App Hub's BrawlGame.Tick).</summary>
+    public void Tick(double dt)
     {
-        if (Sim.Over && Sim.OverT > 180) { RestartMatch(); return; }
-        for (int i = 0; i < bots.Length; i++) inputs[i] = bots[i].Think(Sim);
-        Sim.Step(inputs);
+        t += dt; done += dt;
+        int steps = 0;
+        while (done >= 1.0 / 60 && steps < 4)
+        {
+            done -= 1.0 / 60; steps++;
+            if (Sim.Over && Sim.OverT > 240) { NewMatch(); break; }
+            for (int i = 0; i < bots.Length; i++) inputs[i] = bots[i].Think(Sim);
+            Sim.Step(inputs);
+            View.Take(Sim);
+        }
+        if (steps == 4) done = 0;
+        View.Follow(Sim, false);
+        View.StepFx(Sim, dt);
     }
 
-    void RestartMatch()
+    /// <summary>The game's picture at 1280 x 720 (snapshots draw this into a bitmap).</summary>
+    public void DrawGame(ClassicGames.DrawingContext dc)
     {
-        // a new match on the next stage, with the next two fighters
-        int stage = (BrawlData.Stages.IndexOf(Sim.Stage) + 1) % BrawlData.Stages.Count;
-        Sim = new BrawlSim(BrawlData.Stages[stage], new[] { BrawlData.Fighters[(stage * 3) % 10], BrawlData.Fighters[(stage * 3 + 5) % 10] }, 3, 0, (uint)(7 + stage));
+        View.W = GameW; View.H = GameH;
+        View.Draw(dc, Sim, t);
+        View.DrawPanels(dc, Sim, names, t);
     }
 
-    static IBrush B(uint argb) => new SolidColorBrush(Color.FromUInt32(argb));
-
-    public override void Render(DrawingContext dc)
+    public override void Render(Avalonia.Media.DrawingContext context)
     {
-        var sim = Sim;
-        var st = sim.Stage;
         Rect r = new Rect(Bounds.Size);
-        dc.FillRectangle(new LinearGradientBrush
+        context.FillRectangle(Brushes.Black, r);
+        double k = Math.Min(r.Width / GameW, r.Height / GameH);
+        if (k <= 0) return;
+        double ox = (r.Width - GameW * k) / 2, oy = (r.Height - GameH * k) / 2;
+        using (context.PushClip(new Rect(ox, oy, GameW * k, GameH * k)))
+        using (context.PushTransform(Matrix.CreateScale(k, k) * Matrix.CreateTranslation(ox, oy)))
         {
-            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
-            GradientStops = { new GradientStop(Color.FromUInt32(st.Sky1), 0), new GradientStop(Color.FromUInt32(st.Sky2), 1) },
-        }, r);
-        // world: x -760..760, y -260..520 (y up), fitted to the view
-        double scale = Math.Min(r.Width / 1520, r.Height / 780);
-        double ox = r.Width / 2, oy = r.Height / 2 + 130 * scale;
-        Point P(double x, double y) => new Point(ox + x * scale, oy - y * scale);
-        foreach (BPlat p in st.Plats)
-        {
-            var top = P(p.L, p.Top);
-            double h = (p.Solid ? Math.Min(p.Thick, 120) : 10) * scale;
-            dc.FillRectangle(B(p.Solid ? st.Ground : st.Accent), new Rect(top.X, top.Y, (p.R - p.L) * scale, h));
-            dc.FillRectangle(B(st.GroundTop), new Rect(top.X, top.Y, (p.R - p.L) * scale, 4 * scale));
+            var dc = new ClassicGames.DrawingContext(context);
+            DrawGame(dc);
+            dc.Dispose();
         }
-        var tf = new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Bold);
-        for (int i = 0; i < sim.F.Length; i++)
-        {
-            BFighter f = sim.F[i];
-            if (f.Out) continue;
-            var feet = P(f.X, f.Y);
-            var body = new Rect(feet.X - f.HalfW * scale, feet.Y - f.H * scale, f.HalfW * 2 * scale, f.H * scale);
-            dc.DrawRectangle(B(f.D.Main), new Pen(B(0xFF101010), 2), body, 10 * scale, 10 * scale);
-            dc.DrawEllipse(B(f.D.Skin), null, new Point(body.Center.X + f.Face * f.HalfW * 0.4 * scale, body.Top + 16 * scale), 10 * scale, 10 * scale);
-            var label = new FormattedText(f.D.Name + "  " + f.Percent + "%  " + new string('*', Math.Max(0, f.Stocks)), System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, tf, 18, Brushes.White);
-            dc.DrawText(label, new Point(20 + i * r.Width / 2, r.Height - 40));
-        }
-        var title = new FormattedText("Sahuarita Smash! (Sauce Edition) - moving from App Hub: computer players on " + st.Name, System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, tf, 16, Brushes.White);
-        dc.DrawText(title, new Point(20, 14));
     }
 }

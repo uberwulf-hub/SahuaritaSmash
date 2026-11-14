@@ -38,12 +38,19 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
 - `src\SahuaritaSmash.Engine` (net10.0, no UI): the match, copied from App Hub with the namespace `ClassicGames` kept
   so the files can be compared: `Brawl\BrawlSim.cs`, `BrawlData.cs`, `BrawlBot.cs`, `BrawlSignatures.cs` (its data
   half; the effects' drawing half goes with the pictures).
-- `src\SahuaritaSmash` (Avalonia 12): screens shared by Windows and Android. `Views\MainView.cs` is for now a
-  computer-vs-computer match drawn with plain shapes (see docs/PLAN.md for what replaces it).
+- `src\SahuaritaSmash` (Avalonia 12): screens shared by Windows and Android. `Brawl\` holds App Hub's pictures
+  (`BrawlArt.cs`, `BrawlBodies.cs`, `BrawlMotion.cs`, `BrawlScenery.cs`, `BrawlSignaturesView.cs` = the drawing half of
+  `BrawlSignatures.cs`) with only their `using` lines changed, plus a few marked spots in `BrawlScenery.cs` (bitmaps,
+  gradients, pens). They draw through `Wpf\`: WPF's names on Avalonia (`DrawingContext` with `Push...` / `Pop()`,
+  `StreamGeometry` with WPF's figure calls, the transforms, `DrawingVisual` for off-screen pictures, `Freeze()`,
+  `Pics.FromBgra`), and `Wpf\Gfx.cs` (Classic Games' `Gfx`, fonts Inter). Points, rects, matrices, brushes and pens
+  are Avalonia's. Keep new drawing code in that WPF style so files can still be compared with App Hub's.
+  `Views\MainView.cs` is for now four computer players fighting stage after stage (the game's 1280 x 720 picture,
+  scaled to fit); the menus replace it (docs/PLAN.md).
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
-- `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl]`, App Hub's
-  checks with the same names; the exit code is the number of failures.
+- `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-pictures]
+  [-Snapshot dir]`, App Hub's checks with the same names (pictures drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the
   Desktop project builds on Linux (`EnableWindowsTargeting`); the Android workload doesn't, so `build.yml` checks it.
 

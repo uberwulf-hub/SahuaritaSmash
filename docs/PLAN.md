@@ -9,11 +9,13 @@ Android (.NET 10 + Avalonia 12), built and signed by GitHub Actions and installe
 1. **Done (2026-11-14): the repository and the match.** Projects, the five GitHub workflows (checks and test builds on
    every push, Android signing, release by hand), the store file. The engine: `BrawlSim`, `BrawlData`, `BrawlBot`, the
    signature attacks' data, unchanged. The checks that need only the engine (data, physics, knockback, recovery,
-   mechanics, whole matches, hazards, stages). A stand-in screen: two computer players on plain shapes.
-2. **The pictures.** `BrawlArt.cs`, `BrawlBodies.cs`, `BrawlMotion.cs`, `BrawlScenery.cs` and the effects half of
+   mechanics, whole matches, hazards, stages). A stand-in screen (replaced in step 2).
+2. **Done (2026-11-14): the pictures.** `BrawlArt.cs`, `BrawlBodies.cs`, `BrawlMotion.cs`, `BrawlScenery.cs` and the effects half of
    `BrawlSignatures.cs`, through a small layer with WPF's drawing names (`DrawingContext` with `Pop()`,
    `StreamGeometry` with WPF's figure calls, `Gfx`) over Avalonia's, so the files stay close to App Hub's. The draw
-   checks and `-Snapshot` pictures (Fight, Lineup, Moves, Swings, Stampede), phone-sized too.
+   and motion checks pass, and `-Snapshot` saves a fight on every stage. The app shows four computer players with
+   the real pictures. Still to come with the game (step 3): the menus' pictures and the Lineup, Moves, Swings and
+   Stampede scenes (they live in `Brawl.cs`).
 3. **The game.** `Brawl.cs` (title, choosing fighters and the stage, the ladder, help, pause, results) on a small
    `Game` base like Classic Games' (keys held, taps, mouse / touch hit areas, menu buttons), `BrawlKeys` (changeable
    keys, `brawl-keys.txt`), the scorebook (`ladder-<difficulty>`), the game checks and the buffer checks. Saves through
