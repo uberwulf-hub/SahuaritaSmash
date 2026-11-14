@@ -380,3 +380,12 @@ namespace ClassicGames
         }
     }
 }
+
+namespace ClassicGames
+{
+    /// <summary>The game's name, for the engine (the music's names); the app's BrawlGame.GameName is this.</summary>
+    public static class BrawlInfo
+    {
+        public const string GameName = "Sahuarita Smash!";
+    }
+}

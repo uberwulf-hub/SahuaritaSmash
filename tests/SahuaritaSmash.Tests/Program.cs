@@ -50,8 +50,12 @@ namespace ClassicGames
             var sw = Stopwatch.StartNew();
             // drawing without a window: Avalonia's headless platform with Skia (real pictures)
             Avalonia.AppBuilder.Configure<SahuaritaSmash.App>().UseSkia().UseHeadless(new Avalonia.Headless.AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).WithInterFont().SetupWithoutStarting();
-            Run("brawl", only, BrawlEngineChecks);
-            Run("brawl-pictures", only, BrawlPictureChecks);
+            SahuaritaSmash.App.Testing = true;
+            SahuaritaSmash.Services.Data.UseTestFolder();
+            BrawlMusic.Enabled = false;
+            Run("brawl", only, BrawlChecks);
+            Run("brawl-saves", only, BrawlSaveChecks);
+            Run("brawl-snapshots", only, BrawlSnapshotChecks);
             Console.WriteLine(failed == 0 ? "ALL PASSED (" + checks + " checks, " + sw.Elapsed.TotalSeconds.ToString("0.0") + " s)" : "FAILED " + failed + " of " + checks + " checks:");
             foreach (string f in failures.Take(50)) Console.WriteLine("  " + f);
             return failed;

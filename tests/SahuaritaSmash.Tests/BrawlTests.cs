@@ -1,9 +1,13 @@
-// Sahuarita Smash's match checks, copied unchanged from App Hub's Classic Games (Engine\BrawlTests.cs and
-// Engine\BrawlKeysTests.cs, the groups that need only the match engine; the buffer checks also need the menus). The checks that need the pictures, menus,
-// keys and sounds come with those parts.
+// Classic Games - Sahuarita Smash's checks (part of -Test, group "brawl"): the fighters' data, standing, walking off and
+// dropping through, knockback that grows with damage and falls off with weight, strong attacks that win a life at
+// sensible damage, every fighter coming back to the stage from off it, ledges, shields, grabs, the same buttons giving
+// the same match, whole matches between computer players on every stage (someone wins, nobody walks off), every stage
+// surprise warning first, sudden death, the ladder, the sounds and the pictures. Nothing here plays sound.
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia;
+using Avalonia.Media;
 
 namespace ClassicGames
 {
@@ -26,6 +30,26 @@ namespace ClassicGames
                 sim.Step(inp);
             }
         }
+
+        static void BrawlChecks()
+        {
+            BrawlDataChecks();
+            BrawlPhysicsChecks();
+            BrawlKnockbackChecks();
+            BrawlRecoveryChecks();
+            BrawlMechanicsChecks();
+            BrawlMatchChecks();
+            BrawlHazardChecks();
+            BrawlGameChecks();
+            BrawlSoundChecks();
+            BrawlMusicChecks();
+            BrawlKeyChecks();
+            BrawlBufferChecks();
+            BrawlMotionChecks();
+            BrawlStageChecks();
+            BrawlDrawChecks();
+        }
+
         static void BrawlDataChecks()
         {
             Check("brawl: ten fighters from five groups and five stages", BrawlData.Fighters.Count == 10 && BrawlData.Fighters.Select(f => f.Group).Distinct().Count() == 5 && BrawlData.Stages.Count == 5, BrawlData.Fighters.Count + " " + BrawlData.Stages.Count);
@@ -304,77 +328,155 @@ namespace ClassicGames
             Check("brawl: with surprises off nothing happens", off.HazPhase == 0, off.HazPhase.ToString());
         }
 
-        static void BrawlStageChecks()
+        static void BrawlGameChecks()
         {
-            // every stage has its own platforms: at least three to stand on besides the ground, each drawn its own way,
-            // and no two stages laid out alike
-            var notes = new List<string>(); bool ok = true;
-            var layouts = new HashSet<string>();
-            foreach (BStageDef s in BrawlData.Stages)
+            Audio.MusicOn = false;
+            var book = new ScoreBook(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "brawl-test-scores-" + Guid.NewGuid().ToString("N") + ".txt"));
+            var g = new BrawlGame { Scores = book, Player = "Kim", Rng = new Random(4) };
+            g.Begin();
+            Check("brawl: it opens on its title screen", g.State == Phase.Setup && g.Menu == BrawlGame.Screen.Title, g.State.ToString());
+            // the ladder: winning a round goes on to the next; round 3 is two at once; the last a giant
+            g.LadderPick = 2; g.LadderDiff = 1;
+            g.Tap(Avalonia.Input.Key.Down); g.Tap(Avalonia.Input.Key.Enter);
+            Check("brawl: Down then Enter opens the ladder", g.Menu == BrawlGame.Screen.Ladder, g.Menu.ToString());
+            g.Tap(Avalonia.Input.Key.Enter);
+            bool r1 = g.State == Phase.Play && g.Ladder && g.Sim.F.Length == 2 && g.Sim.F[0].D.Id == "trooper";
+            var sizes = new List<int>(); bool giant = false;
+            for (int round = 0; round < BrawlGame.LadderRounds && g.State == Phase.Play; round++)
             {
-                var soft = s.Plats.Where(p => !p.Solid).ToList();
-                string looks = string.Join(",", soft.Select(p => p.Look).Distinct());
-                notes.Add(s.Id + " " + soft.Count + " (" + looks + ")");
-                if (soft.Count < 3 || soft.Any(p => p.Look == "")) ok = false;
-                if (!layouts.Add(string.Join("|", soft.Select(p => p.X1 + "," + p.X2 + "," + p.Y)))) ok = false;
+                sizes.Add(g.Sim.F.Length);
+                if (g.Sim.F.Any(f => f.Size > 1.5)) giant = true;
+                for (int i = 1; i < g.Sim.F.Length; i++) { g.Sim.F[i].Stocks = 1; g.Sim.F[i].X = 5000; g.Sim.F[i].St = BS.Hurt; }
+                for (int i = 0; i < 60 * 14 && g.LadderRound == round && g.State == Phase.Play; i++) g.Update(1.0 / 60);
             }
-            var allLooks = BrawlData.Stages.SelectMany(s => s.Plats.Where(p => !p.Solid).Select(p => s.Id + ":" + p.Look)).Select(x => x.Split(':')[1]).Distinct().ToList();
-            bool shared = BrawlData.Stages.Any(a => BrawlData.Stages.Any(b => a != b && a.Plats.Any(p => !p.Solid && b.Plats.Any(q => !q.Solid && q.Look == p.Look))));
-            Check("brawl stages: each stage has at least three platforms of its own kind (not one big and two small)", ok && !shared && allLooks.Count >= 10, string.Join("; ", notes));
-
-            // the javelina stampede on the mesa: warned, two grown-ups and three babies, bowls over whoever stands in the
-            // way, and someone who jumps over it is left alone
-            Check("brawl stages: the herd is two grown-ups and three babies", BrawlSim.HerdAdult.Count(a => a) == 2 && BrawlSim.HerdAdult.Count(a => !a) == 3, "");
-            BrawlSim m = null; bool seenWind = false, seenHerd = false;
-            for (uint seed = 1; seed < 40 && (m == null || !seenWind); seed++)
-            {
-                var sim = new BrawlSim(BrawlData.Stages[0], new List<BFighterDef> { BrawlData.Fighters[2], BrawlData.Fighters[6] }, 3, 0, seed);
-                var none = new BrInput[2];
-                for (int i = 0; i < 60 * 60 * 3; i++)
-                {
-                    sim.Step(none);
-                    foreach (BFighter f in sim.F) { f.Dmg = 0; f.X = f.Slot == 0 ? -60 : 60; }
-                    if (sim.HazPhase > 0 && sim.Hazard == "wind") seenWind = true;
-                    if (sim.HazPhase == 1 && sim.Hazard == "javelina") { seenHerd = true; if (m == null) { m = sim; break; } }
-                }
-            }
-            Check("brawl stages: the mesa's surprises take turns (the monsoon wind and the javelinas)", seenWind && seenHerd, seenWind + " " + seenHerd);
-            if (m == null) return;
-            BFighter stand = m.F[0], hop = m.F[1];
-            int dir = m.HazDir; bool warned = m.HazPhase == 1;
-            stand.X = 0; hop.X = dir * 150;
-            var inp = new BrInput[2];
-            bool hopHit = false; int jumped = 0, air = 0, again = 0;
-            for (int i = 0; i < 600 && (m.HazPhase != 0 || i < 5); i++)
-            {
-                double lead = m.HazX;
-                // the second fighter jumps when the herd's leader is close (a full jump, held)
-                bool close = m.HazPhase == 2 && (hop.X - lead) * dir > 0 && (hop.X - lead) * dir < 150;
-                if (close && hop.Ground) { jumped = 12; again = 26; }
-                // and again at the top, as a person would
-                if (again > 0 && --again == 0) jumped = 12;
-                inp[1] = new BrInput { Jump = jumped > 0 && (again == 0 || again > 14) };
-                if (jumped > 0) jumped--;
-                inp[0] = new BrInput();
-                m.Step(inp);
-                if (hop.Dmg > 0) hopHit = true;
-                if (!hop.Ground) air++;
-            }
-            Check("brawl stages: the javelinas are warned first, bowl over someone standing in the way, and miss someone who jumps them",
-                warned && stand.Dmg > 0 && !hopHit, warned + " stood " + stand.Dmg.ToString("0") + "%, jumped " + hop.Dmg.ToString("0") + "% (" + air + " frames in the air)");
+            for (int i = 0; i < 120; i++) g.Update(1.0 / 60);
+            Check("brawl: the ladder: six rounds, two foes in round 3, a giant at the top, then the score is kept",
+                r1 && sizes.SequenceEqual(new[] { 2, 2, 3, 2, 2, 2 }) && giant && g.State != Phase.Play && book.Best("Brawl", "ladder-1", "Kim") > 0, string.Join(",", sizes) + " " + giant + " " + g.State + " " + book.Best("Brawl", "ladder-1", "Kim"));
+            // a versus match with two people: the left keys move the first, the right keys the second
+            g = new BrawlGame { Scores = book, Player = "Kim", Rng = new Random(4) };
+            g.Begin(); g.Menu = BrawlGame.Screen.Select;
+            g.Who[0] = 1; g.Who[1] = 1; g.Who[2] = 0; g.Who[3] = 0; g.StagePick = 0;
+            g.Sel = 11; g.Tap(Avalonia.Input.Key.Enter);
+            for (int i = 0; i < 160; i++) g.Update(1.0 / 60);
+            double x0 = g.Sim.F[0].X, x1 = g.Sim.F[1].X;
+            g.Press(Avalonia.Input.Key.D); g.Press(Avalonia.Input.Key.Left);
+            for (int i = 0; i < 30; i++) g.Update(1.0 / 60);
+            g.Release(Avalonia.Input.Key.D); g.Release(Avalonia.Input.Key.Left);
+            Check("brawl: two people on one keyboard: the left keys and the right keys move their own fighters", g.Sim.F[0].X > x0 + 40 && g.Sim.F[1].X < x1 - 40, (g.Sim.F[0].X - x0).ToString("0") + " " + (g.Sim.F[1].X - x1).ToString("0"));
+            g.Tap(Avalonia.Input.Key.F);
+            g.Update(1.0 / 60);
+            Check("brawl: F attacks", g.Sim.F[0].St == BS.Attack, g.Sim.F[0].St.ToString());
+            var one = new BrawlGame { Scores = book, Player = "Kim" };
+            one.Begin(); one.Menu = BrawlGame.Screen.Select; one.Who[0] = 1; one.Who[1] = 0; one.Who[2] = 0; one.Who[3] = 0; one.Sel = 11;
+            one.Tap(Avalonia.Input.Key.Enter);
+            Check("brawl: with only one fighter chosen, Fight! says to choose another and doesn't start", one.State == Phase.Setup, one.State.ToString());
+            Audio.StopMusic(); Audio.StopEffects();
+            try { System.IO.File.Delete(book.Path); } catch (Exception) { }
         }
 
-        /// <summary>The groups in this file, in App Hub's order.</summary>
-        public static void BrawlEngineChecks()
+        static void BrawlSoundChecks()
         {
-            BrawlDataChecks();
-            BrawlPhysicsChecks();
-            BrawlKnockbackChecks();
-            BrawlRecoveryChecks();
-            BrawlMechanicsChecks();
-            BrawlMatchChecks();
-            BrawlHazardChecks();
-            BrawlStageChecks();
+            var bad = new List<string>();
+            foreach (string n in BrawlSfx.Names)
+            {
+                float[] b = BrawlSfx.Make(n);
+                double peak = b.Length == 0 ? 0 : b.Max(x => Math.Abs(x));
+                if (b.Length < Audio.Rate / 40 || peak < 0.05 || peak > 0.81) bad.Add(n + " " + b.Length + " " + peak.ToString("0.00"));
+            }
+            Check("brawl: every sound is made, not empty and not too loud", bad.Count == 0, string.Join(", ", bad.Take(5)));
+            // every sound a match asks for exists
+            var asked = new HashSet<string>();
+            foreach (BFighterDef f in BrawlData.Fighters) foreach (BMove m in f.Moves.Values) if (m.Sound != "") asked.Add(m.Sound);
+            for (int st = 0; st < BrawlData.Stages.Count; st++)
+            {
+                BrawlSim m = BrawlMatch(st, (uint)(31 + st), 0, 4, 6, 9);
+                var bots = Enumerable.Range(0, 4).Select(i => new BrawlBot(i, 6)).ToArray();
+                var inp = new BrInput[4];
+                for (int i = 0; i < 60 * 60 && !m.Over; i++) { for (int s = 0; s < 4; s++) inp[s] = bots[s].Think(m); m.Step(inp); foreach (BrEvent e in m.Events) if (e.K == "sfx") asked.Add(e.Name); }
+            }
+            var unknown = asked.Where(n => !BrawlSfx.Names.Contains(n)).ToList();
+            Check("brawl: every sound the fighters and stages use exists", unknown.Count == 0, string.Join(", ", unknown));
+            for (int s = 0; s < 5; s++) { Song song = Music.BrawlSong(s); if (song == null) bad.Add("song " + s); }
+            GameTunes t = Music.For("Brawl");
+            Check("brawl: a tune for every stage and the menus, and the stings", bad.Count == 0 && t.Theme != null && t.LevelClear != null && t.HighScore != null && t.GameOver != null && t.Extra2 != null, "");
+        }
+
+        static void BrawlDrawChecks()
+        {
+            // every fighter in every state draws, on every stage, and the menus draw
+            var view = new BrawlView();
+            int drawn = 0; string err = null;
+            try
+            {
+                foreach (BStageDef st in BrawlData.Stages)
+                {
+                    BrawlSim m = new BrawlSim(st, BrawlData.Fighters.Take(4).ToList(), 3, 0, 3);
+                    var dv = new DrawingVisual();
+                    using (DrawingContext dc = dv.RenderOpen()) { view.Follow(m, true); view.Draw(dc, m, 1.5); view.DrawPanels(dc, m, null, 1.5); }
+                    drawn++;
+                }
+                foreach (BFighterDef f in BrawlData.Fighters)
+                    foreach (BS s in Enum.GetValues(typeof(BS)))
+                    {
+                        var dv = new DrawingVisual();
+                        using (DrawingContext dc = dv.RenderOpen()) { view.Portrait(dc, f, 100, 200, 100, 0.5, false, s); view.Portrait(dc, f, 100, 200, 40, 0.5, true, s); }
+                        drawn++;
+                    }
+                foreach (BFighterDef f in BrawlData.Fighters)
+                    foreach (BMove mv in f.Moves.Values)
+                        for (int fr = 1; fr <= mv.Len; fr += 4)
+                        {
+                            var bf = new BFighter { D = f, St = BS.Attack, Mv = mv, MF = fr, Face = -1 };
+                            var dv = new DrawingVisual();
+                            using (DrawingContext dc = dv.RenderOpen()) view.DrawPuppet(dc, bf, 100, 200, 1, 0.5, 0);
+                            drawn++;
+                        }
+                var g = new BrawlGame { Player = "Kim" };
+                foreach (string sc in new[] { "Title", "Select", "Help", "Ladder" })
+                {
+                    g.SnapshotScene(sc, 0, 1);
+                    var dv = new DrawingVisual();
+                    using (DrawingContext dc = dv.RenderOpen()) g.Render(dc);
+                    drawn++;
+                }
+            }
+            catch (Exception ex) { err = ex.GetType().Name + ": " + ex.Message; }
+            Check("brawl: every stage, every fighter in every state and frame of every move, and the menus draw", err == null, err ?? drawn + " pictures");
+        }
+
+        static void BrawlUpdateChecks(string dir)
+        {
+            Audio.MusicOn = false;
+            var book = new ScoreBook(System.IO.Path.Combine(dir, "brawl-scores.txt"));
+            // a versus match mid-fight: who, the stage, everyone's lives and damage are kept and carried on
+            var g = new BrawlGame { Scores = book, Player = "Kim", Rng = new Random(2) };
+            g.Begin(); g.Who[0] = 1; g.Who[1] = 2; g.Who[2] = 2; g.Who[3] = 0; g.Pick[0] = 6; g.Pick[1] = 9; g.Pick[2] = 4; g.StagePick = 2; g.Level[1] = 3;
+            g.NewGame();
+            for (int i = 0; i < 300; i++) g.Update(1.0 / 60);
+            g.Sim.F[0].Dmg = 42; g.Sim.F[1].Stocks = 2; g.Sim.F[1].Dmg = 87.5; g.Sim.F[2].KOs = 1;
+            IDictionary<string, string> v = g.SaveForUpdate();
+            var g2 = new BrawlGame { Scores = book, Player = "Kim", Rng = new Random(9) };
+            g2.Begin();
+            bool ok = v != null && g2.ResumeAfterUpdate(v);
+            Check("update brawl: a match carries on after the update: the same fighters and stage, lives and damage",
+                ok && g2.State == Phase.Play && g2.Sim.Stage.Id == "server" && g2.Sim.F.Length == 3 && g2.Sim.F[0].D.Id == "teddy" && g2.Sim.F[0].Dmg == 42 && g2.Sim.F[1].Stocks == 2 && g2.Sim.F[1].Dmg == 87.5 && g2.Sim.F[2].KOs == 1 && g2.Level[1] == 3,
+                ok + " " + (g2.Sim != null ? g2.Sim.Stage.Id + " " + string.Join(",", g2.Sim.F.Select(f => f.D.Id + " " + f.Dmg + " x" + f.Stocks)) : ""));
+            // the ladder: its round, score and foes
+            var l = new BrawlGame { Scores = book, Player = "Kim", Rng = new Random(2) };
+            l.Begin(); l.LadderPick = 1; l.LadderDiff = 2; l.Menu = BrawlGame.Screen.Ladder; l.Tap(Avalonia.Input.Key.Enter);
+            l.LadderRound = 3; l.LadderScore = 4321; l.NewGame();
+            string foe = l.Sim.F[1].D.Id;
+            v = l.SaveForUpdate();
+            var l2 = new BrawlGame { Scores = book, Player = "Kim" };
+            l2.Begin();
+            ok = v != null && l2.ResumeAfterUpdate(v);
+            Check("update brawl: the ladder carries on at the same round against the same foe, with its score",
+                ok && l2.Ladder && l2.LadderRound == 3 && l2.LadderScore == 4321 && l2.LadderDiff == 2 && l2.Sim.F[0].D.Id == "specimen" && l2.Sim.F[1].D.Id == foe, ok + " " + l2.LadderRound + " " + l2.LadderScore);
+            // the menus and the results have nothing to keep
+            var m = new BrawlGame { Scores = book, Player = "Kim" };
+            m.Begin();
+            Check("update brawl: the menus have nothing to carry on", m.SaveForUpdate() == null, "");
+            Audio.StopMusic(); Audio.StopEffects();
         }
     }
 }

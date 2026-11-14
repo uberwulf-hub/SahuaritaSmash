@@ -7,4 +7,9 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>ClassicGames</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- App Hub's safe-save helper (SafeSave.cs) is internal: the screens and the checks use it too -->
+    <InternalsVisibleTo Include="SahuaritaSmash" />
+    <InternalsVisibleTo Include="SahuaritaSmash.Tests" />
+  </ItemGroup>
 </Project>

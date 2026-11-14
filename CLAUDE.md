@@ -35,9 +35,14 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
 
 ## How it is built
 
-- `src\SahuaritaSmash.Engine` (net10.0, no UI): the match, copied from App Hub with the namespace `ClassicGames` kept
-  so the files can be compared: `Brawl\BrawlSim.cs`, `BrawlData.cs`, `BrawlBot.cs`, `BrawlSignatures.cs` (its data
-  half; the effects' drawing half goes with the pictures).
+- `src\SahuaritaSmash.Engine` (net10.0, no UI): copied from App Hub with the namespace `ClassicGames` kept so the
+  files can be compared. The match: `Brawl\BrawlSim.cs`, `BrawlData.cs` (+ `BrawlInfo.GameName`, the name the music
+  uses), `BrawlBot.cs`, `BrawlSignatures.cs` (its data half). Sound: `Audio\Audio.cs` (App Hub's mixer and synth
+  without Hive's industrial instruments and other games' sounds; the device is an `IAudioOut` the platform gives
+  `Audio.Start`, none yet: silent), `Music.cs` (only this game's tunes and `GameTunes`), `BrawlSfx.cs`, `BrawlMusic.cs`
+  (recorded songs; Media Foundation, so Windows only, off until step 4). Saves: `ScoreBook.cs` (+ `AddKept`),
+  `SafeSave.cs` (App Hub's `AppHubSaves.SafeFile`, internal, visible to the app and the checks), `UpdateResume.cs`
+  (a match kept when the app closes), `CrashLog.cs` (just `Write`).
 - `src\SahuaritaSmash` (Avalonia 12): screens shared by Windows and Android. `Brawl\` holds App Hub's pictures
   (`BrawlArt.cs`, `BrawlBodies.cs`, `BrawlMotion.cs`, `BrawlScenery.cs`, `BrawlSignaturesView.cs` = the drawing half of
   `BrawlSignatures.cs`) with only their `using` lines changed, plus a few marked spots in `BrawlScenery.cs` (bitmaps,
@@ -45,12 +50,22 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `StreamGeometry` with WPF's figure calls, the transforms, `DrawingVisual` for off-screen pictures, `Freeze()`,
   `Pics.FromBgra`), and `Wpf\Gfx.cs` (Classic Games' `Gfx`, fonts Inter). Points, rects, matrices, brushes and pens
   are Avalonia's. Keep new drawing code in that WPF style so files can still be compared with App Hub's.
-  `Views\MainView.cs` is for now four computer players fighting stage after stage (the game's 1280 x 720 picture,
-  scaled to fit); the menus replace it (docs/PLAN.md).
+  The game is `Brawl\Brawl.cs` + `BrawlKeys.cs` (App Hub's, only `using` lines changed; the title's last item says
+  Quit) on `Wpf\Game.cs` (App Hub's `Game` base: pause, game over, scores, held / tapped keys, mouse hit areas, which
+  are also how touch works), `Wpf\Pads.cs` (XInput controllers, none off Windows; `KartPads.Fake` for tests and
+  touch) and `Wpf\NetLink.cs` (a stand-in: no network play yet, `Game.Net` stays null). Keys are Avalonia's `Key`
+  (same names as WPF's, so `brawl-keys.txt` is shared with App Hub). `Views\GameView.cs` hosts a Game (App Hub's
+  GameSurface: loop per frame, picture scaled to fit, keys with repeats, mouse and touch in game coordinates, errors
+  to the log and back to the title, Back = Esc except on the title); `Views\MainView.cs` puts BrawlGame in it.
+  `Services\Data.cs`: the folder (`%APPDATA%\SahuaritaSmashSE`, Android's files folder; `UseTestFolder` for checks)
+  and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
+  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work; `App.QuitApp` is Android's way out.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
-- `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-pictures]
-  [-Snapshot dir]`, App Hub's checks with the same names (pictures drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
+- `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
+  brawl-snapshots] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
+  App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the
   Desktop project builds on Linux (`EnableWindowsTargeting`); the Android workload doesn't, so `build.yml` checks it.
 

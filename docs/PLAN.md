@@ -16,12 +16,16 @@ Android (.NET 10 + Avalonia 12), built and signed by GitHub Actions and installe
    and motion checks pass, and `-Snapshot` saves a fight on every stage. The app shows four computer players with
    the real pictures. Still to come with the game (step 3): the menus' pictures and the Lineup, Moves, Swings and
    Stampede scenes (they live in `Brawl.cs`).
-3. **The game.** `Brawl.cs` (title, choosing fighters and the stage, the ladder, help, pause, results) on a small
+3. **Done (2026-11-14): the game.** `Brawl.cs` (title, choosing fighters and the stage, the ladder, help, pause, results) on a small
    `Game` base like Classic Games' (keys held, taps, mouse / touch hit areas, menu buttons), `BrawlKeys` (changeable
    keys, `brawl-keys.txt`), the scorebook (`ladder-<difficulty>`), the game checks and the buffer checks. Saves through
    App Hub's safe-save helper; App Hub's old keys and ladder scores read once on Windows.
-4. **Sound.** A mixer on each platform (Windows: WASAPI or waveOut; Android: AudioTrack), the sounds made in code
-   (`BrawlSfx.cs`), the built-in tunes (`Music.cs`'s Brawl songs and their synth), then Andrew's recorded songs
+   Brought along with it: the mixer, the built-in tunes and the sounds made in code (`Audio.cs`, `Music.cs`,
+   `BrawlSfx.cs`, `BrawlMusic.cs`), so the game's music logic and its checks run unchanged; they stay silent until
+   step 4 gives them a sound output (`IAudioOut`). All 112 checks pass (App Hub's game, keys, buffer, music, draw,
+   motion, stage and update checks, the keys fixture, bringing App Hub's saves across, 24 snapshot scenes). The
+   title's "Back to the games" is "Quit" here.
+4. **Sound.** An `IAudioOut` on each platform (Windows: waveOut, as App Hub; Android: AudioTrack), then Andrew's recorded songs
    (`Music\Brawl\*.mp3` + `music.txt`, decoded by the platform: Media Foundation on Windows, MediaCodec on Android),
    with a `credits` line for them.
 5. **Controls.** Windows: both keyboard sets and up to four XInput controllers. Android: on-screen stick and buttons

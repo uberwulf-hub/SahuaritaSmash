@@ -14,4 +14,9 @@ namespace SahuaritaSmash.Android;
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
 public class MainActivity : AvaloniaMainActivity
 {
+    protected override void OnCreate(global::Android.OS.Bundle savedInstanceState)
+    {
+        App.QuitApp = () => Finish();
+        base.OnCreate(savedInstanceState);
+    }
 }
