@@ -1,0 +1,31 @@
+using Android.App;
+using Android.Content.PM;
+using Avalonia.Android;
+
+namespace SahuaritaSmash.Android;
+
+// Landscape only: the stage is 16:9
+[Activity(
+    Label = "Sahuarita Smash! SE",
+    Theme = "@style/MyTheme.NoActionBar",
+    Icon = "@drawable/icon",
+    MainLauncher = true,
+    ScreenOrientation = ScreenOrientation.SensorLandscape,
+    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
+public class MainActivity : AvaloniaMainActivity
+{
+    protected override void OnCreate(global::Android.OS.Bundle savedInstanceState)
+    {
+        App.QuitApp = () => Finish();
+        // the sound: an AudioTrack, and the recorded songs from the app's assets, decoded by the phone
+        App.MakeAudioOut = () => new TrackOut();
+        try { ClassicGames.BrawlMusic.Source = new AssetMusic(Assets); } catch (System.Exception) { }
+        base.OnCreate(savedInstanceState);
+    }
+
+    protected override void OnPause()
+    {
+        App.GoneToBackground();
+        base.OnPause();
+    }
+}

@@ -1,0 +1,2 @@
+Kim	1	A,D,W,S,J,G,H,R,T	Left,Right,Up,Down,K,L,OemSemicolon,O,I
+Ben	1	A,D,W,S,F,G,H,R,T	Left,Right,Up,Down,NumPad1,L,OemSemicolon,O,I	something-newer

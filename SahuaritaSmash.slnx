@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/SahuaritaSmash.Engine/SahuaritaSmash.Engine.csproj" />
+  <Project Path="src/SahuaritaSmash/SahuaritaSmash.csproj" />
+  <Project Path="src/SahuaritaSmash.Desktop/SahuaritaSmash.Desktop.csproj" />
+  <Project Path="src/SahuaritaSmash.Android/SahuaritaSmash.Android.csproj" />
+  <Project Path="tests/SahuaritaSmash.Tests/SahuaritaSmash.Tests.csproj" />
+</Solution>

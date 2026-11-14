@@ -1,0 +1,57 @@
+name: Build
+
+# Every push and pull request: run the checks and build both apps. The copies made here are for testing only
+# (Windows unsigned, Android debug-signed); it never releases. Releases are made by the Release workflow
+# (release.yml), started by hand from the Actions tab, the same way as Bored Games.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Run the checks
+        run: dotnet run --project tests/SahuaritaSmash.Tests -c Release
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Build the Windows app
+        run: dotnet publish src/SahuaritaSmash.Desktop/SahuaritaSmash.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SahuaritaSmashSE-windows-unsigned-for-testing
+          path: out/
+
+  android:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Install the .NET Android workload
+        run: dotnet workload install android
+      - name: Android SDK platform 36
+        shell: pwsh
+        run: |
+          $sm = Get-ChildItem "$env:ANDROID_HOME\cmdline-tools" -Recurse -Filter sdkmanager.bat | Select-Object -First 1
+          'y' * 20 -split '' | & $sm.FullName --sdk_root="$env:ANDROID_HOME" 'platforms;android-36' 'build-tools;36.0.0' | Out-Null
+      - name: Build the Android app (debug key)
+        shell: pwsh
+        run: dotnet build src/SahuaritaSmash.Android/SahuaritaSmash.Android.csproj -c Debug -f net10.0-android "-p:AndroidSdkDirectory=$env:ANDROID_HOME" "-p:JavaSdkDirectory=$env:JAVA_HOME"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SahuaritaSmashSE-android-debug-apk-for-testing
+          path: src/SahuaritaSmash.Android/bin/Debug/net10.0-android/*-Signed.apk

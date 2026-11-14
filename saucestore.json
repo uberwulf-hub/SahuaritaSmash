@@ -1,0 +1,21 @@
+{
+  "name": "Sahuarita Smash! (Sauce Edition)",
+  "category": "Game",
+  "description": "A family platform fighter from Sahuarita, Arizona, on Windows and Android. Ten fighters (Classic Games heroes, a roadrunner and a saguaro, Teddy Roosevelt and Ben Franklin, the Firewall Knight and Paul Bunyan), five stages with their own surprises (monsoon wind, a javelina stampede, mine carts, meteors, a lab laser), up to four players against each other or the computer, and a ladder that ends against a giant. Nobody gets hurt: fighters get bonked and twinkle off the screen.",
+  "icon": "store/icon.png",
+  "assets": { "windows": "SahuaritaSmashSE-windows.zip", "android": "SahuaritaSmashSE-android.apk" },
+  "requirements": [
+    "Windows 10 or 11 (64-bit), or Android 8 or later",
+    "A keyboard or game controller on Windows; touch controls on Android",
+    "Nothing else to install; works offline"
+  ],
+  "rightsConfirmed": true,
+  "credits": [
+    { "asset": "The recorded songs (menu, the five stages, victory: Music/Brawl)", "author": "Andrew Saulls, made in Suno on a Pro plan", "license": "Owned by the author (Suno Pro plan terms)", "source": "Andrew's own songs" },
+    { "asset": "Avalonia UI 12 (the windows and screens, on Windows and Android)", "author": "AvaloniaUI OU and contributors", "license": "MIT", "source": "https://github.com/AvaloniaUI/Avalonia" },
+    { "asset": "SkiaSharp and HarfBuzzSharp (drawing and text, bundled by Avalonia)", "author": ".NET Foundation and contributors", "license": "MIT", "source": "https://github.com/mono/SkiaSharp" },
+    { "asset": "Inter typeface", "author": "Rasmus Andersson", "license": "SIL Open Font License 1.1", "source": "https://github.com/rsms/inter" },
+    { "asset": ".NET runtime (bundled with the app)", "author": ".NET Foundation and contributors", "license": "MIT", "source": "https://github.com/dotnet/runtime" },
+    { "asset": "AndroidX libraries (Android version)", "author": "The Android Open Source Project", "license": "Apache-2.0", "source": "https://developer.android.com/jetpack/androidx" }
+  ]
+}

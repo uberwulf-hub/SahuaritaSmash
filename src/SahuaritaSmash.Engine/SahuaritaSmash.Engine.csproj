@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The match: rules, fighters, stages, computer players and sounds. Pure .NET, no UI: shared by Windows, Android and the tests -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ClassicGames</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- App Hub's safe-save helper (SafeSave.cs) is internal: the screens and the checks use it too -->
+    <InternalsVisibleTo Include="SahuaritaSmash" />
+    <InternalsVisibleTo Include="SahuaritaSmash.Tests" />
+  </ItemGroup>
+</Project>

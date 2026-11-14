@@ -1,0 +1,56 @@
+# One-time backup of the Android signing key: turns the cached key into repository secrets so it
+# can never be lost. Run it once (Actions > Back up the Android key > Run workflow). It packs the
+# key into a download called "android-signing-key" on the run's page, kept for 1 day. Then:
+#   1. Download and unzip it. Open android-keystore-base64.txt and copy everything in it.
+#   2. Settings > Secrets and variables > Actions > New repository secret, three times:
+#        ANDROID_KEYSTORE_BASE64    the text you copied
+#        ANDROID_KEYSTORE_ALIAS     sahuaritasmash
+#        ANDROID_KEYSTORE_PASSWORD  sahuaritasmash
+#   3. Delete the downloaded files (or keep the .keystore somewhere safe, like a password manager).
+name: Back up the Android key
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the signing key from the cache
+        id: key
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/android-key
+          key: sahuaritasmash-android-signing-key-v1
+      - name: Pack it up
+        run: |
+          set -e
+          KS=~/android-key/release.keystore
+          if [ "${{ steps.key.outputs.cache-hit }}" != "true" ] || [ ! -f "$KS" ]; then
+            echo "::error::No cached signing key found. If the ANDROID_KEYSTORE_* secrets are already set, the key is already backed up."
+            exit 1
+          fi
+          mkdir -p backup
+          cp "$KS" backup/sahuaritasmash-release.keystore
+          base64 -w0 "$KS" > backup/android-keystore-base64.txt
+          keytool -list -v -keystore "$KS" -storepass sahuaritasmash | grep -E "Alias name|SHA256:" | tee backup/fingerprint.txt
+          {
+            echo "## Android signing key packed"
+            echo ""
+            echo "Download **android-signing-key** below (kept for 1 day), then add these repository secrets"
+            echo "(Settings > Secrets and variables > Actions):"
+            echo ""
+            echo "| Secret | Value |"
+            echo "|---|---|"
+            echo "| ANDROID_KEYSTORE_BASE64 | everything in android-keystore-base64.txt |"
+            echo "| ANDROID_KEYSTORE_ALIAS | sahuaritasmash |"
+            echo "| ANDROID_KEYSTORE_PASSWORD | sahuaritasmash |"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-signing-key
+          path: backup/
+          retention-days: 1
