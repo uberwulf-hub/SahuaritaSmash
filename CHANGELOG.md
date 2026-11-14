@@ -5,12 +5,14 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-14
+
 ### Added
-- Sahuarita Smash! moves out of App Hub's Classic Games into its own app for Windows and Android. This first step
-  brings over the match itself: all ten fighters, their moves and specials, the five stages and their surprises, and
-  the computer players, and all the pictures: the fighters, their moves and effects, and every stage. Then the whole game: the title, choosing
-  fighters and the stage, the ladder, how to play, changing your keys, pause and results, playable with the
-  keyboard and the mouse on Windows. Your Classic Games ladder scores and keys come across the first time. Then the sound: the
-  music, the sounds and Andrew's recorded songs for the menu, every stage and the victory, on Windows and Android.
-  And touch
-  controls for Android: a stick under your left thumb and big buttons for your right.
+- Sahuarita Smash! is its own app now, on Windows and Android (it was a game in App Hub's Classic Games).
+- Ten fighters, each with 13 attacks of its own and four specials, on five stages with surprises that always warn
+  first (monsoon wind, a javelina stampede, mine carts, meteors, a lab laser).
+- Up to four players, people or the computer at four levels, and the ladder: six matches that end against a giant.
+- Change your keys on Windows; Xbox-style controllers work there too.
+- Touch controls on Android: a stick under your left thumb and big buttons for your right.
+- The music and sounds, with Andrew's own songs for the menu, every stage and the victory.
+- On Windows, your Classic Games ladder scores and keys come across the first time it starts.
