@@ -5,6 +5,14 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Changed
+- Android's touch controls: no Jump button (push the stick up to jump), and Shield is now big, right beside
+  Attack (hold Shield and push the stick to roll or dodge).
+
+### Fixed
+- No sound on Android: the music, the sounds and the songs play now, and the phone's volume buttons turn the game
+  up and down.
+
 ## [0.1.0] - 2026-11-14
 
 ### Added

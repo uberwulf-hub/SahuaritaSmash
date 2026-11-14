@@ -1,8 +1,9 @@
 // Touch controls for a fight (Android, and a Windows touch screen once it has been touched): a stick that appears where
-// the left thumb lands, six buttons for the right thumb and a pause button. They pretend to be controller 1
+// the left thumb lands, five buttons for the right thumb and a pause button. They pretend to be controller 1
 // (KartPads.Fake[0]), which Brawl.cs already reads like a person's keys, so the game itself is unchanged: the stick
-// moves (up jumps, down drops, as the keys do), Attack = A, Special = B, Jump = X, Strong = left trigger, Shield = RB,
-// Grab = LB, pause = Start. Sizes are in the screen's own units (at least 56 across, so a thumb can't miss), drawn
+// moves (up jumps, down drops, as the keys do), Attack = A, Special = B, Strong = left trigger, Shield = RB, Grab = LB,
+// pause = Start. (0.1.1, Andrew: no Jump button, the stick already jumps. Shield stays on the right, big and next to
+// Attack: Shield + the stick rolls and dodges, which needs both thumbs.) Sizes are in the screen's own units (at least 56 across, so a thumb can't miss), drawn
 // over the game, never under a finger's way to the menus: menus get every tap as before.
 using System;
 using System.Collections.Generic;
@@ -33,10 +34,9 @@ namespace SahuaritaSmash.Views
         {
             foreach (var b in new[] {
                 new Button { Label = "Attack", Color = 0xFFEF4444 },
-                new Button { Label = "Special", Color = 0xFF3B82F6 },
-                new Button { Label = "Jump", Color = 0xFF22C55E },
-                new Button { Label = "Strong", Color = 0xFFF59E0B },
                 new Button { Label = "Shield", Color = 0xFF8B5CF6 },
+                new Button { Label = "Special", Color = 0xFF3B82F6 },
+                new Button { Label = "Strong", Color = 0xFFF59E0B },
                 new Button { Label = "Grab", Color = 0xFF14B8A6 } }) Buttons.Add(b);
         }
 
@@ -48,13 +48,13 @@ namespace SahuaritaSmash.Views
             double u = Math.Max(1, Math.Min(s.Width, s.Height) / 400.0);   // 1 on a 400-tall phone screen
             double big = Math.Max(36, 40 * u), small = Math.Max(28, 31 * u), pad = 14 * u;
             double rx = s.Width - pad, by = s.Height - pad;
-            // Attack biggest, nearest the thumb's resting place; the rest round it
-            Place(Buttons[0], rx - big * 1.3, by - big * 1.3, big);
-            Place(Buttons[1], rx - big * 3.5, by - big * 0.95, small);
-            Place(Buttons[2], rx - big * 1.15, by - big * 3.55, small);
-            Place(Buttons[3], rx - big * 3.15, by - big * 3.0, small);
-            Place(Buttons[4], rx - big * 5.4, by - big * 0.85, small);
-            Place(Buttons[5], rx - big * 5.05, by - big * 2.95, small);
+            // Attack and Shield big along the bottom, where the thumb rests; Special, Strong and Grab above them
+            double mid = (big + small) / 2;
+            Place(Buttons[0], rx - big * 1.3, by - big * 1.3, big);           // Attack
+            Place(Buttons[1], rx - big * 3.75, by - big * 1.1, mid);          // Shield
+            Place(Buttons[2], rx - big * 1.2, by - big * 3.65, small);        // Special
+            Place(Buttons[3], rx - big * 3.25, by - big * 3.35, small);       // Strong
+            Place(Buttons[4], rx - big * 5.45, by - big * 2.6, small);        // Grab
             Place(Pause, s.Width / 2, pad + small * 0.8, small * 0.8);
             StickReach = 70 * u;
         }
@@ -129,8 +129,8 @@ namespace SahuaritaSmash.Views
                 if (len < 0.25) { x = 0; y = 0; }   // a small dead zone, so resting a thumb doesn't walk
             }
             Pad.X = x; Pad.Y = y;
-            Pad.A = Buttons[0].Down; Pad.B = Buttons[1].Down; Pad.XB = Buttons[2].Down;
-            Pad.LT = Buttons[3].Down ? 1 : 0; Pad.RB = Buttons[4].Down; Pad.LB = Buttons[5].Down;
+            Pad.A = Buttons[0].Down; Pad.RB = Buttons[1].Down; Pad.B = Buttons[2].Down;
+            Pad.LT = Buttons[3].Down ? 1 : 0; Pad.LB = Buttons[4].Down;
             Pad.Start = Pause.Down;
         }
 

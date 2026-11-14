@@ -61,8 +61,11 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   to the log and back to the title, Back = Esc except on the title); `Views\MainView.cs` puts BrawlGame in it.
   `Services\Data.cs`: the folder (`%APPDATA%\SahuaritaSmashSE`, Android's files folder; `UseTestFolder` for checks)
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
-  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.QuitApp` is Android's way out; `App.GoneToBackground`
-  (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick and buttons, controller 1 to
+  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.EnsureSound` starts the sound once `App.MakeAudioOut` is known (Android's
+  `Application.cs` sets it before the app starts: in 0.1.0 the activity set it too late and Android was silent; the
+  activity routes the volume buttons to media); `App.QuitApp` is Android's way out; `App.GoneToBackground`
+  (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick (up jumps) and five buttons (Attack, Shield, Special,
+  Strong, Grab; no Jump since 0.1.1, Andrew; Shield on the right because Shield + stick rolls and dodges), controller 1 to
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
   paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
   screen units (every button 44+ across: `TouchChecks`).
