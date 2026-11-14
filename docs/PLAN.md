@@ -31,9 +31,12 @@ Android (.NET 10 + Avalonia 12), built and signed by GitHub Actions and installe
    the songs as assets, MediaCodec to 16-bit mono), `BrawlMusic.Source` (`IMusicSource`; Windows keeps `Folder` +
    Media Foundation), the songs in `Music/Brawl` (beside the exe; Android assets). Checked with a pretend output and
    song only: nothing has been heard yet on a real PC or phone.
-5. **Controls.** Windows: both keyboard sets and up to four XInput controllers. Android: on-screen stick and buttons
+5. **Done (2026-11-14, touch): controls.** Windows: both keyboard sets and up to four XInput controllers. Android: on-screen stick and buttons
    (attack, strong, special, shield, grab, jump; at least 44 px, thumbs not covering the fighters), Bluetooth game
-   pads through Avalonia's key events, pause on Back.
+   pads through Avalonia's key events, pause on Back. Done: `Views\TouchControls.cs` (a stick where the left thumb
+   lands, Attack / Special / Jump / Strong / Shield / Grab and pause, posing as controller 1 through
+   `KartPads.Fake[0]`, only while fighting) and checks (`TouchChecks.cs`). Not done: Bluetooth game pads on Android
+   (Avalonia doesn't pass their buttons on as keys we read yet), and nothing has been tried on a real phone.
 6. **Release 0.1.0** (only when Andrew asks), then run *Back up the Android key* once, and retire the game from
    Classic Games if Andrew agrees (App Hub's CLAUDE.md, "Retired apps"; for a game inside Classic Games: remove its
    `$Games` entry and engine files, keep its saves, a CHANGELOG line saying where it went).

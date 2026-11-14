@@ -27,6 +27,26 @@ namespace SahuaritaSmash.Views
         public event EventHandler ExitRequested;
         /// <summary>Errors since the start (the checks look at it).</summary>
         public int Errors;
+        /// <summary>The on-screen stick and buttons (TouchControls.cs): on Android from the start, on Windows once the
+        /// screen is touched.</summary>
+        public readonly TouchControls Touch = new TouchControls();
+        public bool TouchOn = OperatingSystem.IsAndroid();
+
+        /// <summary>The touch controls are in use now: during play, nothing paused and nothing on screen to click (a
+        /// fight; results and menus take taps themselves).</summary>
+        public bool TouchActive
+        {
+            get { Game g = game; return TouchOn && g != null && g.State == Phase.Play && !g.Paused && g.MouseHits.Count == 0; }
+        }
+        bool touchWas;
+        /// <summary>Hands the touch controls to the game as controller 1 while they are in use (each frame).</summary>
+        public void SyncTouch()
+        {
+            bool on = TouchActive;
+            if (!on && touchWas) Touch.Clear();
+            KartPads.Fake[0] = on ? Touch.Pad : null;
+            touchWas = on;
+        }
 
         public GameView()
         {
@@ -85,6 +105,7 @@ namespace SahuaritaSmash.Views
             if (g != null && running)
             {
                 g.Stats.Tick(dt * 1000);
+                SyncTouch();
                 Safe(() => g.Update(Math.Max(0, Math.Min(0.1, dt))), "the game");
                 InvalidateVisual();
             }
@@ -132,6 +153,7 @@ namespace SahuaritaSmash.Views
                 Safe(() => g.Render(dc), "drawing the game");
                 dc.Dispose();
             }
+            if (TouchActive) { Touch.Layout(Bounds.Size); Touch.Draw(context); }
             g.Stats.Done(0, sw.Elapsed.TotalMilliseconds);
         }
 
@@ -168,6 +190,7 @@ namespace SahuaritaSmash.Views
         void OnDeactivated(object sender, EventArgs e)
         {
             down.Clear();
+            Touch.Clear();
             Game g = game;
             if (g != null) Safe(g.FocusLost, "the window going to the back");
         }
@@ -190,6 +213,7 @@ namespace SahuaritaSmash.Views
             base.OnPointerMoved(e);
             Game g = game;
             if (g == null) return;
+            if (e.Pointer.Type == PointerType.Touch && Touch.Move(e.Pointer.Id, e.GetPosition(this))) { e.Handled = true; return; }
             Point p = ToGame(e.GetPosition(this));
             Safe(() => g.PointerMove(p), "the mouse");
         }
@@ -200,6 +224,11 @@ namespace SahuaritaSmash.Views
             Focus();
             Game g = game;
             if (g == null) return;
+            if (e.Pointer.Type == PointerType.Touch)
+            {
+                if (!TouchOn) { TouchOn = true; SyncTouch(); }
+                if (TouchActive) { Touch.Layout(Bounds.Size); if (Touch.Down(e.Pointer.Id, e.GetPosition(this))) { e.Handled = true; return; } }
+            }
             Point p = ToGame(e.GetPosition(this));
             bool right = e.GetCurrentPoint(this).Properties.IsRightButtonPressed;
             // a touch first points (selecting a menu item, as the mouse would on its way there), then presses
@@ -213,6 +242,7 @@ namespace SahuaritaSmash.Views
             base.OnPointerReleased(e);
             Game g = game;
             if (g == null) return;
+            if (e.Pointer.Type == PointerType.Touch && Touch.Up(e.Pointer.Id)) { e.Handled = true; return; }
             Point p = ToGame(e.GetPosition(this));
             bool right = e.InitialPressMouseButton == MouseButton.Right;
             Safe(() => g.PointerUp(p, right), "the mouse");

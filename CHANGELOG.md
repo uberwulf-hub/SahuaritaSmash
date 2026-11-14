@@ -12,4 +12,5 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
   fighters and the stage, the ladder, how to play, changing your keys, pause and results, playable with the
   keyboard and the mouse on Windows. Your Classic Games ladder scores and keys come across the first time. Then the sound: the
   music, the sounds and Andrew's recorded songs for the menu, every stage and the victory, on Windows and Android.
-  Touch controls on Android follow.
+  And touch
+  controls for Android: a stick under your left thumb and big buttons for your right.

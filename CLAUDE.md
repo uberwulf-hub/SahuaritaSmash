@@ -62,11 +62,14 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `Services\Data.cs`: the folder (`%APPDATA%\SahuaritaSmashSE`, Android's files folder; `UseTestFolder` for checks)
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
   `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.QuitApp` is Android's way out; `App.GoneToBackground`
-  (Android's OnPause) pauses the game.
+  (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick and buttons, controller 1 to
+  the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
+  paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
+  screen units (every button 44+ across: `TouchChecks`).
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
-  brawl-snapshots,sound] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  brawl-snapshots,sound,touch] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
   `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
   App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the
