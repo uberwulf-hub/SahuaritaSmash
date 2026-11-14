@@ -5,6 +5,8 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-14
+
 ### Changed
 - Android's touch controls: no Jump button (push the stick up to jump), and Shield is now big, right beside
   Attack (hold Shield and push the stick to roll or dodge).
