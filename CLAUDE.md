@@ -16,10 +16,11 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
 - **Releasing: GitHub Actions only, like Learning Lab and Bored Games.** Set the version in `Directory.Build.props` and
   `src\SahuaritaSmash.Android\SahuaritaSmash.Android.csproj` (`ApplicationVersion` = major*10000 + minor*100 + patch,
   `ApplicationDisplayVersion` = X.Y.Z), move CHANGELOG.md's "Unreleased" lines under `## [X.Y.Z] - date`, push to
-  main, then run the `Release` workflow with `vX.Y.Z` on main. **Signing is GitHub's:** the apk is signed in
-  `android.yml` with the key from the `ANDROID_KEYSTORE_*` secrets or, until they exist, the key the first build made
-  and keeps in the Actions cache (`keep-android-key.yml` keeps it alive; `backup-android-key.yml` turns it into the
-  secrets). Never sign with another key and never commit a keystore. The Windows zip is unsigned. `build.yml` runs the
+  main, then run the `Release` workflow with `vX.Y.Z` on main. **Signing is GitHub's:** `android.yml` signs the apk with, first found, the `ANDROID_KEYSTORE_*` secrets, or
+  `keys/sahuaritasmash-release.keystore.enc` (the key the first build made, locked with the `BACKUP_PASSPHRASE` secret
+  by `store-android-key.yml`, which also deleted the cached copy; it is the backup too), or, only while the repository
+  is private, the Actions cache. The repository is public since 2026-11-14 (free Actions minutes): never cache, upload
+  or commit an unlocked key, and never change the key (phones would have to uninstall). The Windows zip is unsigned. `build.yml` runs the
   checks and builds test copies on every push; it never releases.
 - Every rule from App Hub's section on the game (below) still applies: **never Nintendo's names, characters, stages,
   items, music or logo; no living people, actors or look-alikes; nobody is hurt (bonks, a twinkle), no blood; every
@@ -61,8 +62,11 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   to the log and back to the title, Back = Esc except on the title); `Views\MainView.cs` puts BrawlGame in it.
   `Services\Data.cs`: the folder (`%APPDATA%\SahuaritaSmashSE`, Android's files folder; `UseTestFolder` for checks)
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
-  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.QuitApp` is Android's way out; `App.GoneToBackground`
-  (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick and buttons, controller 1 to
+  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.EnsureSound` starts the sound once `App.MakeAudioOut` is known (Android's
+  `Application.cs` sets it before the app starts: in 0.1.0 the activity set it too late and Android was silent; the
+  activity routes the volume buttons to media); `App.QuitApp` is Android's way out; `App.GoneToBackground`
+  (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick (up jumps) and five buttons (Attack, Shield, Special,
+  Strong, Grab; no Jump since 0.1.1, Andrew; Shield on the right because Shield + stick rolls and dodges), controller 1 to
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
   paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
   screen units (every button 44+ across: `TouchChecks`).

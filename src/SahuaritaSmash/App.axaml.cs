@@ -55,8 +55,17 @@ public partial class App : Application
         ClassicGames.CrashLog.Path = SahuaritaSmash.Services.Data.Errors;
         if (System.OperatingSystem.IsWindows())
             SahuaritaSmash.Services.Data.BringAcrossFromAppHub(System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "ClassicGames"));
-        // the sound: the platform's output (Program.cs / MainActivity.cs set it, and where the recorded songs are)
-        try { if (MakeAudioOut != null) ClassicGames.Audio.Start(MakeAudioOut()); }
+        EnsureSound();
+    }
+
+    /// <summary>Starts the sound on the platform's output once it is known (Program.cs and Android's Application.cs
+    /// set MakeAudioOut before the app starts; the game's screen asks again when it opens, so the order can't leave
+    /// the game silent: on 0.1.0 Android started the app before its activity had set the output). Never in the
+    /// checks.</summary>
+    public static void EnsureSound()
+    {
+        if (Testing || ClassicGames.Audio.Live || MakeAudioOut == null) return;
+        try { ClassicGames.Audio.Start(MakeAudioOut()); }
         catch (System.Exception ex) { ClassicGames.CrashLog.Write("starting the sound", ex, false); }
     }
 }

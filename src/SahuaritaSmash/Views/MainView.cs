@@ -25,6 +25,7 @@ namespace SahuaritaSmash.Views
             };
             App.Backgrounded += () => Avalonia.Threading.Dispatcher.UIThread.Post(View.AppPaused);
             Children.Add(View);
+            App.EnsureSound();
             Game.Begin();
         }
 

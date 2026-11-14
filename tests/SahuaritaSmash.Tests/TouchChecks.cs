@@ -28,7 +28,8 @@ namespace ClassicGames
                     big && apart && inside && right, "big " + big + ", apart " + apart + ", inside " + inside + ", right " + right);
             }
 
-            // a fight: one person (touch) against the computer
+            // a fight: the person on touch against a second player who stands still (a computer player could knock
+            // the fighter down mid-check)
             Audio.MusicOn = false;
             var g = new BrawlGame { Scores = new ScoreBook(System.IO.Path.Combine(SahuaritaSmash.Services.Data.Dir, "touch-scores.txt")), Player = "Kim", Rng = new Random(3) };
             g.KeysFileOverride = System.IO.Path.Combine(SahuaritaSmash.Services.Data.Dir, "touch-keys.txt");
@@ -38,7 +39,7 @@ namespace ClassicGames
             g.Begin();
             Frame(view, g);
             Check("touch: on the title the touch controls stay out of the way (menus take the taps)", !view.TouchActive && KartPads.Fake[0] == null, "");
-            g.Who[0] = 1; g.Who[1] = 2; g.Who[2] = 0; g.Who[3] = 0; g.Pick[0] = 0; g.Pick[1] = 1; g.StagePick = 0; g.Level[1] = 0;
+            g.Who[0] = 1; g.Who[1] = 1; g.Who[2] = 0; g.Who[3] = 0; g.Pick[0] = 0; g.Pick[1] = 1; g.StagePick = 0; g.Level[1] = 0;
             g.NewGame();
             for (int i = 0; i < 60 * 3; i++) Frame(view, g);
             Check("touch: in a fight they are in use, as controller 1", view.TouchActive && KartPads.Fake[0] == view.Touch.Pad, "");
@@ -58,6 +59,24 @@ namespace ClassicGames
             for (int i = 0; i < 12 && !attacked; i++) { Frame(view, g); attacked = me.St == BS.Attack; }
             view.Touch.Up(2);
             Check("touch: tapping Attack makes the fighter attack", attacked, me.St.ToString());
+            Check("touch: five buttons (no Jump: the stick jumps), Shield beside Attack along the bottom",
+                view.Touch.Buttons.Count == 5 && !view.Touch.Buttons.Any(x => x.Label == "Jump") && Math.Abs(view.Touch.Buttons[1].Center.Y - attack.Center.Y) < attack.R, "");
+            // the stick pushed up jumps (there's no Jump button)
+            for (int i = 0; i < 30; i++) Frame(view, g);
+            double y0 = me.Y;
+            view.Touch.Down(6, home); view.Touch.Move(6, new Point(home.X, home.Y - 100));
+            double top = y0;
+            for (int i = 0; i < 30; i++) { Frame(view, g); top = Math.Max(top, me.Y); }
+            view.Touch.Up(6);
+            Check("touch: pushing the stick up jumps", top > y0 + 40, y0.ToString("0") + " -> " + top.ToString("0"));
+            // Shield: held, the fighter shields
+            for (int i = 0; i < 60; i++) Frame(view, g);
+            var shieldB = view.Touch.Buttons.First(x => x.Label == "Shield");
+            view.Touch.Down(7, shieldB.Center);
+            bool shielded = false;
+            for (int i = 0; i < 12 && !shielded; i++) { Frame(view, g); shielded = me.St == BS.Shield; }
+            view.Touch.Up(7);
+            Check("touch: holding Shield shields", shielded, me.St.ToString());
             // pause, then the controls step aside for the pause panel
             for (int i = 0; i < 40; i++) Frame(view, g);
             view.Touch.Down(3, view.Touch.Pause.Center);

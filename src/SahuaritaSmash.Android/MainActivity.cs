@@ -17,9 +17,8 @@ public class MainActivity : AvaloniaMainActivity
     protected override void OnCreate(global::Android.OS.Bundle savedInstanceState)
     {
         App.QuitApp = () => Finish();
-        // the sound: an AudioTrack, and the recorded songs from the app's assets, decoded by the phone
-        App.MakeAudioOut = () => new TrackOut();
-        try { ClassicGames.BrawlMusic.Source = new AssetMusic(Assets); } catch (System.Exception) { }
+        // the phone's volume buttons turn the game up and down (not the ringer), even between sounds
+        VolumeControlStream = global::Android.Media.Stream.Music;
         base.OnCreate(savedInstanceState);
     }
 
