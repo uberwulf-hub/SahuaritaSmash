@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Andrew's recorded songs (Suno, Pro plan) and their loops, next to the exe -->
+    <None Include="..\..\Music\Brawl\*" Link="Music\Brawl\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SahuaritaSmash\SahuaritaSmash.csproj" />
   </ItemGroup>
 </Project>

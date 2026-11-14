@@ -11,8 +11,8 @@ computer) knock each other off the stage; nobody gets hurt: fighters get bonked 
 - **The ladder:** six matches against the computer, harder each round; the last one is against a giant.
 
 It started as a game in App Hub's Classic Games and is moving here step by step (see [docs/PLAN.md](docs/PLAN.md)).
-Right now the whole game is here and plays on Windows with the keyboard and mouse, without sound yet; touch
-controls on Android come next.
+Right now the whole game is here, with its music and sounds, and plays on Windows with the keyboard, mouse and
+controllers; touch controls on Android come next.
 
 ## Building
 

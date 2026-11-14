@@ -10,5 +10,6 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
   brings over the match itself: all ten fighters, their moves and specials, the five stages and their surprises, and
   the computer players, and all the pictures: the fighters, their moves and effects, and every stage. Then the whole game: the title, choosing
   fighters and the stage, the ladder, how to play, changing your keys, pause and results, playable with the
-  keyboard and the mouse on Windows. Your Classic Games ladder scores and keys come across the first time. Sound,
-  game controllers and touch controls on Android follow.
+  keyboard and the mouse on Windows. Your Classic Games ladder scores and keys come across the first time. Then the sound: the
+  music, the sounds and Andrew's recorded songs for the menu, every stage and the victory, on Windows and Android.
+  Touch controls on Android follow.

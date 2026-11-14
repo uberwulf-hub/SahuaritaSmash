@@ -25,9 +25,12 @@ Android (.NET 10 + Avalonia 12), built and signed by GitHub Actions and installe
    step 4 gives them a sound output (`IAudioOut`). All 112 checks pass (App Hub's game, keys, buffer, music, draw,
    motion, stage and update checks, the keys fixture, bringing App Hub's saves across, 24 snapshot scenes). The
    title's "Back to the games" is "Quit" here.
-4. **Sound.** An `IAudioOut` on each platform (Windows: waveOut, as App Hub; Android: AudioTrack), then Andrew's recorded songs
+4. **Done (2026-11-14): sound.** An `IAudioOut` on each platform (Windows: waveOut, as App Hub; Android: AudioTrack), then Andrew's recorded songs
    (`Music\Brawl\*.mp3` + `music.txt`, decoded by the platform: Media Foundation on Windows, MediaCodec on Android),
-   with a `credits` line for them.
+   with a `credits` line for them. Done as planned: `WaveOut.cs` (Desktop), `AndroidSound.cs` (`TrackOut`, `AssetMusic`:
+   the songs as assets, MediaCodec to 16-bit mono), `BrawlMusic.Source` (`IMusicSource`; Windows keeps `Folder` +
+   Media Foundation), the songs in `Music/Brawl` (beside the exe; Android assets). Checked with a pretend output and
+   song only: nothing has been heard yet on a real PC or phone.
 5. **Controls.** Windows: both keyboard sets and up to four XInput controllers. Android: on-screen stick and buttons
    (attack, strong, special, shield, grab, jump; at least 44 px, thumbs not covering the fighters), Bluetooth game
    pads through Avalonia's key events, pause on Back.

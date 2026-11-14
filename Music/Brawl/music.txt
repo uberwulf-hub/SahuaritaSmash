@@ -1,0 +1,9 @@
+# Sahuarita Smash's recorded songs (made by Andrew in Suno on a Pro plan): role file loopStart loopEnd gain
+# (seconds; loopEnd 0 = plays once). Written by tools\Import-BrawlMusic.ps1.
+menu menu.mp3 9.973 43.570 1.428
+mesa mesa.mp3 9.430 167.660 0.824
+copper copper.mp3 20.958 134.930 0.941
+server server.mp3 10.326 180.620 0.934
+moon moon.mp3 23.628 199.250 0.890
+lab lab.mp3 11.535 85.330 0.889
+victory victory.mp3 0.000 0 1.670

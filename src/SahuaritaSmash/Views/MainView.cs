@@ -23,6 +23,7 @@ namespace SahuaritaSmash.Views
                 else if (App.QuitApp != null) App.QuitApp();
                 else Game.Begin();
             };
+            App.Backgrounded += () => Avalonia.Threading.Dispatcher.UIThread.Post(View.AppPaused);
             Children.Add(View);
             Game.Begin();
         }

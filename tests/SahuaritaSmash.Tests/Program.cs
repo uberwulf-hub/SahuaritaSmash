@@ -56,6 +56,7 @@ namespace ClassicGames
             Run("brawl", only, BrawlChecks);
             Run("brawl-saves", only, BrawlSaveChecks);
             Run("brawl-snapshots", only, BrawlSnapshotChecks);
+            Run("sound", only, SoundOutChecks);
             Console.WriteLine(failed == 0 ? "ALL PASSED (" + checks + " checks, " + sw.Elapsed.TotalSeconds.ToString("0.0") + " s)" : "FAILED " + failed + " of " + checks + " checks:");
             foreach (string f in failures.Take(50)) Console.WriteLine("  " + f);
             return failed;

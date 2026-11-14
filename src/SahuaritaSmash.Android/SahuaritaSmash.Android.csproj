@@ -23,6 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Andrew's recorded songs (Suno, Pro plan) and their loops, as assets (mp3 is kept uncompressed, so the decoder reads it in place) -->
+    <AndroidAsset Include="..\..\Music\Brawl\*" Link="Assets\Music\Brawl\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia.Android" />
     <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" />
   </ItemGroup>

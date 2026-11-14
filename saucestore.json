@@ -11,6 +11,7 @@
   ],
   "rightsConfirmed": true,
   "credits": [
+    { "asset": "The recorded songs (menu, the five stages, victory: Music/Brawl)", "author": "Andrew Saulls, made in Suno on a Pro plan", "license": "Owned by the author (Suno Pro plan terms)", "source": "Andrew's own songs" },
     { "asset": "Avalonia UI 12 (the windows and screens, on Windows and Android)", "author": "AvaloniaUI OU and contributors", "license": "MIT", "source": "https://github.com/AvaloniaUI/Avalonia" },
     { "asset": "SkiaSharp and HarfBuzzSharp (drawing and text, bundled by Avalonia)", "author": ".NET Foundation and contributors", "license": "MIT", "source": "https://github.com/mono/SkiaSharp" },
     { "asset": "Inter typeface", "author": "Rasmus Andersson", "license": "SIL Open Font License 1.1", "source": "https://github.com/rsms/inter" },

@@ -39,8 +39,10 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   files can be compared. The match: `Brawl\BrawlSim.cs`, `BrawlData.cs` (+ `BrawlInfo.GameName`, the name the music
   uses), `BrawlBot.cs`, `BrawlSignatures.cs` (its data half). Sound: `Audio\Audio.cs` (App Hub's mixer and synth
   without Hive's industrial instruments and other games' sounds; the device is an `IAudioOut` the platform gives
-  `Audio.Start`, none yet: silent), `Music.cs` (only this game's tunes and `GameTunes`), `BrawlSfx.cs`, `BrawlMusic.cs`
-  (recorded songs; Media Foundation, so Windows only, off until step 4). Saves: `ScoreBook.cs` (+ `AddKept`),
+  `Audio.Start` through `App.MakeAudioOut`: `Desktop\WaveOut.cs`, Android's `AndroidSound.cs` `TrackOut`), `Music.cs`
+  (only this game's tunes and `GameTunes`), `BrawlSfx.cs`, `BrawlMusic.cs` (recorded songs from an `IMusicSource`:
+  Windows `FolderMusic` = `Folder` beside the exe + Media Foundation, Android `AssetMusic` = assets + MediaCodec). The
+  songs are `Music\Brawl` at the repository's root (Andrew's Suno Pro songs + `music.txt`; credited in saucestore.json). Saves: `ScoreBook.cs` (+ `AddKept`),
   `SafeSave.cs` (App Hub's `AppHubSaves.SafeFile`, internal, visible to the app and the checks), `UpdateResume.cs`
   (a match kept when the app closes), `CrashLog.cs` (just `Write`).
 - `src\SahuaritaSmash` (Avalonia 12): screens shared by Windows and Android. `Brawl\` holds App Hub's pictures
@@ -59,11 +61,12 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   to the log and back to the title, Back = Esc except on the title); `Views\MainView.cs` puts BrawlGame in it.
   `Services\Data.cs`: the folder (`%APPDATA%\SahuaritaSmashSE`, Android's files folder; `UseTestFolder` for checks)
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
-  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work; `App.QuitApp` is Android's way out.
+  `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.QuitApp` is Android's way out; `App.GoneToBackground`
+  (Android's OnPause) pauses the game.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
-  brawl-snapshots] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  brawl-snapshots,sound] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
   `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
   App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the

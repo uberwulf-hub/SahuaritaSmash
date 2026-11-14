@@ -17,8 +17,10 @@ namespace ClassicGames
     public static class BrawlMusic
     {
         public static readonly string[] Roles = { "menu", "mesa", "copper", "server", "moon", "lab", "victory", "select", "results", "defeat", "hold" };   // select, results, defeat, hold: built-in tunes until there are songs (Music.BrawlFill)
-        /// <summary>Where the songs are (set by ClassicGames.ps1; null = none, the built-in tunes play).</summary>
+        /// <summary>Where the songs are (a folder decoded by Windows' Media Foundation, as in App Hub; null = none, the
+        /// built-in tunes play). Source, when set, takes its place (Android: the app's assets and the phone's decoder).</summary>
         public static string Folder;
+        public static IMusicSource Source;
         /// <summary>Tests and snapshots: never decode real files.</summary>
         public static bool Enabled = true;
 
@@ -30,6 +32,8 @@ namespace ClassicGames
         static readonly List<string> order = new List<string>();
         static readonly HashSet<string> loading = new HashSet<string>(), failed = new HashSet<string>();
         public const int Keep = 3;
+
+        static IMusicSource Current { get { return Source ?? (string.IsNullOrEmpty(Folder) ? null : new FolderMusic(Folder)); } }
 
         /// <summary>The stage's song role.</summary>
         public static string RoleFor(BStageDef s) { return s.Id; }
@@ -57,14 +61,15 @@ namespace ClassicGames
 
         static Entry Find(string role)
         {
-            if (!Enabled || string.IsNullOrEmpty(Folder)) return null;
+            IMusicSource src = Current;
+            if (!Enabled || src == null) return null;
             if (index == null)
             {
-                try { string f = Path.Combine(Folder, "music.txt"); index = File.Exists(f) ? ReadIndex(File.ReadAllText(f)) : new Dictionary<string, Entry>(); }
+                try { string text = src.ReadIndex(); index = text != null ? ReadIndex(text) : new Dictionary<string, Entry>(); }
                 catch (Exception) { index = new Dictionary<string, Entry>(); }
             }
             Entry e;
-            return index.TryGetValue(role, out e) && File.Exists(Path.Combine(Folder, e.File)) ? e : null;
+            return index.TryGetValue(role, out e) && src.Exists(e.File) ? e : null;
         }
 
         /// <summary>The recorded song for this role if it is decoded; otherwise null, and it starts decoding it (in the
@@ -94,7 +99,7 @@ namespace ClassicGames
             try
             {
                 int rate;
-                short[] pcm = MfDecoder.DecodeMono16(Path.Combine(Folder, e.File), out rate);
+                short[] pcm = Current.DecodeMono16(e.File, out rate);
                 bool loop = e.LoopEnd > e.LoopStart + 1;
                 int a = loop ? (int)(e.LoopStart * rate) : 0, b = loop ? Math.Min(pcm.Length, (int)(e.LoopEnd * rate)) : pcm.Length;
                 s = Song.FromPcm("Sahuarita Smash: " + e.Role, pcm, rate, loop, a, b, e.Gain);
@@ -404,5 +409,28 @@ namespace ClassicGames
             }
             finally { MFShutdown(); }
         }
+    }
+}
+
+namespace ClassicGames
+{
+    /// <summary>Where the recorded songs come from and how they are decoded (one per platform).</summary>
+    public interface IMusicSource
+    {
+        /// <summary>music.txt's text (null: no songs).</summary>
+        string ReadIndex();
+        bool Exists(string file);
+        /// <summary>The whole song as 16-bit mono at its own rate. Throws when it can't be decoded.</summary>
+        short[] DecodeMono16(string file, out int rate);
+    }
+
+    /// <summary>Songs in a folder, decoded by Windows' Media Foundation (App Hub's way).</summary>
+    public sealed class FolderMusic : IMusicSource
+    {
+        readonly string folder;
+        public FolderMusic(string folder) { this.folder = folder; }
+        public string ReadIndex() { string f = Path.Combine(folder, "music.txt"); return File.Exists(f) ? File.ReadAllText(f) : null; }
+        public bool Exists(string file) { return File.Exists(Path.Combine(folder, file)); }
+        public short[] DecodeMono16(string file, out int rate) { return MfDecoder.DecodeMono16(Path.Combine(folder, file), out rate); }
     }
 }

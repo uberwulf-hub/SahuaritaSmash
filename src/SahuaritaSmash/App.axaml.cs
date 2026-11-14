@@ -32,6 +32,13 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
+    /// <summary>The app went to the background (Android): the game pauses, as when a window goes to the back.</summary>
+    public static event System.Action Backgrounded;
+    public static void GoneToBackground() { var h = Backgrounded; if (h != null) h(); }
+
+    /// <summary>The platform's sound output (Windows: waveOut; Android: AudioTrack). Null: silent.</summary>
+    public static System.Func<ClassicGames.IAudioOut> MakeAudioOut;
+
     /// <summary>How the platform closes the app when the game asks (Quit on the title). Windows: the window closes;
     /// Android sets this (the activity finishes).</summary>
     public static System.Action QuitApp;
@@ -48,7 +55,8 @@ public partial class App : Application
         ClassicGames.CrashLog.Path = SahuaritaSmash.Services.Data.Errors;
         if (System.OperatingSystem.IsWindows())
             SahuaritaSmash.Services.Data.BringAcrossFromAppHub(System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "ClassicGames"));
-        // the recorded songs and the sound output come in the next step (docs/PLAN.md): silent until then
-        ClassicGames.BrawlMusic.Enabled = false;
+        // the sound: the platform's output (Program.cs / MainActivity.cs set it, and where the recorded songs are)
+        try { if (MakeAudioOut != null) ClassicGames.Audio.Start(MakeAudioOut()); }
+        catch (System.Exception ex) { ClassicGames.CrashLog.Write("starting the sound", ex, false); }
     }
 }
