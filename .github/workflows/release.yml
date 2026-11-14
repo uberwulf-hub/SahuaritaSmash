@@ -112,6 +112,16 @@ jobs:
           set -e
           V="v${VERSION#v}"
           ls -la dist
+          # the notes are made here from CHANGELOG.md: the check job's copy can be missing from "all artifacts"
+          # (2026-11-14 the listing returned 3 of the 4 and the release stopped)
+          python3 - "${V#v}" <<'PY'
+          import re, sys
+          log = open('CHANGELOG.md', encoding='utf-8').read().replace('\r\n', '\n')
+          m = re.search(r'^## \[' + re.escape(sys.argv[1]) + r'\][^\n]*\n(.*?)(?=^## \[|\Z)', log, re.S | re.M)
+          assert m and re.search(r'^\s*-\s+\S', m.group(1), re.M), 'CHANGELOG.md has no lines under ## [' + sys.argv[1] + ']'
+          open('dist/release-notes.md', 'w', encoding='utf-8').write(m.group(1).strip() + '\n')
+          PY
+          cat dist/release-notes.md
           gh release create "$V" dist/SahuaritaSmashSE-windows.zip dist/SahuaritaSmashSE-android.apk \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Sahuarita Smash! (Sauce Edition) ${V#v}" \
             --notes-file dist/release-notes.md --latest
