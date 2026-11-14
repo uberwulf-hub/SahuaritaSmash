@@ -1,0 +1,10 @@
+* text=auto
+*.cs text eol=crlf
+*.axaml text eol=crlf
+*.csproj text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary
+*.s text eol=crlf
+*.mp3 binary
+*.axaml text eol=crlf

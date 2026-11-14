@@ -1,0 +1,117 @@
+# Builds the Windows and Android versions and publishes a GitHub release. SauceStore picks it up
+# automatically (it reads saucestore.json from the release's tag). Same practice as Bored Games.
+#
+# Start it on GitHub: Actions > Release > Run workflow, and type the version (like v0.1.0).
+# Before that: set the version in Directory.Build.props and the Android project (ApplicationVersion =
+# major*10000 + minor*100 + patch, ApplicationDisplayVersion = X.Y.Z), and move CHANGELOG.md's
+# "Unreleased" lines under "## [X.Y.Z] - date". Those lines are the release notes (### Added / ### Fixed
+# become New / Fixed in SauceStore's Version history).
+#
+# Started only by hand (not by pushing a tag) so it always runs on the main branch, where the
+# Android signing key is cached; caches made on a tag run can't be read by later runs.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, like v0.1.0 (must match Directory.Build.props)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version matches the project, has notes, and isn't released yet
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          V="${VERSION#v}"
+          if ! [[ "$V" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then echo "::error::Type the version like v0.1.0."; exit 1; fi
+          CODE=$(( BASH_REMATCH[1]*10000 + BASH_REMATCH[2]*100 + BASH_REMATCH[3] ))
+          grep -q "<Version>$V</Version>" Directory.Build.props || { echo "::error::Directory.Build.props doesn't say $V. Bump it first."; exit 1; }
+          A=src/SahuaritaSmash.Android/SahuaritaSmash.Android.csproj
+          grep -q "<ApplicationDisplayVersion>$V</ApplicationDisplayVersion>" $A || { echo "::error::$A: ApplicationDisplayVersion isn't $V."; exit 1; }
+          grep -q "<ApplicationVersion>$CODE</ApplicationVersion>" $A || { echo "::error::$A: ApplicationVersion isn't $CODE."; exit 1; }
+          if gh release view "v$V" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "::error::v$V is already released."; exit 1; fi
+          python3 - "$V" <<'PY'
+          import json, re, sys
+          d = json.load(open('saucestore.json'))
+          assert d['rightsConfirmed'], 'saucestore.json: rightsConfirmed is false'
+          assert d['category'] in ('Game', 'App', 'Script', 'Other'), 'saucestore.json: category must be Game, App, Script or Other'
+          log = open('CHANGELOG.md', encoding='utf-8').read().replace('\r\n', '\n')
+          m = re.search(r'^## \[' + re.escape(sys.argv[1]) + r'\][^\n]*\n(.*?)(?=^## \[|\Z)', log, re.S | re.M)
+          assert m and re.search(r'^\s*-\s+\S', m.group(1), re.M), 'CHANGELOG.md has no lines under ## [' + sys.argv[1] + ']'
+          open('release-notes.md', 'w', encoding='utf-8').write(m.group(1).strip() + '\n')
+          PY
+          cat release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          retention-days: 1
+
+  test:
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Run the checks
+        run: dotnet run --project tests/SahuaritaSmash.Tests -c Release
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Build the Windows app
+        run: dotnet publish src/SahuaritaSmash.Desktop/SahuaritaSmash.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o build/SahuaritaSmashSE
+      - name: Zip the app folder (SauceStore unzips it and starts SahuaritaSmashSE.exe)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path build/SahuaritaSmashSE/SahuaritaSmashSE.exe)) { Write-Error 'SahuaritaSmashSE.exe was not built.'; exit 1 }
+          Get-ChildItem build/SahuaritaSmashSE -Filter *.pdb | Remove-Item -Force
+          foreach ($f in 'README.md', 'CREDITS.md', 'CHANGELOG.md') { if (Test-Path $f) { Copy-Item $f build/SahuaritaSmashSE } }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path build/SahuaritaSmashSE), "$PWD/SahuaritaSmashSE-windows.zip", [IO.Compression.CompressionLevel]::Optimal, $true)
+          Get-Item SahuaritaSmashSE-windows.zip | Select-Object Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: SahuaritaSmashSE-windows.zip
+
+  android:
+    needs: test
+    uses: ./.github/workflows/android.yml
+    secrets: inherit
+
+  publish:
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Tag and publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -e
+          V="v${VERSION#v}"
+          ls -la dist
+          gh release create "$V" dist/SahuaritaSmashSE-windows.zip dist/SahuaritaSmashSE-android.apk \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Sahuarita Smash! (Sauce Edition) ${V#v}" \
+            --notes-file dist/release-notes.md --latest

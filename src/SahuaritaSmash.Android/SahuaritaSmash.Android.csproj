@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sahuarita Smash! SE for Android -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>com.uberwulf.sahuaritasmashse</ApplicationId>
+    <ApplicationTitle>Sahuarita Smash! SE</ApplicationTitle>
+    <ApplicationVersion>100</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidSdkDirectory>$(USERPROFILE)\DevTools\android-sdk</AndroidSdkDirectory>
+    <JavaSdkDirectory>$(USERPROFILE)\DevTools\jdk17</JavaSdkDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AndroidResource Include="Icon.png">
+      <Link>Resources\drawable\Icon.png</Link>
+    </AndroidResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" />
+    <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SahuaritaSmash\SahuaritaSmash.csproj" />
+  </ItemGroup>
+</Project>
