@@ -1,12 +1,19 @@
-# One-time backup of the Android signing key: turns the cached key into repository secrets so it
-# can never be lost. Run it once (Actions > Back up the Android key > Run workflow). It packs the
-# key into a download called "android-signing-key" on the run's page, kept for 1 day. Then:
-#   1. Download and unzip it. Open android-keystore-base64.txt and copy everything in it.
-#   2. Settings > Secrets and variables > Actions > New repository secret, three times:
-#        ANDROID_KEYSTORE_BASE64    the text you copied
-#        ANDROID_KEYSTORE_ALIAS     sahuaritasmash
-#        ANDROID_KEYSTORE_PASSWORD  sahuaritasmash
-#   3. Delete the downloaded files (or keep the .keystore somewhere safe, like a password manager).
+# One-time backup of the Android signing key (the one the first build made and keeps in the Actions cache), so it can
+# become the repository's secrets and never be lost. The download is LOCKED with a passphrase you choose, so it's
+# safe even on a public repository (anyone signed in to GitHub can download a public repository's files).
+#
+# Before running it: Settings > Secrets and variables > Actions > New repository secret
+#   BACKUP_PASSPHRASE   a long passphrase you choose (keep it in your password manager)
+# Then Actions > Back up the Android key > Run workflow. Download "android-signing-key" from the run's page (kept for
+# 1 day) and unzip it. In Git Bash (it comes with Git for Windows), in that folder:
+#   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in sahuaritasmash-release.keystore.enc -out sahuaritasmash-release.keystore
+#   base64 -w0 sahuaritasmash-release.keystore > android-keystore-base64.txt
+# (openssl asks for the passphrase.) Then add three repository secrets:
+#   ANDROID_KEYSTORE_BASE64    everything in android-keystore-base64.txt
+#   ANDROID_KEYSTORE_ALIAS     sahuaritasmash
+#   ANDROID_KEYSTORE_PASSWORD  sahuaritasmash
+# Keep the .keystore.enc file somewhere safe (it's useless without the passphrase), delete the others, and delete
+# the cached key: Actions > Caches > sahuaritasmash-android-signing-key-v1.
 name: Back up the Android key
 
 on:
@@ -25,29 +32,25 @@ jobs:
         with:
           path: ~/android-key
           key: sahuaritasmash-android-signing-key-v1
-      - name: Pack it up
+      - name: Lock it with your passphrase
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
           set -e
           KS=~/android-key/release.keystore
+          if [ -z "$PASSPHRASE" ]; then echo "::error::Add the BACKUP_PASSPHRASE secret first (see the top of this workflow)."; exit 1; fi
           if [ "${{ steps.key.outputs.cache-hit }}" != "true" ] || [ ! -f "$KS" ]; then
             echo "::error::No cached signing key found. If the ANDROID_KEYSTORE_* secrets are already set, the key is already backed up."
             exit 1
           fi
           mkdir -p backup
-          cp "$KS" backup/sahuaritasmash-release.keystore
-          base64 -w0 "$KS" > backup/android-keystore-base64.txt
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$KS" -out backup/sahuaritasmash-release.keystore.enc -pass env:PASSPHRASE
           keytool -list -v -keystore "$KS" -storepass sahuaritasmash | grep -E "Alias name|SHA256:" | tee backup/fingerprint.txt
           {
-            echo "## Android signing key packed"
+            echo "## Android signing key packed (locked with your passphrase)"
             echo ""
-            echo "Download **android-signing-key** below (kept for 1 day), then add these repository secrets"
-            echo "(Settings > Secrets and variables > Actions):"
-            echo ""
-            echo "| Secret | Value |"
-            echo "|---|---|"
-            echo "| ANDROID_KEYSTORE_BASE64 | everything in android-keystore-base64.txt |"
-            echo "| ANDROID_KEYSTORE_ALIAS | sahuaritasmash |"
-            echo "| ANDROID_KEYSTORE_PASSWORD | sahuaritasmash |"
+            echo "Download **android-signing-key** below (kept for 1 day) and follow the steps at the top of"
+            echo "backup-android-key.yml to unlock it and add the three ANDROID_KEYSTORE_* secrets."
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:

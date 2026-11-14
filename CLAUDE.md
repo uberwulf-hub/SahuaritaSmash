@@ -19,7 +19,9 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   main, then run the `Release` workflow with `vX.Y.Z` on main. **Signing is GitHub's:** the apk is signed in
   `android.yml` with the key from the `ANDROID_KEYSTORE_*` secrets or, until they exist, the key the first build made
   and keeps in the Actions cache (`keep-android-key.yml` keeps it alive; `backup-android-key.yml` turns it into the
-  secrets). Never sign with another key and never commit a keystore. The Windows zip is unsigned. `build.yml` runs the
+  secrets; its download is locked with the `BACKUP_PASSPHRASE` secret). **A public repository signs only with the
+  secrets** (`android.yml` stops otherwise: other people's pull requests can reach the Actions cache); once the secrets
+  are set, delete the cached key (Actions > Caches). Never sign with another key and never commit a keystore. The Windows zip is unsigned. `build.yml` runs the
   checks and builds test copies on every push; it never releases.
 - Every rule from App Hub's section on the game (below) still applies: **never Nintendo's names, characters, stages,
   items, music or logo; no living people, actors or look-alikes; nobody is hurt (bonks, a twinkle), no blood; every
