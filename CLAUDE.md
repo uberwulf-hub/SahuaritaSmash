@@ -41,7 +41,8 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   uses), `BrawlBot.cs`, `BrawlSignatures.cs` (its data half). Sound: `Audio\Audio.cs` (App Hub's mixer and synth
   without Hive's industrial instruments and other games' sounds; the device is an `IAudioOut` the platform gives
   `Audio.Start` through `App.MakeAudioOut`: `Desktop\WaveOut.cs`, Android's `AndroidSound.cs` `TrackOut`), `Music.cs`
-  (only this game's tunes and `GameTunes`), `BrawlSfx.cs`, `BrawlMusic.cs` (recorded songs from an `IMusicSource`:
+  (only this game's tunes and `GameTunes`), `BrawlSfx.cs`, `BrawlMusic.cs` (recorded songs from an `IMusicSource`, all decoded at start by `PreloadAll`, menu first,
+  and all kept, loops trimmed at their end: App Hub kept 3, which made screens start with the chiptune; 
   Windows `FolderMusic` = `Folder` beside the exe + Media Foundation, Android `AssetMusic` = assets + MediaCodec). The
   songs are `Music\Brawl` at the repository's root (Andrew's Suno Pro songs + `music.txt`; credited in saucestore.json). Saves: `ScoreBook.cs` (+ `AddKept`),
   `SafeSave.cs` (App Hub's `AppHubSaves.SafeFile`, internal, visible to the app and the checks), `UpdateResume.cs`
@@ -64,7 +65,8 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
   `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.EnsureSound` starts the sound once `App.MakeAudioOut` is known (Android's
   `Application.cs` sets it before the app starts: in 0.1.0 the activity set it too late and Android was silent; the
-  activity routes the volume buttons to media); `App.QuitApp` is Android's way out; `App.GoneToBackground`
+  activity routes the volume buttons to media); `App.QuitApp` is Android's way out; the Windows window is full screen without a title bar (F11 / Alt+Enter: a
+  window), Android hides the system bars (`MainActivity.FullScreen`); `App.GoneToBackground`
   (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick (up jumps) and five buttons (Attack, Shield, Special,
   Strong, Grab; no Jump since 0.1.1, Andrew; Shield on the right because Shield + stick rolls and dodges), controller 1 to
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not

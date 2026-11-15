@@ -37,6 +37,19 @@ namespace ClassicGames
             }
         }
 
+        sealed class ManySongs : IMusicSource
+        {
+            public int Decoded; public string First;
+            public string ReadIndex() { return "menu menu.mp3 1 3 1\nselect select.mp3 1 3 1\nmesa mesa.mp3 1 3 1\ncopper copper.mp3 1 3 1\nserver server.mp3 1 3 1\nmoon moon.mp3 1 3 1\nlab lab.mp3 1 3 1\nvictory victory.mp3 0 0 1\n"; }
+            public bool Exists(string file) { return true; }
+            public short[] DecodeMono16(string file, out int rate)
+            {
+                lock (this) { Decoded++; if (First == null) First = file; }
+                rate = 22050;
+                return new short[rate * 4];
+            }
+        }
+
         public static void SoundOutChecks()
         {
             var o = new FakeOut();
@@ -60,6 +73,16 @@ namespace ClassicGames
                 while (s == null && sw.ElapsedMilliseconds < 3000) { Thread.Sleep(10); s = BrawlMusic.Get("menu"); }
                 Check("sound: a recorded song comes from the platform's source, decoded in the background, looping where music.txt says", s != null && s.Recorded && s.PcmRate == 22050 && s.LoopA == 22050 && s.LoopB == 66150 && src.Decoded == 1, s == null ? "null" : s.PcmRate + " " + s.LoopA + " " + s.LoopB);
                 Check("sound: a song music.txt names by a path is never opened", BrawlMusic.Get("mesa") == null && !BrawlMusic.Has("mesa"), "");
+                // every song decoded once at the start, all kept, loops trimmed at their end (2026-11-15)
+                BrawlMusic.Reset();
+                var many = new ManySongs();
+                BrawlMusic.Source = many;
+                BrawlMusic.PreloadAll(); BrawlMusic.PreloadAll();
+                sw.Restart();
+                while (BrawlMusic.ReadyCount < 8 && sw.ElapsedMilliseconds < 5000) Thread.Sleep(10);
+                Song mesa = BrawlMusic.Get("mesa");
+                Check("sound: the game decodes every recorded song once, menu first, and keeps them all", BrawlMusic.ReadyCount == 8 && many.Decoded == 8 && many.First == "menu.mp3", BrawlMusic.ReadyCount + " ready, " + many.Decoded + " decoded, first " + many.First);
+                Check("sound: a looping song is trimmed at its loop's end (nothing after it plays)", mesa != null && mesa.Pcm.Length == mesa.LoopB && mesa.LoopB == 22050 * 3, mesa == null ? "null" : mesa.Pcm.Length + " " + mesa.LoopB);
             }
             finally { BrawlMusic.Reset(); BrawlMusic.Source = before; BrawlMusic.Enabled = en; }
         }

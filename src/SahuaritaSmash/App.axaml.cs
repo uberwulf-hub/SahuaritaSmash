@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using SahuaritaSmash.Views;
@@ -17,19 +18,35 @@ public partial class App : Application
     {
         Start();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new Window
-            {
-                Title = "Sahuarita Smash!",
-                Width = 1280, Height = 720, MinWidth = 640, MinHeight = 360,
-                Background = Avalonia.Media.Brushes.Black,
-                Icon = new WindowIcon(Avalonia.Platform.AssetLoader.Open(new System.Uri("avares://SahuaritaSmash/Assets/SahuaritaSmash.ico"))),
-                Content = new MainView(),
-            };
+            desktop.MainWindow = MakeWindow();
         else if (ApplicationLifetime is IActivityApplicationLifetime activity)
             activity.MainViewFactory = () => new MainView();
         else if (ApplicationLifetime is ISingleViewApplicationLifetime single)
             single.MainView = new MainView();
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>The Windows window: full screen with no title bar (the game has its own Back and Quit; Andrew,
+    /// 2026-11-15). F11 or Alt+Enter switches to an ordinary window and back.</summary>
+    static Window MakeWindow()
+    {
+        var w = new Window
+        {
+            Title = "Sahuarita Smash!",
+            Width = 1280, Height = 720, MinWidth = 640, MinHeight = 360,
+            Background = Avalonia.Media.Brushes.Black,
+            Icon = new WindowIcon(Avalonia.Platform.AssetLoader.Open(new System.Uri("avares://SahuaritaSmash/Assets/SahuaritaSmash.ico"))),
+            Content = new MainView(),
+            WindowState = WindowState.FullScreen,
+        };
+        w.AddHandler(InputElement.KeyDownEvent, (sender, e) =>
+        {
+            bool toggle = e.Key == Avalonia.Input.Key.F11 || (e.Key == Avalonia.Input.Key.Enter && (e.KeyModifiers & Avalonia.Input.KeyModifiers.Alt) != 0);
+            if (!toggle) return;
+            w.WindowState = w.WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+            e.Handled = true;
+        }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        return w;
     }
 
     /// <summary>The app went to the background (Android): the game pauses, as when a window goes to the back.</summary>
@@ -65,7 +82,7 @@ public partial class App : Application
     public static void EnsureSound()
     {
         if (Testing || ClassicGames.Audio.Live || MakeAudioOut == null) return;
-        try { ClassicGames.Audio.Start(MakeAudioOut()); }
+        try { ClassicGames.Audio.Start(MakeAudioOut()); ClassicGames.BrawlMusic.PreloadAll(); }
         catch (System.Exception ex) { ClassicGames.CrashLog.Write("starting the sound", ex, false); }
     }
 }
