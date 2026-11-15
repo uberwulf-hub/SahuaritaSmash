@@ -31,7 +31,12 @@ namespace ClassicGames
         static readonly Dictionary<string, Song> ready = new Dictionary<string, Song>();
         static readonly List<string> order = new List<string>();
         static readonly HashSet<string> loading = new HashSet<string>(), failed = new HashSet<string>();
-        public const int Keep = 3;
+        /// <summary>How many decoded songs are kept: all of them (App Hub kept 3, so going back to a screen often meant
+        /// decoding its song again, with the built-in tune playing meanwhile and then crossfading: Andrew, 2026-11-15,
+        /// "the music doesn't seem to transition quite right"). Loops are trimmed at their end, which nothing plays.</summary>
+        public const int Keep = 12;
+        /// <summary>The order songs are decoded in when the game starts: the menu first, then the rest.</summary>
+        public static readonly string[] PreloadOrder = { "menu", "select", "mesa", "copper", "server", "moon", "lab", "victory", "defeat", "results", "hold" };
 
         static IMusicSource Current { get { return Source ?? (string.IsNullOrEmpty(Folder) ? null : new FolderMusic(Folder)); } }
 
@@ -89,6 +94,28 @@ namespace ClassicGames
             t.Start();
             return null;
         }
+        /// <summary>Decodes every song there is, one after another on one background thread (menu first), so changing
+        /// screens and stages never waits for one. Safe to call more than once.</summary>
+        public static void PreloadAll()
+        {
+            var todo = new List<Entry>();
+            lock (sync)
+            {
+                foreach (string r in PreloadOrder)
+                {
+                    if (ready.ContainsKey(r) || loading.Contains(r) || failed.Contains(r)) continue;
+                    Entry e = Find(r);
+                    if (e == null) continue;
+                    loading.Add(r); todo.Add(e);
+                }
+            }
+            if (todo.Count == 0) return;
+            var t = new Thread(() => { foreach (Entry e in todo) Load(e); }) { IsBackground = true, Name = "Sahuarita Smash! music", Priority = ThreadPriority.BelowNormal };
+            t.Start();
+        }
+        /// <summary>Decoded songs kept now (the checks).</summary>
+        public static int ReadyCount { get { lock (sync) return ready.Count; } }
+
         /// <summary>Starts decoding these (the next stage, the victory) so they are ready in time.</summary>
         public static void Want(params string[] roles) { foreach (string r in roles) Get(r); }
         public static bool Has(string role) { return Find(role) != null; }
@@ -102,6 +129,7 @@ namespace ClassicGames
                 short[] pcm = Current.DecodeMono16(e.File, out rate);
                 bool loop = e.LoopEnd > e.LoopStart + 1;
                 int a = loop ? (int)(e.LoopStart * rate) : 0, b = loop ? Math.Min(pcm.Length, (int)(e.LoopEnd * rate)) : pcm.Length;
+                if (loop && b < pcm.Length) Array.Resize(ref pcm, b);   // after the loop's end nothing ever plays
                 s = Song.FromPcm("Sahuarita Smash: " + e.Role, pcm, rate, loop, a, b, e.Gain);
             }
             catch (Exception ex) { try { CrashLog.Write("Sahuarita Smash! music " + e.Role, ex, false); } catch (Exception) { } }
