@@ -31,7 +31,8 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
 - Saved data (keys, scores, a kept match) persists until the person deletes it; every format change loads all older
   versions; never overwrite a save that failed to load (App Hub's safe-save rules). On Windows, read App Hub's saves
   once on first start (`%APPDATA%\ClassicGames`: the scorebook's `ladder-*` lines, `brawl-keys.txt`) and keep our own.
-- Tests never touch real data, never open windows (Avalonia headless), never play audio, never use the network.
+- Tests never touch real data, never open windows (Avalonia headless), never play audio, never use the network
+  beyond this computer (127.0.0.1).
 - Plain words for families. Touch first on Android: buttons at least 44 px, nothing hover-only.
 
 ## How it is built
@@ -72,10 +73,27 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
   paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
   screen units (every button 44+ across: `TouchChecks`).
+- **Play online (2026-11-15, Andrew: "like Race Track Mayhem")**: lockstep. `Engine\Net\NetMatch.cs`: devices send only
+  their people's buttons (`NetProtocol.Pack`: stick in 255 steps, used on the sending device too), a frame is stepped
+  only when everyone's are in (input delay 4 frames at home, 7 online), checksums every 120 frames to the host (a
+  mismatch ends the match with a message), a leaver's fighter goes to the computer from a frame all can reach. This
+  needs the match to compute the same on every device: **only `+ - * /`, `Math.Sqrt`, `Round`, `Floor` and `DMath.Sin`
+  / `Cos` in `BrawlSim` and `BrawlBot`, never `Math.Sin` / `Cos` / `Pow` / `Exp` / `Atan2` (they may differ between
+  Windows and Android), nothing from the clock or `System.Random`** (`NetChecks` replays and compares).
+  `NetSession.cs` is the lobby (Hello with `NetProtocol.Game` and `Version`: bump it when messages or match rules change;
+  Refuse in plain words; Lobby, Pick, Start, End). Transports (`INetTransport`): `LanTransport` (TCP 47871-47879, the
+  host passes messages on; "who's hosting?" on UDP 47870, private addresses only; Android holds a multicast lock while
+  hosting, `HoldBroadcasts`) and `RelayTransport` (Race Track Mayhem's relay on Cloudflare, `DefaultRelay`; its rooms and
+  4-letter codes; it calls games races, so its messages are reworded). `Brawl\BrawlOnline.cs`: the screens (Play
+  online, Join with a letter pad, Lobby) and the hooks into `Brawl.cs` (marked "online"); `Wpf\NetLink.cs` makes the
+  game base keep going behind pause and leave to Play online. Checks: `net` (pretend network), `net-lobby` (and real TCP
+  on 127.0.0.1), `net-relay` (only with `SMASH_RELAY_URL`, e.g. Race Track Mayhem's `server/relay/local.mjs`), `online`
+  (two whole games through the menus). Off-screen pictures (`DrawingVisual`) must be disposed: piles of them crashed
+  Skia in the checks; old background layers are disposed when a stage changes.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
-  brawl-snapshots,sound,touch] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  brawl-snapshots,sound,touch,net,net-lobby,net-relay,online] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
   `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
   App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the

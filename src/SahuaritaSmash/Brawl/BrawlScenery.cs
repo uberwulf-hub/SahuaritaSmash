@@ -271,7 +271,9 @@ namespace ClassicGames
                     DrawLayer(dc, s, i, LayerWidth, H);
                     if (i < 2) dc.DrawRectangle(Linear(Gfx.Alpha(s.Sky1, 0), Gfx.Alpha(s.Sky1, 0.22 - i * 0.07), 90), null, new Rect(0, H * 0.35, LayerWidth, H * 0.65));
                     dc.Pop(); if (i > 0) dc.DrawRectangle(LayerFoot(s, i), null, new Rect(0, H + LayerPad - 2, LayerWidth, LayerPad + 2)); }
+                var old = layers[i] as IDisposable;   // the last stage's layer: its memory goes now, not whenever (Sauce Edition)
                 layers[i] = rtb;
+                if (old != null) old.Dispose();
                 partPic[i * 2] = partPic[i * 2 + 1] = null;
             }
         }

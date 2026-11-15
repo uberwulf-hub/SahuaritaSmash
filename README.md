@@ -9,6 +9,7 @@ computer) knock each other off the stage; nobody gets hurt: fighters get bonked 
 - **Five stages** with surprises that always warn first: the mesa (monsoon wind, a javelina stampede), the copper mine
   (mine carts), the server room (fans), the moon (meteors) and the lab (a sweeping laser).
 - **The ladder:** six matches against the computer, harder each round; the last one is against a giant.
+- **Play online:** on your home network, or over the internet with a 4-letter code (like Race Track Mayhem).
 
 It started as a game in App Hub's Classic Games and is moving here step by step (see [docs/PLAN.md](docs/PLAN.md)).
 Right now the whole game is here, with its music and sounds, and plays on Windows with the keyboard, mouse and

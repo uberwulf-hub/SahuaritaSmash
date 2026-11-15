@@ -5,6 +5,16 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-15
+
+### Added
+- Play online, like Race Track Mayhem: host a game on your home network (the others find it under Join) or over
+  the internet (a 4-letter code for family in other houses), pick fighters in the lobby, add computer players, and
+  fight on separate computers, phones and tablets. Everyone's match stays exactly the same.
+
+### Fixed
+- A slow build-up of memory over many matches (each stage's background is now let go when the next one starts).
+
 ## [0.1.1] - 2026-11-14
 
 ### Changed

@@ -14,11 +14,29 @@ namespace SahuaritaSmash.Android;
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
 public class MainActivity : AvaloniaMainActivity
 {
+    global::Android.Net.Wifi.WifiManager.MulticastLock multicast;
+
     protected override void OnCreate(global::Android.OS.Bundle savedInstanceState)
     {
         App.QuitApp = () => Finish();
         // the phone's volume buttons turn the game up and down (not the ringer), even between sounds
         VolumeControlStream = global::Android.Media.Stream.Music;
+        // hosting on the home network: hear the others' "who's hosting?" (Android drops broadcasts without this)
+        ClassicGames.LanTransport.HoldBroadcasts = hold =>
+        {
+            try
+            {
+                if (hold)
+                {
+                    var wifi = (global::Android.Net.Wifi.WifiManager)ApplicationContext.GetSystemService(WifiService);
+                    multicast = wifi.CreateMulticastLock("SahuaritaSmash");
+                    multicast.SetReferenceCounted(false);
+                    multicast.Acquire();
+                }
+                else if (multicast != null) { multicast.Release(); multicast = null; }
+            }
+            catch (System.Exception ex) { ClassicGames.CrashLog.Write("the home network's broadcasts", ex, false); }
+        };
         base.OnCreate(savedInstanceState);
         FullScreen();
     }

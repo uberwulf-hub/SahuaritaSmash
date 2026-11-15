@@ -164,7 +164,7 @@ namespace ClassicGames
             {
                 if (p.Period <= 0) { p.DX = p.DY = 0; continue; }
                 double a = 2 * Math.PI * Frame / p.Period;
-                double nx = p.MoveX * Math.Sin(a), ny = p.MoveY * Math.Sin(a);
+                double nx = p.MoveX * DMath.Sin(a), ny = p.MoveY * DMath.Sin(a);
                 p.DX = nx - p.OX; p.DY = ny - p.OY; p.OX = nx; p.OY = ny;
             }
             for (int i = 0; i < F.Length; i++) { F[i].Prev = F[i].In; F[i].In = inputs != null && i < inputs.Length ? inputs[i] : new BrInput(); }
@@ -554,7 +554,7 @@ namespace ClassicGames
             s.On = true; s.Owner = f.Slot; s.D = d; s.Face = f.Face; s.Age = 0; s.Back = false; s.Landed = false;
             s.X = f.X + f.Face * d.SX * (d.Look == "bolt" ? 1 : k); s.Y = f.Y + d.SY * k;
             double a = angle * Math.PI / 180;
-            s.Vx = f.Face * (d.Vx * Math.Cos(a)) ; s.Vy = d.Vy + d.Vx * Math.Sin(a);
+            s.Vx = f.Face * (d.Vx * DMath.Cos(a)) ; s.Vy = d.Vy + d.Vx * DMath.Sin(a);
             if (d.Look == "bolt")
             {
                 // the strike lands on whatever floor is under that spot
@@ -921,12 +921,12 @@ namespace ClassicGames
             double ang = h.Ang;
             if (ang == 361) ang = kb < 32 && t.Ground ? 0 : 40;
             double rad = ang * Math.PI / 180;
-            double ux = Math.Cos(rad) * dir, uy = Math.Sin(rad);
+            double ux = DMath.Cos(rad) * dir, uy = DMath.Sin(rad);
             // influence: the one hit can tilt the launch a little by holding a direction across it
             double px = -uy, py = ux;
             double di = Math.Max(-1, Math.Min(1, t.In.X * px + t.In.Y * py));
             double turn = di * 15 * Math.PI / 180;
-            double cx = ux * Math.Cos(turn) - uy * Math.Sin(turn), cy = ux * Math.Sin(turn) + uy * Math.Cos(turn);
+            double cx = ux * DMath.Cos(turn) - uy * DMath.Sin(turn), cy = ux * DMath.Sin(turn) + uy * DMath.Cos(turn);
             ux = cx; uy = cy;
             double speed = kb * KbSpeed;
             if (t.Ground && uy < 0) { uy = -uy * 0.8; }   // a spike on the ground bounces up

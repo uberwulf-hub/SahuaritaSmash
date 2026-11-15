@@ -41,6 +41,11 @@ Android (.NET 10 + Avalonia 12), built and signed by GitHub Actions and installe
    Classic Games if Andrew agrees (App Hub's CLAUDE.md, "Retired apps"; for a game inside Classic Games: remove its
    `$Games` entry and engine files, keep its saves, a CHANGELOG line saying where it went).
 
-## Later
+## Network play (2026-11-15, Andrew: "like Race Track Mayhem")
 
-- Network play (the match is already deterministic; App Hub's LAN code is `Engine\Net*.cs` there).
+Done: lockstep over the home network and the internet (`Engine\Net\`: `NetMatch`, `NetSession`, `LanTransport`,
+`RelayTransport` through Race Track Mayhem's relay), `DMath` so every device computes the same, the screens
+(`Brawl\BrawlOnline.cs`), checks (pretend network, TCP on 127.0.0.1, the relay's own code run locally, two whole games
+through the menus). Not yet tried: real devices on a real network, the live relay, Wi-Fi lag, a phone and a PC
+together, the Windows firewall prompt. Ideas: kid-safe quick cheers (Race Track Mayhem has six), measuring the delay
+instead of 4 / 7 frames, rollback for a snappier feel over the internet.

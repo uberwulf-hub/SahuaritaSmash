@@ -162,11 +162,14 @@ namespace ClassicGames
 {
     /// <summary>WPF's DrawingVisual, for drawing off screen (checks and snapshots): RenderOpen() draws into a bitmap
     /// of the given size (WPF's has no size; 1280 x 720 = the game's screen).</summary>
-    public sealed class DrawingVisual
+    public sealed class DrawingVisual : IDisposable
     {
         public readonly Avalonia.Media.Imaging.RenderTargetBitmap Bitmap;
         public DrawingVisual() : this(1280, 720) { }
         public DrawingVisual(int w, int h) { Bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(w, h)); }
         public DrawingContext RenderOpen() { return new DrawingContext(Bitmap.CreateDrawingContext(), true); }
+        /// <summary>Lets go of the picture's memory now (many pictures waiting for the garbage collector crashed Skia
+        /// in the checks).</summary>
+        public void Dispose() { Bitmap.Dispose(); }
     }
 }

@@ -479,6 +479,8 @@ namespace ClassicGames
         /// <summary>Back out of a game: to its setup screen if it has one, else to the game picker.</summary>
         protected void Quit()
         {
+            // online: leave the game (back to its own menu), never out of the app (Sahuarita Smash! SE)
+            if (Net != null && Net.Leave != null) { Net.Leave(); return; }
             if (HasSetup && Net == null) { State = Phase.Setup; Audio.StopEffects(); SetupMusic(); }
             else RequestExit();
         }

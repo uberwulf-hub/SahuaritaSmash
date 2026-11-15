@@ -83,11 +83,13 @@ namespace ClassicGames
                     var g = new BrawlGame { Scores = new ScoreBook(Path.Combine(Data.Dir, "snap-scores.txt")), Player = "Kim" };
                     g.KeysFileOverride = Path.Combine(Data.Dir, "snap-keys.txt");
                     what = g.SnapshotScene(sc.Item1, 0, sc.Item2);
-                    var dv = new DrawingVisual((int)g.Width, (int)g.Height);
-                    using (DrawingContext dc = dv.RenderOpen()) SahuaritaSmash.Views.GameView.RenderGame(g, dc);
-                    int colours = Colours(dv.Bitmap);
-                    Check("brawl snapshot " + name + " is drawn (not blank)", colours > 40, colours + " colours; " + what);
-                    Save(dv.Bitmap, name);
+                    using (var dv = new DrawingVisual((int)g.Width, (int)g.Height))
+                    {
+                        using (DrawingContext dc = dv.RenderOpen()) SahuaritaSmash.Views.GameView.RenderGame(g, dc);
+                        int colours = Colours(dv.Bitmap);
+                        Check("brawl snapshot " + name + " is drawn (not blank)", colours > 40, colours + " colours; " + what);
+                        Save(dv.Bitmap, name);
+                    }
                 }
                 catch (Exception ex) { Check("brawl snapshot " + name + " draws", false, ex.GetType().Name + ": " + ex.Message + " " + ex.StackTrace?.Split('\n').FirstOrDefault()); }
             }
