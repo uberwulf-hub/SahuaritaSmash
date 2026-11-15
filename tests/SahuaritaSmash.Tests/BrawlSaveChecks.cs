@@ -70,13 +70,13 @@ namespace ClassicGames
         {
             var scenes = new List<Tuple<string, int>>();
             foreach (string s in new[] { "Title", "Select", "Help", "Ladder", "Keys", "Lineup", "Countdown", "Pause", "Results", "Ladder1", "Giant" }) scenes.Add(Tuple.Create(s, 1));
-            for (int lv = 1; lv <= 5; lv++) scenes.Add(Tuple.Create("Fight", lv));
+            for (int lv = 1; lv <= 6; lv++) scenes.Add(Tuple.Create("Fight", lv));
             scenes.Add(Tuple.Create("Fight2", 3)); scenes.Add(Tuple.Create("Cast", 2));
-            scenes.Add(Tuple.Create("Moves", 1)); scenes.Add(Tuple.Create("Swings", 6));
-            scenes.Add(Tuple.Create("Stampede", 1)); scenes.Add(Tuple.Create("Stampede", 2));
+            scenes.Add(Tuple.Create("Moves", 1)); scenes.Add(Tuple.Create("Moves", 11)); scenes.Add(Tuple.Create("Swings", 6));
+            scenes.Add(Tuple.Create("Stampede", 1)); scenes.Add(Tuple.Create("Stampede", 2)); scenes.Add(Tuple.Create("Pecans", 1)); scenes.Add(Tuple.Create("Pecans", 2));
             foreach (var sc in scenes)
             {
-                string name = sc.Item1 + (sc.Item1 == "Fight" || sc.Item1 == "Moves" || sc.Item1 == "Swings" || sc.Item1 == "Stampede" || sc.Item1 == "Fight2" || sc.Item1 == "Cast" ? "-" + sc.Item2 : "");
+                string name = sc.Item1 + (sc.Item1 == "Fight" || sc.Item1 == "Moves" || sc.Item1 == "Swings" || sc.Item1 == "Stampede" || sc.Item1 == "Pecans" || sc.Item1 == "Fight2" || sc.Item1 == "Cast" ? "-" + sc.Item2 : "");
                 string what = null;
                 try
                 {

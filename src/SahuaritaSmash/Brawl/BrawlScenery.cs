@@ -132,6 +132,23 @@ namespace ClassicGames
                                 if ((x % 32 == 4 || x % 32 == 27) && (y % 32 == 6 || y % 32 == 26)) c = 0xFF57534E;   // nails
                                 break;
                             }
+                        case "bark":
+                            {
+                                // pecan bark: grey-brown, in long rough ridges
+                                double ridge = Math.Abs(Math.Sin(x * 0.2 + Noise(x, y, 4, 17) * 9));
+                                c = Shade(0xFF6B5B4B, 0.6 + ridge * 0.35 + n * 0.2);
+                                if (ridge < 0.12) c = Shade(0xFF2E2620, 0.8 + n * 0.3);
+                                break;
+                            }
+                        case "soil":
+                            {
+                                // the orchard's floor: dark flood-watered earth with fallen leaves and the odd pecan shell
+                                c = Shade(0xFF5B3A24, 0.7 + n * 0.4 + (d - 0.5) * 0.15);
+                                double leaf = Noise(x, y, 16, 23);
+                                if (leaf > 0.74) c = Shade(Hash(x / 6, y / 6, 24) > 0.5 ? 0xFF9A7B2E : 0xFF6B7A2E, 0.8 + n * 0.3);
+                                if (Hash(x, y, 25) > 0.993) c = 0xFF3B2414;
+                                break;
+                            }
                         case "crystal": { double g = Noise(x, y, 8, 15); c = Shade(g > 0.55 ? 0xFFA5B4FC : 0xFF6366F1, 0.75 + n * 0.45); break; }
                         default: c = Shade(0xFF808080, 0.8 + n * 0.3); break;
                     }
@@ -228,12 +245,12 @@ namespace ClassicGames
         /// <summary>The light on the fighters' edges (rim) and over the whole picture (grade), per stage.</summary>
         public static uint RimFor(string stage)
         {
-            switch (stage) { case "mesa": return 0xFFFFB25C; case "copper": return 0xFFFFE7A3; case "server": return 0xFF67E8F9; case "moon": return 0xFFC7D2FE; case "lab": return 0xFFFCA5A5; }
+            switch (stage) { case "mesa": return 0xFFFFB25C; case "copper": return 0xFFFFE7A3; case "server": return 0xFF67E8F9; case "moon": return 0xFFC7D2FE; case "lab": return 0xFFFCA5A5; case "orchard": return 0xFFFFF1C2; }
             return 0xFFFFFFFF;
         }
         static uint GradeFor(string stage)
         {
-            switch (stage) { case "mesa": return 0x18FF7A1A; case "copper": return 0x10FFD27A; case "server": return 0x1A0EA5E9; case "moon": return 0x184338CA; case "lab": return 0x16DC2626; }
+            switch (stage) { case "mesa": return 0x18FF7A1A; case "copper": return 0x10FFD27A; case "server": return 0x1A0EA5E9; case "moon": return 0x184338CA; case "lab": return 0x16DC2626; case "orchard": return 0x10FDE68A; }
             return 0;
         }
 
@@ -253,7 +270,7 @@ namespace ClassicGames
         /// <summary>The ground continuing under a layer (the colour its bottom ends in).</summary>
         static Brush LayerFoot(BStageDef s, int layer)
         {
-            switch (s.Id) { case "mesa": return Gfx.B(layer == 1 ? 0xFF7C2D12 : 0xFF6B2A0E); case "copper": return Gfx.B(0xFF1C1209); case "server": return Gfx.B(0xFF0F172A); case "moon": return Gfx.B(0xFF27272A); default: return Gfx.B(0xFF18181B); }
+            switch (s.Id) { case "mesa": return Gfx.B(layer == 1 ? 0xFF7C2D12 : 0xFF6B2A0E); case "copper": return Gfx.B(0xFF1C1209); case "server": return Gfx.B(0xFF0F172A); case "moon": return Gfx.B(0xFF27272A); case "orchard": return Gfx.B(0xFF3B2A1A); default: return Gfx.B(0xFF18181B); }
         }
 
         void EnsureLayers(BStageDef s)
@@ -367,6 +384,19 @@ namespace ClassicGames
                 case "lab":
                     dc.DrawRectangle(Linear(0x00000000, 0x40450A0A, 90), null, new Rect(0, 0, span, H));
                     break;
+                case "orchard":
+                    {
+                        // a clear morning: a soft sun up on the left, a few fair-weather clouds
+                        var sun = new Point(ox + W * 0.22, H * 0.16);
+                        dc.DrawEllipse(Glow(0x80FFF7D6), null, sun, 220, 220);
+                        dc.DrawEllipse(Sphere(0xFFFFF7D6), null, sun, 40, 40);
+                        for (int i = 0; i < span / 330; i++)
+                        {
+                            double x = i * 330 + 90 + (i % 3) * 40, y = 60 + (i % 4) * 26;
+                            for (int k = 0; k < 4; k++) dc.DrawEllipse(Gfx.B(0xC0FFFFFF), null, new Point(x + k * 34, y - (k == 1 || k == 2 ? 14 : 0)), 34, 20);
+                        }
+                        break;
+                    }
             }
         }
 
@@ -531,6 +561,35 @@ namespace ClassicGames
                         for (int i = 0; i < 6; i++) { double x = rng.NextDouble() * w; Crystal(dc, x, h - 40 - rng.Next(60), 0.8 + rng.NextDouble()); }
                     }
                     break;
+                case "orchard":
+                    if (layer == 0)
+                    {
+                        // the Santa Rita Mountains across the valley, blue in the distance
+                        var g = new StreamGeometry();
+                        using (var c = g.Open())
+                        {
+                            c.BeginFigure(new Point(0, horizon + 10), true, true);
+                            for (double x = 0; x <= w; x += 40) c.LineTo(new Point(x, horizon - 70 - 60 * Math.Abs(Math.Sin(x * 0.0021)) - 30 * Math.Sin(x * 0.011 + 1) - rng.Next(14)), true, true);
+                            c.LineTo(new Point(w, horizon + 10), true, true);
+                        }
+                        g.Freeze();
+                        dc.DrawGeometry(Linear(0xFF7C8DB5, 0xFF8FA0BF, 90), null, g);
+                        dc.DrawRectangle(Linear(0xFF9AA67A, 0xFF7E8A5A, 90), null, new Rect(0, horizon + 8, w, h));
+                    }
+                    else if (layer == 1)
+                    {
+                        // rows of pecan trees going back, small
+                        dc.DrawRectangle(Linear(0xFF6B5134, 0xFF4E3A26, 90), null, new Rect(0, horizon + 30, w, h));
+                        for (double x = 20; x < w; x += 110 + rng.Next(20)) PecanTree(dc, x, horizon + 36, 0.55 + rng.NextDouble() * 0.08, 0xFF4F7A3A);
+                        for (double x = 70; x < w; x += 130 + rng.Next(20)) PecanTree(dc, x, horizon + 70, 0.7 + rng.NextDouble() * 0.08, 0xFF46703A);
+                    }
+                    else
+                    {
+                        // the near row, big, and the berms that hold the irrigation water
+                        for (double x = -40; x < w + 100; x += 340 + rng.Next(80)) PecanTree(dc, x, h - 20, 1.25 + rng.NextDouble() * 0.2, 0xFF3F6B33);
+                        for (int i = 0; i < 4; i++) dc.DrawLine(Gfx.P(0x40000000, 6), new Point(0, h - 120 + i * 34), new Point(w, h - 116 + i * 34));
+                    }
+                    break;
                 case "lab":
                     if (layer == 0)
                     {
@@ -557,6 +616,21 @@ namespace ClassicGames
                     }
                     break;
             }
+        }
+
+        /// <summary>A pecan tree standing on (x, y), size k: a tall grey trunk that forks, a wide rounded crown of
+        /// clumps (lit from the upper left).</summary>
+        static void PecanTree(DrawingContext dc, double x, double y, double k, uint leaf)
+        {
+            Pen trunk = Gfx.P(0xFF5B4B3B, 14 * k), limb = Gfx.P(0xFF5B4B3B, 8 * k);
+            dc.DrawLine(trunk, new Point(x, y), new Point(x, y - 80 * k));
+            dc.DrawLine(limb, new Point(x, y - 70 * k), new Point(x - 40 * k, y - 120 * k));
+            dc.DrawLine(limb, new Point(x, y - 72 * k), new Point(x + 44 * k, y - 116 * k));
+            uint dark = Gfx.Mix(leaf, 0xFF000000, 0.3), lite = Gfx.Mix(leaf, 0xFFFFFFFF, 0.18);
+            double[] cx = { -60, -25, 15, 55, -40, 5, 40, -8 }, cy = { -120, -150, -155, -122, -175, -190, -170, -205 }, cr = { 38, 42, 44, 38, 36, 40, 34, 30 };
+            for (int i = 0; i < cx.Length; i++) dc.DrawEllipse(Gfx.B(dark), null, new Point(x + cx[i] * k, y + cy[i] * k), cr[i] * k, cr[i] * 0.8 * k);
+            for (int i = 0; i < cx.Length; i++) dc.DrawEllipse(Gfx.B(leaf), null, new Point(x + cx[i] * k - 4 * k, y + cy[i] * k - 4 * k), cr[i] * 0.82 * k, cr[i] * 0.64 * k);
+            for (int i = 4; i < cx.Length; i++) dc.DrawEllipse(Gfx.B(lite), null, new Point(x + cx[i] * k - 10 * k, y + cy[i] * k - 10 * k), cr[i] * 0.4 * k, cr[i] * 0.3 * k);
         }
 
         static void Mesa(DrawingContext dc, double x, double top, double wd, double bottom, uint lit, uint shade)
@@ -664,6 +738,15 @@ namespace ClassicGames
                         dc.DrawEllipse(Gfx.B(0x50FFF7ED), null, new Point(x, y), 1.5, 1.5);
                     }
                     break;
+                case "orchard":
+                    for (int i = 0; i < 16; i++)
+                    {
+                        // leaves drifting down and across, turning as they fall
+                        double x = ((i * 173.1 + t * (20 + i % 4 * 6)) % (W + 40)) - 20, y = (i * 61.3 + t * (26 + i % 3 * 8)) % (H - 120);
+                        double a = t * (1.5 + i % 3) + i;
+                        dc.DrawEllipse(Gfx.B(i % 3 == 0 ? 0xC0A3842E : 0xC06B8E3A), null, new Point(x + Math.Sin(a) * 8, y), 5 * Math.Abs(Math.Cos(a)) + 1.5, 2.5);
+                    }
+                    break;
                 case "server":
                     for (int i = 0; i < 30; i++)
                     {
@@ -695,7 +778,7 @@ namespace ClassicGames
         }
 
         // ---------------------------------------------------------------- platforms as boxes in perspective
-        static string FrontTex(string stage) { switch (stage) { case "mesa": return "sandstone"; case "copper": return "copperrock"; case "server": return "metalpanel"; case "moon": return "regolith"; default: return "labwall"; } }
+        static string FrontTex(string stage) { switch (stage) { case "mesa": return "sandstone"; case "copper": return "copperrock"; case "server": return "metalpanel"; case "moon": return "regolith"; case "orchard": return "soil"; default: return "labwall"; } }
 
         void DrawPlatforms(DrawingContext dc, BrawlSim sim, double t)
         {
@@ -764,6 +847,9 @@ namespace ClassicGames
                 case "tray": case "catwalk": return "grate";
                 case "rock": return "regolith";
                 case "crystal": return "crystal";
+                case "branch": return "bark";
+                case "bins": return "wood";
+                case "picker": return "metalpanel";
                 default: return stage == "moon" ? "crystal" : stage == "mesa" || stage == "copper" ? "wood" : "grate";
             }
         }
@@ -782,13 +868,16 @@ namespace ClassicGames
                 case "crystal": return 0xFFA5B4FC;
                 case "catwalk": return 0xFF71717A;
                 case "gantry": return 0xFFFACC15;
+                case "branch": return 0xFF8B7355;
+                case "bins": return 0xFFB7834A;
+                case "picker": return 0xFFEAB308;
                 default: switch (stage) { case "mesa": return 0xFFC08040; case "copper": return 0xFFB87333; case "server": return 0xFF94A3B8; case "moon": return 0xFFA5B4FC; default: return 0xFF71717A; }
             }
         }
 
         static double SoftThick(string look)
         {
-            switch (look) { case "ledge": case "arch": return 24; case "terrace": return 20; case "rock": return 18; case "rack": return 10; case "tank": return 12; default: return 16; }
+            switch (look) { case "ledge": case "arch": return 24; case "terrace": return 20; case "rock": return 18; case "rack": return 10; case "tank": return 12; case "branch": return 18; case "bins": return 22; default: return 16; }
         }
 
         /// <summary>What holds a platform up (or hangs it down), drawn behind it: hoodoo columns and a stone arch, a saguaro,
@@ -833,6 +922,51 @@ namespace ClassicGames
                         }
                         geo.Freeze();
                         dc.DrawGeometry(Linear3(0xFF7C3A1E, 0xFFA8522E, 0xFF6B3018, 0), edge, geo);
+                        break;
+                    }
+                case "branch":
+                    {
+                        // a pecan tree: the crown spreading behind and above, the trunk down to the orchard floor
+                        double tx = cx + w * 0.18 * (cx < W / 2 ? 1 : -1);
+                        for (int i = 0; i < 7; i++)
+                        {
+                            double ex = cx + (i - 3) * w * 0.26, ey = y - (40 + (i % 3) * 34 + (i == 3 ? 40 : 0)) * z, er = (52 + (i % 2) * 14) * z;
+                            dc.DrawEllipse(Gfx.B(0xFF2F5228), null, new Point(ex, ey), er, er * 0.78);
+                            dc.DrawEllipse(Gfx.B(0xFF3F6B33), null, new Point(ex - 6 * z, ey - 6 * z), er * 0.8, er * 0.6);
+                        }
+                        var tg = new StreamGeometry();
+                        using (var c = tg.Open())
+                        {
+                            c.BeginFigure(new Point(tx - 16 * z, g), true, true);
+                            c.BezierTo(new Point(tx - 12 * z, (g + yb) / 2), new Point(tx - 10 * z, yb + 10 * z), new Point(tx - 14 * z, yb), true, true);
+                            c.LineTo(new Point(tx + 14 * z, yb), true, true);
+                            c.BezierTo(new Point(tx + 10 * z, yb + 10 * z), new Point(tx + 12 * z, (g + yb) / 2), new Point(tx + 18 * z, g), true, true);
+                        }
+                        tg.Freeze();
+                        dc.DrawGeometry(Linear(0xFF6B5B4B, 0xFF3F342A, 0), edge, tg);
+                        for (int i = 1; i < 5; i++) { double yy = yb + (g - yb) * i / 5.0; dc.DrawLine(Gfx.P(0x40000000, 1.5 * z), new Point(tx - 8 * z, yy), new Point(tx - 4 * z, yy + 14 * z)); }
+                        break;
+                    }
+                case "bins":
+                    {
+                        // wooden harvest bins stacked up to the top one, full of pecans
+                        int n = Math.Max(1, (int)Math.Round((g - yb) / (46 * z)));
+                        double bh = (g - yb) / n;
+                        for (int i = 0; i < n; i++)
+                        {
+                            double by = yb + i * bh;
+                            dc.DrawRectangle(Linear(0xFFB7834A, 0xFF7C5228, 90), edge, new Rect(x1 + 4 * z, by, w - 8 * z, bh - 2 * z));
+                            for (int k = 1; k < 4; k++) dc.DrawLine(Gfx.P(0x40000000, 1.5 * z), new Point(x1 + 4 * z, by + bh * k / 4), new Point(x2 - 4 * z, by + bh * k / 4));
+                        }
+                        for (int i = 0; i < 14; i++) dc.DrawEllipse(Gfx.B(i % 2 == 0 ? 0xFF7C4A1E : 0xFF92582A), Gfx.P(0x80000000, 1), new Point(x1 + 12 * z + (i * 37 % (int)Math.Max(1, w - 24 * z)), y - 3 * z - (i % 3) * 2 * z), 6 * z, 4 * z);
+                        break;
+                    }
+                case "picker":
+                    {
+                        // the picker: a yellow mast from a little cart on the ground up to the basket
+                        dc.DrawRectangle(Linear(0xFFCA8A04, 0xFF854D0E, 0), edge, new Rect(cx - 8 * z, yb, 16 * z, Math.Max(0, g - yb - 20 * z)));
+                        dc.DrawRoundedRectangle(Gfx.B(0xFFEAB308), edge, new Rect(cx - 40 * z, g - 30 * z, 80 * z, 22 * z), 5 * z, 5 * z);
+                        foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(Gfx.B(0xFF1C1917), null, new Point(cx + side * 26 * z, g - 6 * z), 9 * z, 9 * z);
                         break;
                     }
                 case "saguaro":
@@ -1015,6 +1149,18 @@ namespace ClassicGames
                         for (double x = fl.X - 40 * z; x < fr.X + 20 * z; x += 20 * z)
                             Poly(dc, Gfx.B(0xFF1C1917), null, new Point(x, yb), new Point(x + 10 * z, yb), new Point(x + 10 * z + (yb - fl.Y), fl.Y), new Point(x + (yb - fl.Y), fl.Y));
                         dc.Pop();
+                        break;
+                    }
+                case "picker":
+                    {
+                        // the basket's railing
+                        Pen rail = Gfx.P(0xFFFACC15, 3 * z), post = Gfx.P(0xFFCA8A04, 2.5 * z);
+                        double h = 26 * z;
+                        foreach (Point[] e in new[] { new[] { bl, br }, new[] { fl, fr } })
+                        {
+                            for (int i = 0; i <= 3; i++) { double k = i / 3.0; double x = e[0].X + (e[1].X - e[0].X) * k, yy = e[0].Y + (e[1].Y - e[0].Y) * k; dc.DrawLine(post, new Point(x, yy), new Point(x, yy - h)); }
+                            dc.DrawLine(rail, new Point(e[0].X, e[0].Y - h), new Point(e[1].X, e[1].Y - h));
+                        }
                         break;
                     }
                 case "tank":

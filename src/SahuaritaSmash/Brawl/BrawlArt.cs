@@ -226,8 +226,39 @@ namespace ClassicGames
             }
         }
 
+        /// <summary>The orchard's tree shaker: a sign and leaves shaken loose while it rumbles, and every pecan's shadow on
+        /// the ground growing until it lands (drawn over the platforms, so trees never hide them).</summary>
+        void DrawPecanWarning(DrawingContext dc, BrawlSim sim, double t)
+        {
+            bool warn = sim.HazPhase == 1;
+            double blink = Math.Sin(t * 18) > 0 ? 1 : 0.4;
+            // the tree shaker rumbles (a warning sign on the side, leaves shaken loose), and every pecan's
+            // shadow on the ground grows until it lands
+            double gy = SY(sim.Main.Top);
+            double k = warn ? 1 - sim.HazT / (double)BrawlSim.HazWarn : 1;
+            for (int i = 0; i < sim.Nuts.Length; i++)
+            {
+                double left = warn ? 99 : i * BrawlSim.NutGap + BrawlSim.NutDrop - sim.HazY;
+                if (left < 0) continue;
+                double near = warn ? k * 0.6 : 0.6 + 0.4 * (1 - Math.Min(1, left / BrawlSim.NutDrop));
+                dc.DrawEllipse(Gfx.B(Gfx.Alpha(0xFF000000, 0.2 + 0.35 * near)), null, new Point(SX(sim.Nuts[i]), gy + 2), (14 + 18 * near) * Zoom, 6 * Zoom);
+            }
+            if (warn)
+            {
+                double x = W / 2, y = 70;
+                dc.DrawRoundedRectangle(Gfx.B(Gfx.Alpha(0xFFFACC15, blink)), Gfx.P(0xFF000000, 2), new Rect(x - 160, y - 18, 320, 36), 10, 10);
+                Gfx.Text(dc, "Tree shaker! Watch out below", x, y - 12, 18, 0xFF000000, 0.5, Gfx.UiBold);
+                for (int i = 0; i < 10; i++)
+                {
+                    double lx = (i * 131.7 + t * 60) % W, ly = ((t * 140 + i * 47) % 260) + 40;
+                    dc.DrawEllipse(Gfx.B(0xC06B8E3A), null, new Point(lx + Math.Sin(t * 30 + i) * 3, ly), 5, 2.5);
+                }
+            }
+        }
+
         void DrawHazardFront(DrawingContext dc, BrawlSim sim, double t)
         {
+            if (sim.Hazard == "pecans" && sim.HazPhase > 0) DrawPecanWarning(dc, sim, t);
             if (sim.HazPhase != 2) return;
             switch (sim.Hazard)
             {
@@ -269,6 +300,18 @@ namespace ClassicGames
                         double phase = t * 15 + k * 1.7;
                         DrawDust(dc, SX(mx - sim.HazDir * 30), SY(sim.Main.Top), 0.45 * Zoom, t + k, 0.3 * fade);
                         DrawJavelina(dc, SX(mx), SY(sim.Main.Top + lift), sim.HazDir, BrawlSim.HerdAdult[k], phase, fade);
+                    }
+                    break;
+                case "pecans":
+                    for (int i = 0; i < sim.Nuts.Length; i++)
+                    {
+                        double left = i * BrawlSim.NutGap + BrawlSim.NutDrop - sim.HazY;
+                        if (left < 0 || left > BrawlSim.NutDrop) continue;
+                        double x = SX(sim.Nuts[i]), y = SY(sim.Main.Top + 16 + left * 26);
+                        dc.PushTransform(new RotateTransform(sim.HazY * 23 + i * 50, x, y));
+                        dc.DrawEllipse(Sphere(0xFF8B5A2B), Gfx.P(0xFF3B2414, 2), new Point(x, y), 11 * Zoom, 7 * Zoom);
+                        dc.DrawLine(Gfx.P(0xFF3B2414, 1.5), new Point(x - 9 * Zoom, y), new Point(x + 9 * Zoom, y));
+                        dc.Pop();
                     }
                     break;
                 case "meteor":
@@ -952,6 +995,7 @@ namespace ClassicGames
                 case "specimen": DressSpecimen(dc, f, r, p, t, active); break;
                 case "dusty": DressDusty(dc, f, r, p, t); break;
                 case "sam": DressSam(dc, f, r, p, t); break;
+                case "gila": DressGila(dc, f, r, p, t, active); break;
                 default: DressPerson(dc, f, r, p, t); break;
             }
             ExtraFront(dc, f, r, extra, active, t);
@@ -1178,6 +1222,27 @@ namespace ClassicGames
                         }
                         break;
                     }
+                case "gila":
+                    {
+                        // a wide, flat lizard head pointing forward: black snout, orange blotches, beady eyes, a grin
+                        Point snout = new Point(h.X + R * 0.95, h.Y - R * 0.12);
+                        dc.DrawEllipse(BrawlView.Sphere(d.Main), Outline(2.5), new Point(h.X + R * 0.15, h.Y), R * 1.15, R * 0.82);
+                        dc.DrawEllipse(BrawlView.Sphere(d.Second), Outline(2.5), snout, R * 0.72, R * 0.58);
+                        dc.DrawEllipse(Gfx.B(d.Main), null, new Point(h.X - R * 0.35, h.Y + R * 0.3), R * 0.28, R * 0.2);
+                        dc.DrawEllipse(Gfx.B(d.Second), null, new Point(h.X - R * 0.05, h.Y + R * 0.45), R * 0.22, R * 0.16);
+                        dc.DrawEllipse(Gfx.B(d.Main), null, new Point(h.X + R * 0.95, h.Y + R * 0.2), R * 0.2, R * 0.13);
+                        // beads on the crown
+                        for (int i = 0; i < 5; i++) dc.DrawEllipse(Gfx.B(i % 2 == 0 ? d.Trim : d.Second), null, new Point(h.X - R * 0.7 + i * R * 0.3, h.Y + R * 0.62 - Math.Abs(i - 2) * R * 0.06), R * 0.08, R * 0.08);
+                        Point eye = new Point(h.X + R * 0.48, h.Y + R * 0.28);
+                        dc.DrawEllipse(Gfx.B(0xFF111111), Outline(1.5), eye, R * 0.2, R * 0.18);
+                        if (hurt) { dc.DrawLine(Gfx.P(d.Trim, 2), new Point(eye.X - R * 0.14, eye.Y - R * 0.12), new Point(eye.X + R * 0.14, eye.Y + R * 0.12)); dc.DrawLine(Gfx.P(d.Trim, 2), new Point(eye.X - R * 0.14, eye.Y + R * 0.12), new Point(eye.X + R * 0.14, eye.Y - R * 0.12)); }
+                        else dc.DrawEllipse(Gfx.B(0xFFFFFFFF), null, new Point(eye.X + R * 0.06, eye.Y + R * 0.06), R * 0.06, R * 0.06);
+                        dc.DrawEllipse(Gfx.B(0xFF000000), null, new Point(snout.X + R * 0.5, snout.Y + R * 0.18), R * 0.06, R * 0.05);
+                        // the mouth: a long friendly grin along the jaw (a little open when hurt)
+                        if (hurt) dc.DrawEllipse(Gfx.B(0xFF7F1D1D), null, new Point(snout.X + R * 0.2, h.Y - R * 0.42), R * 0.24, R * 0.12);
+                        else dc.DrawGeometry(null, Gfx.P(d.Trim, 2), Cap(new Point(h.X + R * 0.65, h.Y + R * 0.05), R * 0.62, 205, 330));
+                        break;
+                    }
                 default: Skull(dc, h, R, d.Skin, st); FaceEyes(dc, h, R, hurt, st); break;
             }
         }
@@ -1335,6 +1400,74 @@ namespace ClassicGames
             double dx = tip.X - s.X, dy = tip.Y - s.Y, l = Math.Sqrt(dx * dx + dy * dy) + 0.01;
             double nx = -dy / l, ny = dx / l;
             Poly(dc, Gfx.B(c), Outline(2), s, new Point(tip.X + nx * 6, tip.Y + ny * 6), new Point(tip.X + dx / l * 6, tip.Y + dy / l * 6), new Point(tip.X - nx * 8, tip.Y - ny * 8), new Point(s.X - nx * 6, s.Y - ny * 6));
+        }
+
+        // ---- Gila Gus: an upright Gila monster, beaded orange and black, a thick banded tail behind
+        void DressGila(DrawingContext dc, BFighter f, Rig r, BPose p, double t, bool active)
+        {
+            BFighterDef d = f.D;
+            double w = r.BodyW;
+            bool sweep = f.St == BS.Attack && f.Mv != null && f.Mv.Extra == "tail";
+            // the tail: beads from the hip, back and down to the ground, swinging a little (out flat in a tail sweep)
+            double swing = sweep ? 0 : Math.Sin(t * 2.2) * 8;
+            double tailAng = sweep ? 180 : 200 + swing + p.Lean * 0.3, tailLen = r.TorsoLen * 3.0;
+            int beads = 11;
+            for (int i = beads - 1; i >= 0; i--)
+            {
+                double k = i / (double)(beads - 1);
+                double a = tailAng + (sweep ? 0 : k * 25);
+                Point c = Off(r.Hip, a, tailLen * k);
+                if (!sweep) c = new Point(c.X, Math.Max(c.Y, w * 0.1 * (1 - k)));   // it rests along the ground, never under it
+                double rad = w * (0.3 - k * 0.2);
+                dc.DrawEllipse(BrawlView.Sphere(i % 2 == 0 ? d.Main : d.Second), Outline(2), c, rad, rad * 0.9);
+            }
+            // back leg and arm (shorter, darker)
+            Limb(dc, r.Hip, r.BKnee, r.BFoot, Gfx.Mix(d.Second, 0xFF000000, 0.2), Gfx.Mix(d.Main, 0xFF000000, 0.3), r.LegW);
+            Claws(dc, r.BFoot, r.LegW * 0.6, 0xFF57534E);
+            Limb(dc, Shoulder(r), r.BElbow, r.BHand, Gfx.Mix(d.Second, 0xFF000000, 0.2), Gfx.Mix(d.Main, 0xFF000000, 0.3), r.ArmW);
+            Claws(dc, r.BHand, r.ArmW * 0.6, 0xFF57534E);
+            // the body: a fat beaded egg with a paler belly
+            Point mid = new Point((r.Hip.X + r.Neck.X) / 2, (r.Hip.Y + r.Neck.Y) / 2);
+            double ang = Math.Atan2(r.Neck.Y - r.Hip.Y, r.Neck.X - r.Hip.X) * 180 / Math.PI;
+            dc.PushTransform(new RotateTransform(ang - 90, mid.X, mid.Y));
+            double bh = r.TorsoLen * 0.78, bw = w * 0.46;
+            dc.DrawEllipse(BrawlView.Sphere(d.Main), Outline(2.5), mid, bw, bh);
+            dc.DrawEllipse(Gfx.B(d.Skin), null, new Point(mid.X + bw * 0.35, mid.Y - bh * 0.05), bw * 0.42, bh * 0.75);
+            // black blotches and cream beads in rows across the back
+            for (int row = 0; row < 4; row++)
+                for (int col = 0; col < 3; col++)
+                {
+                    double bx = mid.X - bw * 0.55 + col * bw * 0.32 + (row % 2) * bw * 0.12, by = mid.Y - bh * 0.6 + row * bh * 0.38;
+                    if ((bx - mid.X) * (bx - mid.X) / (bw * bw) + (by - mid.Y) * (by - mid.Y) / (bh * bh) > 0.7) continue;
+                    dc.DrawEllipse(Gfx.B(d.Second), null, new Point(bx, by), bw * 0.16, bh * 0.1);
+                    dc.DrawEllipse(Gfx.B(Gfx.Alpha(d.Trim, 0.7)), null, new Point(bx + bw * 0.12, by + bh * 0.08), bw * 0.05, bw * 0.05);
+                }
+            dc.Pop();
+            // front leg, head, the tongue, the front arm
+            Limb(dc, r.Hip, r.FKnee, r.FFoot, d.Second, d.Main, r.LegW);
+            Claws(dc, r.FFoot, r.LegW * 0.6, 0xFF44403C);
+            dc.DrawLine(Outline(r.ArmW + 8), r.Neck, r.Head);
+            dc.DrawLine(Gfx.P(d.Main, r.ArmW + 4), r.Neck, r.Head);
+            if (f.St == BS.Attack && f.Mv != null && f.Mv.Extra == "tongue" && active)
+            {
+                double reach = 0;
+                foreach (BHit hh in f.Mv.Hits) if (f.MF >= hh.From && f.MF <= hh.To) reach = Math.Max(reach, hh.X + hh.R * 0.6);
+                Point from = new Point(r.Head.X + r.HeadR * 1.4, r.Head.Y - r.HeadR * 0.2), to = new Point(Math.Max(from.X + 10, reach), from.Y + Math.Sin(t * 40) * 2);
+                dc.DrawLine(Gfx.P(0xFF9D174D, 7), from, to);
+                dc.DrawLine(Gfx.P(0xFFF472B6, 4), from, to);
+                dc.DrawLine(Gfx.P(0xFFF472B6, 3), to, new Point(to.X + 10, to.Y + 6));
+                dc.DrawLine(Gfx.P(0xFFF472B6, 3), to, new Point(to.X + 10, to.Y - 6));
+            }
+            HeadOf(dc, f, r, p, t);
+            Limb(dc, Shoulder(r), r.FElbow, r.FHand, d.Second, d.Main, r.ArmW);
+            Claws(dc, r.FHand, r.ArmW * 0.6, 0xFF44403C);
+        }
+
+        /// <summary>Four little claws fanned out from a hand or foot.</summary>
+        static void Claws(DrawingContext dc, Point p, double w, uint c)
+        {
+            Pen pen = Gfx.P(c, Math.Max(1.5, w * 0.35));
+            for (int i = 0; i < 4; i++) { double a = -40 + i * 26; dc.DrawLine(pen, p, Off(p, a, w * 1.3)); }
         }
 
         // ---- Saguaro Sam

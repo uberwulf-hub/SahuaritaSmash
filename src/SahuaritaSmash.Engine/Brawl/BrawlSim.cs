@@ -98,6 +98,10 @@ namespace ClassicGames
         public int HazT, HazPhase;   // phase 0 = quiet, 1 = warning, 2 = happening
         public double HazX, HazY; public int HazDir;
         public readonly int[] HazHit = new int[8];
+        /// <summary>The orchard's pecans: where each one lands (picked when the shaker starts, so their shadows show
+        /// through the whole warning), one every NutGap frames once they fall, NutDrop frames from the branches.</summary>
+        public readonly double[] Nuts = new double[5];
+        public const int NutGap = 9, NutDrop = 24;
         readonly string[] hazards;
         /// <summary>The javelina herd, front to back: where each runs behind the leader (HazX) and whether it is a grown-up
         /// (two) or a baby (three).</summary>
@@ -1073,6 +1077,7 @@ namespace ClassicGames
                 switch (Hazard)
                 {
                     case "meteor": HazX = Main.L + 40 + RandD() * (Main.R - Main.L - 80); HazY = Main.Top; break;
+                    case "pecans": for (int k = 0; k < Nuts.Length; k++) Nuts[k] = Main.L + 40 + RandD() * (Main.R - Main.L - 80); HazY = 0; Sfx("brawl-shaker", 0, 0.6); return;
                     case "laser": HazY = Main.Top + (Rand(2) == 0 ? 26 : 120); HazX = HazDir < 0 ? Stage.BlastR : Stage.BlastL; break;
                     case "cart": HazX = HazDir > 0 ? Main.L - 120 : Main.R + 120; HazY = Main.Top; break;
                     case "javelina": HazX = HazDir > 0 ? Main.L - 150 : Main.R + 150; HazY = Main.Top; Sfx("brawl-snort", HazX, 0.7); return;
@@ -1087,6 +1092,7 @@ namespace ClassicGames
                 HazPhase = 2;
                 HazT = Hazard == "wind" ? 240 : Hazard == "fans" ? 180 : Hazard == "cart" ? 200 : Hazard == "laser" ? 40 : 30;
                 if (Hazard == "meteor") HazY = Main.Top + 700;
+                if (Hazard == "pecans") { HazY = 0; HazT = 9999; }   // ends once the last nut is down (below)
                 if (Hazard == "javelina") { HazT = 600; Sfx("brawl-hooves", HazX, 0.7); }
                 return;
             }
@@ -1125,6 +1131,20 @@ namespace ClassicGames
                             if (f.Playing && f.Invuln == 0 && HazHit[f.Slot] < 0 && Math.Abs(f.X - HazX) < 50 && f.Y < HazY && f.Y + f.H > HazY)
                             { HazHit[f.Slot] = Frame; Hit(null, f, new BHit { Dmg = 6, Ang = 60, Base = 40, Grow = 40, Electric = true }, HazDir, 1, false); }
                         break;
+                    case "pecans":
+                        // HazY counts the frames since the shaking; each nut lands on its own frame with a small bonk
+                        HazY++;
+                        for (int k = 0; k < Nuts.Length; k++)
+                            if (HazY == k * NutGap + NutDrop)
+                            {
+                                double nx = Nuts[k];
+                                Ev("land", "", nx, Main.Top, 0, -1); Sfx("brawl-pecan", nx, 0.6);
+                                foreach (BFighter f in F)
+                                    if (f.Playing && f.Invuln == 0 && Overlap(nx, Main.Top + 20, 34, f))
+                                        Hit(null, f, new BHit { Dmg = 5, Ang = 80, Base = 30, Grow = 45 }, f.X >= nx ? 1 : -1, 1, false);
+                            }
+                        if (HazY >= (Nuts.Length - 1) * NutGap + NutDrop + 6) HazT = 0;
+                        break;
                     case "meteor":
                         HazY -= 24;
                         if (HazY <= Main.Top + 10)
@@ -1138,7 +1158,7 @@ namespace ClassicGames
                         break;
                 }
                 HazT--;
-                if (HazT <= 0) { HazPhase = 0; HazT = (Hazard == "meteor" ? 360 : 780) + Rand(Hazard == "meteor" ? 240 : 420); }
+                if (HazT <= 0) { bool shortWait = Hazard == "meteor" || Hazard == "pecans"; HazPhase = 0; HazT = (shortWait ? 360 : 780) + Rand(shortWait ? 240 : 420); }
             }
         }
 

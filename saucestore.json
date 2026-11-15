@@ -1,7 +1,7 @@
 {
   "name": "Sahuarita Smash! (Sauce Edition)",
   "category": "Game",
-  "description": "A family platform fighter from Sahuarita, Arizona, on Windows and Android. Ten fighters (Classic Games heroes, a roadrunner and a saguaro, Teddy Roosevelt and Ben Franklin, the Firewall Knight and Paul Bunyan), five stages with their own surprises (monsoon wind, a javelina stampede, mine carts, meteors, a lab laser), up to four players against each other or the computer, and a ladder that ends against a giant. Nobody gets hurt: fighters get bonked and twinkle off the screen.",
+  "description": "A family platform fighter from Sahuarita, Arizona, on Windows and Android. Eleven fighters (Classic Games heroes, a roadrunner, a saguaro and a Gila monster, Teddy Roosevelt and Ben Franklin, the Firewall Knight and Paul Bunyan), six stages with their own surprises (monsoon wind, a javelina stampede, mine carts, meteors, a lab laser, pecans from the orchard's tree shaker), up to four players against each other or the computer, and a ladder that ends against a giant. Nobody gets hurt: fighters get bonked and twinkle off the screen.",
   "icon": "store/icon.png",
   "assets": { "windows": "SahuaritaSmashSE-windows.zip", "android": "SahuaritaSmashSE-android.apk" },
   "requirements": [

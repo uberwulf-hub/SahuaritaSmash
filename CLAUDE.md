@@ -90,6 +90,14 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   on 127.0.0.1), `net-relay` (only with `SMASH_RELAY_URL`, e.g. Race Track Mayhem's `server/relay/local.mjs`), `online`
   (two whole games through the menus). Off-screen pictures (`DrawingVisual`) must be disposed: piles of them crashed
   Skia in the checks; old background layers are disposed when a stage changes.
+- **New fighters and stages (since 0.3.0, Andrew: "keep going"):** Gila Gus (`gila`, Arizona) and the Pecan Orchard
+  (`orchard`, surprise `pecans`: the tree shaker warns `HazWarn` frames with every nut's spot (`BrawlSim.Nuts`) already
+  shadowed, then one lands every `NutGap` frames, `NutDrop` after it falls; small bonks). **Add new fighters and stages
+  at the end of their lists:** saved matches (`UpdateResume`) and the online lobby keep them by number; and bump
+  `NetProtocol.Version` whenever the lists change. A new fighter needs its signature table, `BodyStyle`, `MotionStyle`,
+  `Dress`/`HeadOf` art; a new stage its `BrawlScenery` cases (layers, sky, light, textures, platform looks under / over),
+  a built-in `Music.BrawlSong` tune and a `BrawlMusic.Roles` entry (a recorded Suno song can be added later), and the
+  menus fit up to 15 fighters (three rows of five). Checks and snapshots (`Fight-6`, `Moves-11`, `Pecans-1|2`) cover them.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

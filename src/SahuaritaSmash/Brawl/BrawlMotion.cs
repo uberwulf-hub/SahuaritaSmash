@@ -65,6 +65,8 @@ namespace ClassicGames
             { "dusty", new MotionStyle { Amp = 1.05, Snap = 1.1, Over = 1.12, Lean = 16, Low = 0.1, Peck = 28, Scurry = 26, Arms = "tucked" } },
             // a cactus: stiff arms bent up, slow to swing, and a springy wobble afterwards
             { "sam", new MotionStyle { Amp = 0.85, Snap = 3.2, Over = 1.1, Elbow = 0.3, Cactus = 70, Wobble = 9, Wide = 6 } },
+            // a Gila monster: low and heavy, slow to wind up, then the head snaps forward in a bite and the body rocks
+            { "gila", new MotionStyle { Amp = 0.95, Snap = 2.6, Over = 1.2, Low = 0.22, Lean = 14, Peck = 18, Bounce = 0.05, Wobble = 4, Arms = "guard", Elbow = 0.6 } },
             // a boxer: the other fist up by his chin, bobbing and weaving, short punchy snaps
             { "teddy", new MotionStyle { Amp = 1.0, Snap = 1.7, Over = 1.1, Arms = "guard", Weave = 8, Wide = 12, Low = 0.08, Lean = 8 } },
             // a gentleman fencer: the free arm raised behind, a lunge on every strike

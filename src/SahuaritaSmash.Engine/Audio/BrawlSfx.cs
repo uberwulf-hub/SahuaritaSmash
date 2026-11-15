@@ -16,7 +16,7 @@ namespace ClassicGames
             "brawl-dodge", "brawl-break", "brawl-thud", "brawl-grab", "brawl-pummel", "brawl-ledge", "brawl-shieldhit", "brawl-counter-hit",
             "brawl-smash", "brawl-hit1", "brawl-hit2", "brawl-reflect", "brawl-fizzle", "brawl-boom", "brawl-bell", "brawl-beep", "brawl-hum",
             "brawl-whistle", "brawl-wind", "brawl-twinkle", "brawl-ko", "brawl-sudden", "brawl-game", "brawl-go",
-            "brawl-snort", "brawl-squeal", "brawl-hooves" };
+            "brawl-snort", "brawl-squeal", "brawl-hooves", "brawl-hiss", "brawl-chomp", "brawl-shaker", "brawl-pecan" };
 
         static float[] Buf(double s) { return new float[(int)(s * Rate)]; }
 
@@ -146,6 +146,12 @@ namespace ClassicGames
                 case "brawl-snort": b = Buf(0.45); Tone(b, 0, 0.12, 150, 110, 0, 0.12, 10); Tone(b, 0.18, 0.14, 140, 95, 0, 0.12, 10); Noise(b, 0, 0.13, 0.6, 2, 14, 50); Noise(b, 0.18, 0.15, 0.55, 2, 12, 51); Lowpass(b, 0.18); break;
                 case "brawl-squeal": b = Buf(0.25); Tone(b, 0, 0.18, 520, 760, 1, 0.12, 6); Tone(b, 0, 0.18, 1040, 1500, 4, 0.06, 6); Noise(b, 0, 0.15, 0.12, 1, 12, 52); Lowpass(b, 0.5); break;
                 case "brawl-hooves": b = Buf(1.3); for (int i = 0; i < 16; i++) { double s = i * 0.07 + (i % 2) * 0.02; Tone(b, s, 0.05, 120, 70, 4, 0.35, 40); Noise(b, s, 0.03, 0.2, 2, 60, 53 + i); } Lowpass(b, 0.35); break;
+                // Gila Gus: a soft breathy hiss and a snapping bite; the orchard's tree shaker (a low motor and rattling
+                // branches) and a pecan landing (a small woody tock)
+                case "brawl-hiss": b = Buf(0.4); Noise(b, 0, 0.36, 0.3, 1, 5, 54); Tone(b, 0, 0.3, 3200, 2600, 4, 0.02, 6); break;
+                case "brawl-chomp": b = Buf(0.3); Noise(b, 0, 0.05, 0.4, 2, 40, 55); Tone(b, 0.04, 0.1, 260, 120, 2, 0.3, 20); Noise(b, 0.12, 0.04, 0.3, 2, 50, 56); Lowpass(b, 0.4); break;
+                case "brawl-shaker": b = Buf(1.4); Tone(b, 0, 1.35, 55, 70, 3, 0.16, 0.5); Tone(b, 0, 1.35, 110, 130, 0, 0.05, 0.5); for (int i = 0; i < 14; i++) Noise(b, 0.2 + i * 0.08, 0.05, 0.12, 2, 40, 57 + i); Lowpass(b, 0.25); break;
+                case "brawl-pecan": b = Buf(0.2); Tone(b, 0, 0.08, 900, 500, 4, 0.3, 40); Noise(b, 0, 0.03, 0.15, 2, 80, 72); break;
                 case "brawl-sudden": b = Buf(1.0); Notes(b, 0, 0.12, 0, 0.12, 69, 68, 67, 66, 65); break;
                 case "brawl-game": b = Buf(0.7); Tone(b, 0, 0.6, 100, 50, 4, 0.5, 4); Noise(b, 0, 0.3, 0.3, 2, 8, 47); Lowpass(b, 0.3); break;
                 case "brawl-go": b = Buf(0.5); Notes(b, 0, 0.09, 0, 0.12, 74, 78, 81, 86); break;

@@ -295,6 +295,27 @@ namespace ClassicGames
             }
             Check("brawl stages: the javelinas are warned first, bowl over someone standing in the way, and miss someone who jumps them",
                 warned && stand.Dmg > 0 && !hopHit, warned + " stood " + stand.Dmg.ToString("0") + "%, jumped " + hop.Dmg.ToString("0") + "% (" + air + " frames in the air)");
+
+            // the orchard's pecans: the shaker warns for the full 1.5 s with every nut's spot already shown, then a fighter
+            // standing on a spot gets a small bonk and one standing clear of every spot is left alone
+            int orchard = BrawlData.StageIndex("orchard");
+            var pm = new BrawlSim(BrawlData.Stages[orchard], new List<BFighterDef> { BrawlData.Fighter("gila"), BrawlData.Fighter("ben") }, 3, 0, 11);
+            var quiet = new BrInput[2];
+            int warnFrames = 0; double[] spots = null;
+            for (int i = 0; i < 60 * 60 && pm.HazPhase != 2; i++)
+            {
+                pm.Step(quiet);
+                foreach (BFighter f in pm.F) { f.Dmg = 0; f.X = f.Slot == 0 ? -300 : 300; }
+                if (pm.HazPhase == 1) { warnFrames++; if (spots == null) spots = (double[])pm.Nuts.Clone(); }
+            }
+            bool sameSpots = spots != null && spots.SequenceEqual(pm.Nuts);
+            double clear = pm.Main.L + 5;
+            foreach (double n in pm.Nuts) if (Math.Abs(n - clear) < 120) clear = pm.Main.R - 5;
+            pm.F[0].X = pm.Nuts[0]; pm.F[1].X = clear;
+            int landed = 0;
+            for (int i = 0; i < 200 && pm.HazPhase == 2; i++) { pm.Step(quiet); foreach (BrEvent e in pm.Events) if (e.K == "sfx" && e.Name == "brawl-pecan") landed++; if (i < 20) { pm.F[0].X = pm.Nuts[0]; pm.F[1].X = clear; } }
+            Check("brawl stages: the orchard's pecans are warned 1.5 s with their spots shown, all fall, bonk someone under one and miss someone clear",
+                warnFrames >= BrawlSim.HazWarn && sameSpots && landed == pm.Nuts.Length && pm.F[0].Dmg > 0 && pm.F[1].Dmg == 0, warnFrames + " frames, " + landed + " landed, under " + pm.F[0].Dmg.ToString("0") + "%, clear " + pm.F[1].Dmg.ToString("0") + "%");
         }
     }
 }

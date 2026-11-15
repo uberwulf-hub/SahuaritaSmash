@@ -5,6 +5,14 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Added
+- A new fighter from Arizona: Gila Gus, a beaded orange-and-black Gila monster. Slow and heavy, with a tongue that
+  flicks, a bite that won't let go, a rock hop home and a tail that sweeps the ground.
+- A new stage: the Pecan Orchard, Sahuarita's own. Fight on the branches, the harvest bins and the picker's basket
+  going up and down; when the tree shaker rumbles, get out from under the shadows before the pecans land. It has its
+  own tune for now.
+- Online games need everyone on this version (the cast and the stages changed).
+
 ## [0.2.0] - 2026-11-15
 
 ### Added
