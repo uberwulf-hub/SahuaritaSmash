@@ -30,7 +30,7 @@ namespace ClassicGames
         protected override bool HasSetup { get { return true; } }
         protected override bool ClearsTapsItself { get { return true; } }
 
-        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings }   // Lineup, Moves, Swings: snapshots only
+        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings, Online, OnlineJoin, OnlineLobby }   // Online*: BrawlOnline.cs (Sauce Edition)   // Lineup, Moves, Swings: snapshots only
         public Screen Menu = Screen.Title;
         public int Sel;
         // who plays: 0 off, 1 a person, 2 the computer; Level: 0 Easy, 1 Normal, 2 Hard, 3 Champion; Pick: a fighter, -1 any
@@ -157,7 +157,7 @@ namespace ClassicGames
         public int KeyRow, KeyCol;
         public bool KeyListening;
         const int KeyRows = BrawlKeys.Count + 2;
-        protected override bool TakesKey(Key k) { return State == Phase.Setup && Menu == Screen.Keys && KeyListening; }
+        protected override bool TakesKey(Key k) { return State == Phase.Setup && (Menu == Screen.Keys && KeyListening || OnlineTakesKey(k)); }
         void KeysScreenKey(Key k)
         {
             if (KeyListening)
@@ -222,6 +222,7 @@ namespace ClassicGames
         protected override bool SetupBack()
         {
             if (Menu == Screen.Title) return false;
+            if (OnlineScreen) return OnlineBack();   // online
             Sel = Menu == Screen.Keys ? 3 : 0; Menu = Screen.Title; return true;
         }
 
@@ -231,15 +232,17 @@ namespace ClassicGames
         {
             switch (Menu)
             {
+                case Screen.Online: case Screen.OnlineJoin: case Screen.OnlineLobby: OnlineKey(k); return;   // online
                 case Screen.Title:
                     {
-                        if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 5); Audio.Ui("move"); return; }
+                        if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 6); Audio.Ui("move"); return; }
                         if (k != Key.Enter && k != Key.Space) return;
                         Audio.Ui("select");
                         if (Sel == 0) { Menu = Screen.Select; Sel = 0; }
                         else if (Sel == 1) { Menu = Screen.Ladder; Sel = 0; }
                         else if (Sel == 2) { Menu = Screen.Help; }
                         else if (Sel == 3) { Menu = Screen.Keys; KeyRow = 0; KeyCol = 0; KeyListening = false; }
+                        else if (Sel == 4) { Menu = Screen.Online; Sel = 0; onlineNote = ""; }   // online (Sauce Edition)
                         else RequestExit();
                         return;
                     }
@@ -339,6 +342,7 @@ namespace ClassicGames
         // ================================================================ a match
         protected override void Reset()
         {
+            if (Online != null && Online.Match != null && Net != null) { ResetOnline(); return; }   // online
             var defs = new List<BFighterDef>();
             var who = new List<int>(); var levels = new List<int>(); var seats = new List<int>(); var names = new List<string>();
             int lives = Lives, minutes = Minutes;
@@ -390,9 +394,10 @@ namespace ClassicGames
         BrInput Read(int slot)
         {
             var i = new BrInput();
-            int seat = seatOf[slot];
-            int h = Ladder ? 0 : HumanIndex(seat);
-            bool one = Humans == 1;
+            bool net = Online != null && Net != null;   // online: this device's one person, with every key set and controller 1
+            int seat = net ? 0 : seatOf[slot];
+            int h = Ladder || net ? 0 : HumanIndex(seat);
+            bool one = Humans == 1 || net;
             bool keysA = h == 0, keysB = h == 1 || one;
             double x = 0, y = 0;
             for (int s = 0; s < 2; s++)
@@ -431,6 +436,7 @@ namespace ClassicGames
         // ---------------------------------------------------------------- the loop
         protected override void TickSetup(double dt)
         {
+            OnlineTickSetup(dt);   // online
             MusicCatchUp();
             MenuMusic(1.5);
             // controllers move round the menus too
@@ -477,8 +483,12 @@ namespace ClassicGames
             while (acc >= 1.0 / 60 && steps < 4)
             {
                 acc -= 1.0 / 60; steps++;
-                for (int s = 0; s < Sim.F.Length; s++) inputs[s] = bots[s] != null ? bots[s].Think(Sim) : (Autopilot ? new BrInput() : Read(s));
-                Sim.Step(inputs);
+                if (Online != null && Online.Match != null && Net != null) { if (!OnlineStep()) { acc = 0; break; } }   // online
+                else
+                {
+                    for (int s = 0; s < Sim.F.Length; s++) inputs[s] = bots[s] != null ? bots[s].Think(Sim) : (Autopilot ? new BrInput() : Read(s));
+                    Sim.Step(inputs);
+                }
                 WorldSteps++;
                 ClearTaps();
                 Sounds();
@@ -538,6 +548,11 @@ namespace ClassicGames
         protected override void OnKey(Key k)
         {
             if (Sim == null) return;
+            if (Step == Stage.Results && stageT > 0.8 && Online != null && Net != null)   // online: the host takes everyone back
+            {
+                if ((k == Key.Enter || k == Key.Space) && Online.IsHost) { Audio.Ui("select"); Online.ToLobby(); }
+                return;
+            }
             if (Step == Stage.Results && stageT > 0.8)
             {
                 if (k == Key.Enter || k == Key.Space) { Audio.Ui("select"); BackToSelect(); }
@@ -620,7 +635,8 @@ namespace ClassicGames
                 Gfx.Text(dc, ((int)f.Done) + "%", x + 660, y + 8, 26, 0xFFFFFFFF, 0.5, Gfx.UiBold);
                 y += 74;
             }
-            if (stageT > 0.8) MenuButtons(dc, Width / 2 + 160, Height - 60, 18, new[] { "Enter: choose again", "R: rematch" }, new[] { Key.Enter, Key.R });
+            if (stageT > 0.8 && Online != null && Net != null) { if (Online.IsHost) MenuButtons(dc, Width / 2 + 160, Height - 60, 18, new[] { "Enter: back to the lobby" }, new[] { Key.Enter }); else Gfx.Text(dc, "Waiting for the host...", Width / 2 + 160, Height - 66, 18, 0xFF93C5FD, 0.5, Gfx.UiBold); }   // online
+            else if (stageT > 0.8) MenuButtons(dc, Width / 2 + 160, Height - 60, 18, new[] { "Enter: choose again", "R: rematch" }, new[] { Key.Enter, Key.R });
         }
 
         static string Ordinal(int n) { return n == 1 ? "1st" : n == 2 ? "2nd" : n == 3 ? "3rd" : n > 0 ? n + "th" : "-"; }
@@ -659,6 +675,9 @@ namespace ClassicGames
                 case Screen.Swings: DrawSwings(dc); break;
                 case Screen.Moves: DrawMoves(dc); break;
                 case Screen.Ladder: DrawLadder(dc); break;
+                case Screen.Online: DrawOnline(dc); break;      // online
+                case Screen.OnlineJoin: DrawJoin(dc); break;
+                case Screen.OnlineLobby: DrawLobby(dc); break;
             }
         }
 
@@ -683,7 +702,7 @@ namespace ClassicGames
             }
             Logo(dc, 40, 84);
             Gfx.Text(dc, "Knock your friends off the stage. Nobody gets hurt: they just fly off with a twinkle.", Width / 2, 236, 18, 0xFFE5E7EB, 0.5, Gfx.Ui);
-            DrawMenu(dc, Width / 2, 280, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "How to play", "Controls (change the keys)", "Quit" }, Sel, i => Sel = i);
+            DrawMenu(dc, Width / 2, 280, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "How to play", "Controls (change the keys)", "Play online (with others)", "Quit" }, Sel, i => Sel = i);
         }
 
         void DrawHelp(DrawingContext dc)

@@ -188,6 +188,20 @@ namespace ClassicGames
             }
         }
 
+        /// <summary>The seat whose buttons the match is waiting for (-1 when none).</summary>
+        public int WaitingFor()
+        {
+            int f = Sim.Frame;
+            if (f < Setup.Delay) return -1;
+            for (int i = 0; i < owner.Length; i++)
+            {
+                int at;
+                if (owner[i] == 0 || (handAt.TryGetValue(i, out at) && f >= at)) continue;
+                if (!known[i].ContainsKey(f)) return i;
+            }
+            return -1;
+        }
+
         /// <summary>Steps one frame if it can; false while waiting for someone's buttons.</summary>
         public bool TryStep()
         {

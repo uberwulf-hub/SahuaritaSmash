@@ -5,6 +5,11 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Added
+- Play online, like Race Track Mayhem: host a game on your home network (the others find it under Join) or over
+  the internet (a 4-letter code for family in other houses), pick fighters in the lobby, add computer players, and
+  fight on separate computers, phones and tablets. Everyone's match stays exactly the same.
+
 ## [0.1.1] - 2026-11-14
 
 ### Changed

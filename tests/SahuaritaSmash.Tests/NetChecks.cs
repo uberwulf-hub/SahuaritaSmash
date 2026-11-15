@@ -48,6 +48,110 @@ namespace ClassicGames
             Check("net: a device whose match drifted is caught (the host stops the match with a message)", r3.Broken != null, r3.Info);
         }
 
+        /// <summary>The lobby: hello, refusals, picks, the host's rules, a match on every device, back to the lobby. Over
+        /// the pretend network, then the real home-network connection on this computer only (127.0.0.1).</summary>
+        public static void NetSessionChecks()
+        {
+            var room = new LoopbackRoom(1, 1, 5);
+            var host = new NetSession(room.Join(), false, "Kim", 0);
+            var ben = new NetSession(room.Join(), false, "Kim", 4);
+            Func<int, bool> pump = n => { for (int i = 0; i < n; i++) { room.Pump(); host.Poll(); ben.Poll(); } return true; };
+            pump(10);
+            Check("net lobby: a guest says hello and both see two players (a name already taken gets a number)", host.Players.Count == 2 && ben.Players.Count == 2 && ben.State == NetSession.Phase.Lobby && host.Players[1].Name == "Kim 2", string.Join(",", host.Players.Select(p => p.Name)));
+            ben.Pick(7); host.Stage = 2; host.Lives = 2; host.Cpus = 1; host.CpuLevel = 6; host.SendLobby();
+            pump(10);
+            Check("net lobby: picks and the host's rules reach everyone", ben.Players.First(p => p.Peer == 2).Fighter == 7 && ben.Stage == 2 && ben.Lives == 2 && ben.Cpus == 1, "");
+            int started = 0; ben.MatchStarted += () => started++;
+            host.StartMatch(4242);
+            pump(10);
+            Check("net lobby: the host starts and both devices have the same match (2 people, 1 computer)", started == 1 && ben.Match != null && ben.Match.Setup.Seats.Count == 3 && ben.Match.Setup.Seed == 4242 && ben.Match.Sim.Stage.Id == host.Match.Sim.Stage.Id, "");
+            for (int t = 0; t < 900; t++)
+            {
+                room.Pump(); host.Poll(); ben.Poll();
+                foreach (var s in new[] { host, ben }) { foreach (int seat in s.Match.MySeats()) s.Match.Local(seat, new BrInput { X = t % 120 < 60 ? 1 : -1, Attack = t % 17 == 0 }); for (int k = 0; k < 2 && s.Match.Sim.Frame < 600; k++) if (!s.Match.TryStep()) break; }
+            }
+            Check("net lobby: the match runs the same on both", host.Match.Sim.Frame == 600 && ben.Match.Sim.Frame == 600 && host.Match.Sim.Checksum() == ben.Match.Sim.Checksum(), host.Match.Sim.Frame + " " + ben.Match.Sim.Frame);
+            int back = 0; ben.BackToLobby += () => back++;
+            host.ToLobby(); pump(10);
+            Check("net lobby: the host sends everyone back to the lobby", back == 1 && ben.State == NetSession.Phase.Lobby && ben.Match == null, "");
+            var other = new NetSession(room.Join(), false, "Eve", 0);
+            // a device of another game says hello: refused with words
+            other.Net.Send(1, new NetWriter(NetProtocol.Hello).S("RaceTrackMayhem").I(1).S("Eve").I(0).Done());
+            for (int i = 0; i < 10; i++) { room.Pump(); host.Poll(); ben.Poll(); other.Net.Poll(out NetEvent _); }
+            var oldie = new NetSession(room.Join(), false, "Old", 0);
+            oldie.Net.Send(1, new NetWriter(NetProtocol.Hello).S(NetProtocol.Game).I(NetProtocol.Version - 1).S("Old").I(0).Done());
+            string refusal = null;
+            for (int i = 0; i < 10 && refusal == null; i++)
+            {
+                room.Pump(); host.Poll();
+                while (oldie.Net.Poll(out NetEvent e)) if (e.Kind == NetEventKind.Data && e.Data[0] == NetProtocol.Refuse) refusal = new NetReader(e.Data).S();
+            }
+            Check("net lobby: another game or an older version is refused, in plain words", host.Players.Count == 2 && refusal != null && refusal.Contains("older"), refusal ?? "none");
+            ben.Leave(); pump(5);
+            Check("net lobby: someone leaving is taken off the host's list", host.Players.Count == 1, host.Players.Count.ToString());
+            host.Leave();
+
+            // the real home-network connection, on this computer only
+            var lan = LanTransport.Host("Kim's PC", true);
+            var lh = new NetSession(lan, false, "Kim", 0);
+            var found = LanTransport.Look(300, true);
+            var lg = new NetSession(LanTransport.Join("127.0.0.1:" + lan.Port), false, "Ben", 3);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < 4000 && (lh.Players.Count < 2 || lg.State != NetSession.Phase.Lobby)) { lh.Poll(); lg.Poll(); System.Threading.Thread.Sleep(10); }
+            Check("net home network: a guest joins the host over TCP (on this computer)", lh.Players.Count == 2 && lg.State == NetSession.Phase.Lobby && lg.Players.Count == 2, lh.Players.Count + " " + lg.State + " " + lg.Reason);
+            lh.Cpus = 0; lh.StartMatch(99);
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 4000 && lg.Match == null) { lh.Poll(); lg.Poll(); System.Threading.Thread.Sleep(5); }
+            while (sw.ElapsedMilliseconds < 15000 && lg.Match != null && (lh.Match.Sim.Frame < 300 || lg.Match.Sim.Frame < 300))
+            {
+                lh.Poll(); lg.Poll();
+                foreach (var s in new[] { lh, lg }) { foreach (int seat in s.Match.MySeats()) s.Match.Local(seat, new BrInput { X = 1, Attack = s.Match.Sim.Frame % 23 == 0 }); for (int k = 0; k < 2 && s.Match.Sim.Frame < 300; k++) if (!s.Match.TryStep()) break; }
+                System.Threading.Thread.Sleep(1);
+            }
+            Check("net home network: a match over TCP stays the same on both", lg.Match != null && lh.Match.Sim.Frame == 300 && lg.Match.Sim.Frame == 300 && lh.Match.Sim.Checksum() == lg.Match.Sim.Checksum(), (lg.Match == null ? "no match" : lh.Match.Sim.Frame + " " + lg.Match.Sim.Frame));
+            lh.Leave();
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 3000 && lg.State != NetSession.Phase.Closed) { lg.Poll(); System.Threading.Thread.Sleep(10); }
+            Check("net home network: when the host leaves, the guest is told", lg.State == NetSession.Phase.Closed && lg.Reason != null, lg.Reason ?? "");
+            Check("net home network: asking who's hosting finds the host, with its name, port and version", found.Count == 1 && found[0].Name == "Kim's PC" && found[0].SameVersion && found[0].Address.EndsWith(lan.Port == LanTransport.FirstPort ? "127.0.0.1" : ":" + lan.Port), found.Count + " found " + string.Join(",", found.Select(f => f.Name + "@" + f.Address)));
+            lg.Leave();
+        }
+
+        /// <summary>The internet connection, against Race Track Mayhem's relay running on this computer (its local.mjs, the
+        /// same room rules as the Cloudflare one). Only when SMASH_RELAY_URL is set (e.g. ws://127.0.0.1:24690).</summary>
+        public static void NetRelayChecks()
+        {
+            string url = Environment.GetEnvironmentVariable("SMASH_RELAY_URL");
+            if (string.IsNullOrEmpty(url)) { Console.WriteLine("   (skipped: set SMASH_RELAY_URL to a relay on this computer)"); return; }
+            var host = new NetSession(RelayTransport.Host(url), true, "Kim", 0);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < 5000 && (host.State != NetSession.Phase.Lobby || host.Net.Address.Length != 4)) { host.Poll(); System.Threading.Thread.Sleep(10); }
+            string code = host.Net.Address;
+            Check("net relay: hosting gets a 4-letter code", code.Length == 4 && host.State == NetSession.Phase.Lobby, code + " " + host.State + " " + host.Reason);
+            var guest = new NetSession(RelayTransport.Join(url, code.ToLowerInvariant()), true, "Ben", 5);
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 5000 && (host.Players.Count < 2 || guest.State != NetSession.Phase.Lobby)) { host.Poll(); guest.Poll(); System.Threading.Thread.Sleep(10); }
+            Check("net relay: a guest joins with the code (any case) and both see the lobby", host.Players.Count == 2 && guest.Players.Count == 2, host.Players.Count + " " + guest.State + " " + guest.Reason);
+            host.Cpus = 1; host.StartMatch(7);
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 5000 && guest.Match == null) { host.Poll(); guest.Poll(); System.Threading.Thread.Sleep(5); }
+            while (sw.ElapsedMilliseconds < 20000 && guest.Match != null && (host.Match.Sim.Frame < 400 || guest.Match.Sim.Frame < 400))
+            {
+                host.Poll(); guest.Poll();
+                foreach (var s in new[] { host, guest }) { foreach (int seat in s.Match.MySeats()) s.Match.Local(seat, new BrInput { X = -1, Special = s.Match.Sim.Frame % 41 == 0 }); for (int k = 0; k < 2 && s.Match.Sim.Frame < 400; k++) if (!s.Match.TryStep()) break; }
+                System.Threading.Thread.Sleep(1);
+            }
+            Check("net relay: a match through the relay stays the same on both", guest.Match != null && host.Match.Sim.Frame == 400 && guest.Match.Sim.Frame == 400 && host.Match.Sim.Checksum() == guest.Match.Sim.Checksum(), guest.Match == null ? "no match" : host.Match.Sim.Frame + " " + guest.Match.Sim.Frame);
+            var lost = new NetSession(RelayTransport.Join(url, "ZZZZ"), true, "Eve", 0);
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 5000 && lost.State != NetSession.Phase.Closed) { lost.Poll(); System.Threading.Thread.Sleep(10); }
+            Check("net relay: a code with no game says so, in this game's words", lost.State == NetSession.Phase.Closed && lost.Reason != null && lost.Reason.Contains("game") && !lost.Reason.Contains("race"), lost.Reason ?? "");
+            host.Leave();
+            sw.Restart();
+            while (sw.ElapsedMilliseconds < 5000 && guest.State != NetSession.Phase.Closed) { guest.Poll(); System.Threading.Thread.Sleep(10); }
+            Check("net relay: when the host leaves, the guest is told", guest.State == NetSession.Phase.Closed, guest.Reason ?? "");
+        }
+
         sealed class PlayResult { public bool Same; public int Frame, Stalls; public long Sum, Replay; public string Broken, Info; }
 
         static PlayResult Play(NetMatchSetup setup, int target, int delay, int jitter, int leaveAt, bool drift)
