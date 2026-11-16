@@ -5,6 +5,8 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-16
+
 ### Added
 - A new fighter from Arizona: Gila Gus, a beaded orange-and-black Gila monster. Slow and heavy, with a tongue that
   flicks, a bite that won't let go, a rock hop home and a tail that sweeps the ground.
