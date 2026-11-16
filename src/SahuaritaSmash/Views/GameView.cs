@@ -45,6 +45,7 @@ namespace SahuaritaSmash.Views
             bool on = TouchActive;
             if (!on && touchWas) Touch.Clear();
             KartPads.Fake[0] = on ? Touch.Pad : null;
+            Game.TouchMode = TouchOn;
             touchWas = on;
         }
 

@@ -10,6 +10,9 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 - Your own songs no longer start with a second of the old built-in tune: the game waits for the song to be ready (the
   first screen may be quiet for a moment while the app starts), and only plays the built-in tune if a song takes very
   long or can't be read.
+- The pause menu has big buttons you can tap on a phone: Keep playing, Restart, Main menu, music and sounds (before,
+  it listed keyboard keys, and its rows were too small to tap). Playing online, the menu has Back to the game and
+  Leave this game.
 
 ## [0.3.0] - 2026-11-16
 

@@ -758,12 +758,7 @@ namespace ClassicGames
             dc.DrawRectangle(Gfx.B(0xA0000000), null, new Rect(0, 0, Width, Height));
             Gfx.Panel(dc, new Rect(x, y, w, h), 0xF0101522, 0xFFFB923C);
             Gfx.Text(dc, "Paused", x + 40 + menuW / 2, y + 20, 34, 0xFFFDE047, 0.5, Gfx.UiBold);
-            MenuRows(dc, x + 40, y + 84, 18, menuW, new[] {
-                "P or Esc", "keep playing",
-                "R", "start again",
-                "Q", "back to the menu",
-                "M", "music " + (Audio.MusicOn ? "off" : "on"),
-                "N", "sounds " + (Audio.SoundsOn ? "off" : "on") }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
+            BigButtons(dc, x + 30, y + 84, menuW, PauseMenu("Main menu"), new[] { "P / Esc", "R", "Q", "M", "N" }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
             DrawPauseControls(dc, x + 440, y + 26, x + w - 30, y + h - 20);
         }
 

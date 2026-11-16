@@ -98,6 +98,39 @@ namespace ClassicGames
             }
             Save(dv.Bitmap, "Touch-phone");
             view.Touch.Clear();
+            dv.Dispose();
+
+            // the pause menu by touch (0.3.1, Andrew: "from the pause menu on the phone there's no restart, main menu"):
+            // big buttons with plain words, 44+ pixels tall on a phone, and tapping them does what they say
+            for (int i = 0; i < 20; i++) Frame(view, g);
+            Func<string, HitArea> find = label => g.MouseHits.FirstOrDefault(h => h.Label == label);
+            Action<string> tap = label => { var h = find(label); if (h != null) { var c = new Point(h.Area.X + h.Area.Width / 2, h.Area.Y + h.Area.Height / 2); g.PointerDown(c, false); g.PointerUp(c, false); } };
+            double scale = Math.Min(phone.Width / g.Width, phone.Height / g.Height);
+            g.Pause(); Frame(view, g);
+            string[] want = { "Keep playing", "Restart", "Main menu", "Music on", "Sounds off" };
+            bool every = want.All(w => find(w) != null);
+            bool tall = want.All(w => find(w) == null || find(w).Area.Height * scale >= 44);
+            var pic = new DrawingVisual((int)phone.Width, (int)phone.Height);
+            using (DrawingContext dc = pic.RenderOpen())
+            {
+                double ox = (phone.Width - g.Width * scale) / 2, oy = (phone.Height - g.Height * scale) / 2;
+                dc.Ctx.FillRectangle(Avalonia.Media.Brushes.Black, new Rect(phone));
+                using (dc.Ctx.PushTransform(Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(ox, oy))) GameView.RenderGame(g, new DrawingContext(dc.Ctx));
+            }
+            Save(pic.Bitmap, "Pause-phone");
+            pic.Dispose();
+            Check("touch: the pause menu has big buttons with plain words (Keep playing, Restart, Main menu, music, sounds), 44+ pixels tall on a phone",
+                every && tall, string.Join(", ", g.MouseHits.Select(h => h.Label + " " + (h.Area.Height * scale).ToString("0")).ToArray()));
+            tap("Keep playing"); Frame(view, g);
+            bool resumed = !g.Paused && g.State == Phase.Play;
+            for (int i = 0; i < 60; i++) Frame(view, g);
+            int before = g.Sim.Frame;
+            g.Pause(); Frame(view, g); tap("Restart"); Frame(view, g);
+            bool restarted = !g.Paused && g.State == Phase.Play && g.Sim.Frame < before;
+            g.Pause(); Frame(view, g); tap("Main menu"); Frame(view, g);
+            bool menu = !g.Paused && g.State == Phase.Setup && g.Menu == BrawlGame.Screen.Title;
+            Check("touch: tapping Keep playing, Restart and Main menu in the pause menu does what they say", resumed && restarted && menu, resumed + " " + restarted + " " + menu);
+            Game.TouchMode = false;
             KartPads.Fake[0] = null;
             Audio.StopMusic(); Audio.StopEffects();
         }
