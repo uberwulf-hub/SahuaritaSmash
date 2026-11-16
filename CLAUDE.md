@@ -66,7 +66,7 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   and `BringAcrossFromAppHub` (once, on Windows, only when we have nothing yet: App Hub's Brawl ladder scores and
   `brawl-keys.txt`, read only). `App.Testing` skips the start-up work (no sound); `App.EnsureSound` starts the sound once `App.MakeAudioOut` is known (Android's
   `Application.cs` sets it before the app starts: in 0.1.0 the activity set it too late and Android was silent; the
-  activity routes the volume buttons to media); `App.QuitApp` is Android's way out; the Windows window is full screen without a title bar (F11 / Alt+Enter: a
+  activity routes the volume buttons to media, and since 0.3.1 turns them into the music volume itself in `DispatchKeyEvent`, because Avalonia's view took them as keys; `GameView.SystemKey` leaves volume / media keys alone too); `App.QuitApp` is Android's way out; the Windows window is full screen without a title bar (F11 / Alt+Enter: a
   window), Android hides the system bars (`MainActivity.FullScreen`); `App.GoneToBackground`
   (Android's OnPause) pauses the game. `Views\TouchControls.cs`: the on-screen stick (up jumps) and five buttons (Attack, Shield, Special,
   Strong, Grab; no Jump since 0.1.1, Andrew; Shield on the right because Shield + stick rolls and dodges), controller 1 to
@@ -174,7 +174,7 @@ stride from real speed, double-jump flip, squash / stretch, swoosh from `TipOf`;
 gain), brought in only by `tools\Import-BrawlMusic.ps1` (finds the beat near each prompt's tempo, loops whole bars,
 picks the better of Suno's two versions, `-Preview` writes seam WAVs). `BrawlMusic.cs` decodes with Media Foundation
 on a background thread (`MfDecoder`), keeps 3; `Song.FromPcm` / `SongPlayer.NextRecorded` play it (60 ms seam
-crossfade); the built-in tune plays until it's ready or when it's missing (`PlayMusic` / `MusicCatchUp`). Tests and
+crossfade); the game waits for a recorded song still decoding (`BrawlMusic.Coming`, `WaitingForSong`) and plays the built-in tune only after `SongWaitSeconds` (8) or when it's missing or unreadable (`PlayMusic` / `MusicCatchUp`; since 0.3.1: before, the built-in tune played first and the song swapped in). Tests and
 snapshots set `BrawlMusic.Enabled = false` and never decode the files (`BrawlMusicTests.cs` uses made-up PCM). Never
 add a song made on a free Suno plan, and never a song by anyone else.
 Snapshots `-Game Brawl -Show Title|Select|Help|Ladder|Fight|Fight2|Cast|Countdown|Results|Ladder1|Giant -Level 1-5`.

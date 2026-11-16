@@ -63,6 +63,30 @@ public class MainActivity : AvaloniaMainActivity
         if (hasFocus) FullScreen();
     }
 
+    /// <summary>The volume buttons always change the game's volume (music and sounds), with Android's own volume bar.
+    /// They are handled here, before the game's screen sees any key: Avalonia's view took them as key presses, so
+    /// in 0.3.0 the buttons did nothing in the game (Andrew).</summary>
+    public override bool DispatchKeyEvent(global::Android.Views.KeyEvent e)
+    {
+        var code = e.KeyCode;
+        if (code == global::Android.Views.Keycode.VolumeUp || code == global::Android.Views.Keycode.VolumeDown || code == global::Android.Views.Keycode.VolumeMute)
+        {
+            if (e.Action == global::Android.Views.KeyEventActions.Down)
+            {
+                try
+                {
+                    var audio = (global::Android.Media.AudioManager)GetSystemService(AudioService);
+                    var dir = code == global::Android.Views.Keycode.VolumeUp ? global::Android.Media.Adjust.Raise
+                        : code == global::Android.Views.Keycode.VolumeDown ? global::Android.Media.Adjust.Lower : global::Android.Media.Adjust.ToggleMute;
+                    audio.AdjustStreamVolume(global::Android.Media.Stream.Music, dir, global::Android.Media.VolumeNotificationFlags.ShowUi);
+                }
+                catch (System.Exception ex) { ClassicGames.CrashLog.Write("the volume buttons", ex, false); }
+            }
+            return true;
+        }
+        return base.DispatchKeyEvent(e);
+    }
+
     protected override void OnPause()
     {
         App.GoneToBackground();

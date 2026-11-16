@@ -69,18 +69,37 @@ namespace ClassicGames
         public BrawlGame() { Tunes = Music.For("Brawl"); BrawlMusic.Want("menu", "select"); }
 
         // ================================================================ the menus
-        // the music: a recorded song when there is one (BrawlMusic.cs), else the built-in tune; when the recorded one
-        // finishes decoding while its built-in stand-in plays, it takes over with a crossfade
-        string musicRole; Song musicFallback;
+        // the music: a recorded song when there is one (BrawlMusic.cs), else the built-in tune. A recorded song still
+        // being decoded is waited for (whatever plays now goes on, or quiet at the very start) rather than starting the
+        // built-in tune for a moment and swapping (0.3.1, Andrew: "the music starts off for a second with the old
+        // soundtrack, then switches over to the suno one"); only after SongWaitSeconds, or if it can't be decoded, does
+        // the built-in tune play, and then the recorded one still takes over once it is ready
+        string musicRole; Song musicFallback; double musicFade; long musicWaitSince = -1;
+        /// <summary>How long to wait for a recorded song before the built-in tune plays instead.</summary>
+        public static double SongWaitSeconds = 8;
+        /// <summary>Waiting for a recorded song to finish decoding (the checks).</summary>
+        public bool WaitingForSong { get { return musicWaitSince >= 0; } }
         void PlayMusic(string role, Song fallback, double fade)
         {
-            musicRole = role; musicFallback = fallback;
-            Song s = BrawlMusic.Get(role) ?? fallback;
+            musicRole = role; musicFallback = fallback; musicFade = fade; musicWaitSince = -1;
+            Song s = BrawlMusic.Get(role);
+            if (s == null && BrawlMusic.Coming(role)) { musicWaitSince = Environment.TickCount64; return; }
+            s = s ?? fallback;
             if (s != null && Audio.Current != s) Audio.Crossfade(s, fade);
         }
         void MusicCatchUp()
         {
-            if (musicRole == null || Audio.Current != musicFallback) return;
+            if (musicRole == null) return;
+            if (musicWaitSince >= 0)
+            {
+                Song r = BrawlMusic.Get(musicRole);
+                if (r != null) { musicWaitSince = -1; if (Audio.Current != r) Audio.Crossfade(r, Math.Max(0.5, musicFade)); return; }
+                if (BrawlMusic.Coming(musicRole) && Environment.TickCount64 - musicWaitSince < SongWaitSeconds * 1000) return;
+                musicWaitSince = -1;
+                if (musicFallback != null && Audio.Current != musicFallback) Audio.Crossfade(musicFallback, musicFade);
+                return;
+            }
+            if (Audio.Current != musicFallback) return;
             Song s = BrawlMusic.Get(musicRole);
             if (s != null) Audio.Crossfade(s, 1.5);
         }
@@ -89,7 +108,7 @@ namespace ClassicGames
         void MenuMusic(double fade)
         {
             string want = Menu == Screen.Select || Menu == Screen.Ladder ? "select" : "menu";
-            if (musicRole != want || Audio.Current == null) PlayMusic(want, want == "select" ? Music.BrawlFill(0) : Tunes.Theme, fade);
+            if (musicRole != want || (Audio.Current == null && musicWaitSince < 0)) PlayMusic(want, want == "select" ? Music.BrawlFill(0) : Tunes.Theme, fade);
         }
         double resultsMusicAt;
         // hold music while paused (Andrew, 2026-10-31: "like elevator music"); back to the stage song on resuming
@@ -455,7 +474,7 @@ namespace ClassicGames
         protected override void Tick(double dt)
         {
             if (Sim == null) return;
-            if (Step != Stage.Results) MusicCatchUp();
+            if (Step != Stage.Results || WaitingForSong) MusicCatchUp();
             stageT += dt;
             bool startNow = PadStart(); if (startNow && !padStartWas && Step == Stage.Fight) Pause(); padStartWas = startNow;
             switch (Step)
@@ -524,7 +543,7 @@ namespace ClassicGames
         void MatchOver()
         {
             resultsDone = true;
-            if (!Ladder) { Step = Stage.Results; stageT = 0; musicRole = null; Audio.Jingle(ResultsJingle()); return; }
+            if (!Ladder) { Step = Stage.Results; stageT = 0; musicRole = null; musicWaitSince = -1; Audio.Jingle(ResultsJingle()); return; }
             BFighter me = Sim.F[0];
             if (Sim.Winner == 0)
             {
@@ -739,12 +758,7 @@ namespace ClassicGames
             dc.DrawRectangle(Gfx.B(0xA0000000), null, new Rect(0, 0, Width, Height));
             Gfx.Panel(dc, new Rect(x, y, w, h), 0xF0101522, 0xFFFB923C);
             Gfx.Text(dc, "Paused", x + 40 + menuW / 2, y + 20, 34, 0xFFFDE047, 0.5, Gfx.UiBold);
-            MenuRows(dc, x + 40, y + 84, 18, menuW, new[] {
-                "P or Esc", "keep playing",
-                "R", "start again",
-                "Q", "back to the menu",
-                "M", "music " + (Audio.MusicOn ? "off" : "on"),
-                "N", "sounds " + (Audio.SoundsOn ? "off" : "on") }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
+            BigButtons(dc, x + 30, y + 84, menuW, PauseMenu("Main menu"), new[] { "P / Esc", "R", "Q", "M", "N" }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
             DrawPauseControls(dc, x + 440, y + 26, x + w - 30, y + h - 20);
         }
 

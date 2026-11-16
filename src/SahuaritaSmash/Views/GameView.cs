@@ -45,6 +45,7 @@ namespace SahuaritaSmash.Views
             bool on = TouchActive;
             if (!on && touchWas) Touch.Clear();
             KartPads.Fake[0] = on ? Touch.Pad : null;
+            Game.TouchMode = TouchOn;
             touchWas = on;
         }
 
@@ -169,16 +170,30 @@ namespace SahuaritaSmash.Views
         {
             base.OnKeyDown(e);
             Game g = game;
-            if (g == null || e.Key == Key.None) return;
+            if (g == null || e.Key == Key.None || SystemKey(e.Key)) return;
             bool repeat = !down.Add(e.Key);
             Key k = e.Key;
             Safe(() => g.KeyDown(k, repeat), "a key");
             e.Handled = true;
         }
 
+        /// <summary>Keys the device keeps for itself: the volume and media keys are never the game's, so they still turn
+        /// the sound up and down (0.3.1, Andrew: "I can't control the volume in game").</summary>
+        public static bool SystemKey(Key k)
+        {
+            switch (k)
+            {
+                case Key.VolumeUp: case Key.VolumeDown: case Key.VolumeMute:
+                case Key.MediaPlayPause: case Key.MediaNextTrack: case Key.MediaPreviousTrack: case Key.MediaStop:
+                    return true;
+            }
+            return false;
+        }
+
         protected override void OnKeyUp(KeyEventArgs e)
         {
             base.OnKeyUp(e);
+            if (SystemKey(e.Key)) return;
             down.Remove(e.Key);
             Game g = game;
             if (g == null) return;

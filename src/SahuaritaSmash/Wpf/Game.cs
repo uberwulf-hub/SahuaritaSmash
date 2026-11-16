@@ -236,6 +236,31 @@ namespace ClassicGames
             }
         }
 
+        /// <summary>The person is playing by touch (Android, or a touched Windows screen): key names are left off buttons.</summary>
+        public static bool TouchMode;
+        /// <summary>The height of a big menu button in game units: 44+ screen pixels even on a small phone (the game's
+        /// 720 rows shown about 400 high).</summary>
+        public const double BigButton = 80;
+
+        /// <summary>Big buttons in a column, each pressing its key (the pause menu, made for thumbs: 0.3.1, Andrew: "from
+        /// the pause menu on the phone there's no restart, main menu etc"). The key is shown small at the right unless
+        /// the person plays by touch. Returns the y below them.</summary>
+        public double BigButtons(DrawingContext dc, double x, double y, double width, string[] labels, string[] keyNames, Key[] keys)
+        {
+            for (int i = 0; i < labels.Length; i++)
+            {
+                var r = new Rect(x, y, width, BigButton);
+                bool lit = Hovered(r);
+                dc.DrawRoundedRectangle(Gfx.B(lit ? 0xFF1E3A8A : 0xE0172036), Gfx.P(lit ? 0xFF60A5FA : 0xFF2C3A55, lit ? 2.5 : 1.5), r, 16, 16);
+                Gfx.Text(dc, labels[i], x + 26, y + BigButton / 2 - 15, 24, 0xFFFFFFFF, 0, Gfx.UiBold);
+                if (!TouchMode && keyNames != null && i < keyNames.Length && keyNames[i] != null)
+                    Gfx.Text(dc, keyNames[i], x + width - 22, y + BigButton / 2 - 10, 16, 0xFF93C5FD, 1, Gfx.Ui);
+                AddKeyHit(r, labels[i], keys[i]);
+                y += BigButton + 10;
+            }
+            return y;
+        }
+
         /// <summary>Like Gfx.Keys (pairs of keys and what they do), but each row is a button that presses its key.</summary>
         public double MenuRows(DrawingContext dc, double x, double y, double size, double width, string[] pairs, Key[] keys)
         {
@@ -554,30 +579,31 @@ namespace ClassicGames
 
         protected virtual void DrawPause(DrawingContext dc)
         {
-            double w = 420, h = 290, x = (Width - w) / 2, y = (Height - h) / 2;
+            double w = 480, h = 84 + 5 * (BigButton + 10) + 16, x = (Width - w) / 2, y = (Height - h) / 2;
             dc.DrawRectangle(Gfx.B(0xA0000000), null, new Rect(0, 0, Width, Height));
             if (Net != null)
             {
                 // the others keep playing: this is only a menu
-                w = 500; h = 250; x = (Width - w) / 2;
+                w = 560; h = 110 + 4 * (BigButton + 10) + 16; x = (Width - w) / 2; y = (Height - h) / 2;
                 Gfx.Panel(dc, new Rect(x, y, w, h));
                 Gfx.Text(dc, "Menu", Width / 2, y + 18, 34, 0xFFE6E9F0, 0.5, Gfx.UiBold);
                 Gfx.Text(dc, "The game keeps going for everyone while this is open.", Width / 2, y + 66, 15, 0xFF8C93A5, 0.5);
-                MenuRows(dc, x + 40, y + 100, 18, w - 56, new[] {
-                    "P or Esc", "back to the game",
-                    "Q", "leave this game (the others are told)",
-                    "M", "music " + (Audio.MusicOn ? "off" : "on"),
-                    "N", "sounds " + (Audio.SoundsOn ? "off" : "on") }, new[] { Key.Escape, Key.Q, Key.M, Key.N });
+                BigButtons(dc, x + 30, y + 110, w - 60, PauseMenuOnline(), new[] { "P / Esc", "Q", "M", "N" }, new[] { Key.Escape, Key.Q, Key.M, Key.N });
                 return;
             }
             Gfx.Panel(dc, new Rect(x, y, w, h));
             Gfx.Text(dc, "Paused", Width / 2, y + 20, 34, 0xFFE6E9F0, 0.5, Gfx.UiBold);
-            MenuRows(dc, x + 50, y + 84, 18, w - 76, new[] {
-                "P or Esc", "keep playing",
-                "R", "start again",
-                "Q", "back to " + (HasSetup ? "the menu" : "the games"),
-                "M", "music " + (Audio.MusicOn ? "off" : "on"),
-                "N", "sounds " + (Audio.SoundsOn ? "off" : "on") }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
+            BigButtons(dc, x + 30, y + 84, w - 60, PauseMenu(HasSetup ? "Main menu" : "Back to the games"), new[] { "P / Esc", "R", "Q", "M", "N" }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
+        }
+
+        /// <summary>The pause menu's words: keep playing, start again, the way back, music, sounds.</summary>
+        protected static string[] PauseMenu(string back)
+        {
+            return new[] { "Keep playing", "Restart", back, Audio.MusicOn ? "Music off" : "Music on", Audio.SoundsOn ? "Sounds off" : "Sounds on" };
+        }
+        protected static string[] PauseMenuOnline()
+        {
+            return new[] { "Back to the game", "Leave this game", Audio.MusicOn ? "Music off" : "Music on", Audio.SoundsOn ? "Sounds off" : "Sounds on" };
         }
 
         /// <summary>A vertical menu for setup screens. Returns the y below it.</summary>
