@@ -877,7 +877,7 @@ namespace ClassicGames
                 BFighterDef d = BrawlData.Fighters[i];
                 BMove m = d.M(id);
                 if (m == null) continue;
-                double cx = 128 + (i % 5) * 256, base_ = i < 5 ? 320 : 670;
+                double cx = 107 + (i % 6) * 213, base_ = i < 6 ? 320 : 670;
                 double sc = 140 / d.Height;
                 var w = new BFighter { D = d, St = BS.Attack, Mv = m, MF = Math.Max(0, m.FirstActive - 1), Face = 1, Slot = 0, Ground = !air, AirMove = air };
                 dc.PushOpacity(0.35);
@@ -890,14 +890,14 @@ namespace ClassicGames
             }
         }
 
-        /// <summary>Snapshots only (-Show Lineup): every fighter large, five to a row, to compare their shapes.</summary>
+        /// <summary>Snapshots only (-Show Lineup): every fighter large, six to a row, to compare their shapes.</summary>
         void DrawLineup(DrawingContext dc)
         {
             dc.DrawRectangle(Gfx.B(0xF0101522), null, new Rect(0, 0, Width, Height));
             int n = BrawlData.Fighters.Count;
             for (int i = 0; i < n; i++)
             {
-                double cx = 128 + (i % 5) * 256, base_ = i < 5 ? 330 : 680;
+                double cx = 107 + (i % 6) * 213, base_ = i < 6 ? 330 : 680;
                 View.Portrait(dc, BrawlData.Fighters[i], cx - 10, base_, 270, T, false, BS.Idle);
                 Gfx.Text(dc, BrawlData.Fighters[i].Name, cx, base_ + 6, 16, 0xFFE5E7EB, 0.5, Gfx.UiBold);
             }
@@ -907,8 +907,8 @@ namespace ClassicGames
         {
             Gfx.Text(dc, "Choose your fighters", 150, 18, 34, 0xFFFDE047, 0, Gfx.UiBold);
             // the cast: click one to give it to the player being chosen for
-            int n = BrawlData.Fighters.Count, cols = 5;
-            double gx = 640, gy = 70, cw = 120, ch = 168;
+            int n = BrawlData.Fighters.Count, cols = 5, rows = (n + cols - 1) / cols;
+            double gx = 640, gy = 70, cw = 120, ch = rows > 2 ? 132 : 168, ph = rows > 2 ? 80 : 108;
             int focusSeat = Sel < 8 ? Sel / 2 : -1;
             for (int i = 0; i < n; i++)
             {
@@ -917,7 +917,7 @@ namespace ClassicGames
                 var r = new Rect(x, y, cw - 8, ch - 8);
                 bool lit = Hovered(r);
                 dc.DrawRoundedRectangle(Gfx.B(lit ? 0xE0233050 : 0xD0131A2A), Gfx.P(lit ? 0xFF60A5FA : 0xFF2C3A55, lit ? 2 : 1), r, 12, 12);
-                View.Portrait(dc, d, x + (cw - 8) / 2, y + ch - 44, Math.Min(108, d.Height * 1.05), T + i * 0.3, false, BS.Idle);
+                View.Portrait(dc, d, x + (cw - 8) / 2, y + ch - 44, Math.Min(ph, d.Height * (rows > 2 ? 0.8 : 1.05)), T + i * 0.3, false, BS.Idle);
                 Gfx.Text(dc, d.Name, x + (cw - 8) / 2, y + ch - 38, 14, 0xFFFFFFFF, 0.5, Gfx.UiBold);
                 // who has picked it
                 int k = 0;
@@ -965,8 +965,8 @@ namespace ClassicGames
             }
             // the chosen one's details, and the stage
             int show = focusSeat >= 0 && Pick[focusSeat] >= 0 ? Pick[focusSeat] : -1;
-            double iy = gy + 2 * ch + 8;
-            dc.DrawRoundedRectangle(Gfx.B(0xD0131A2A), Gfx.P(0xFF2C3A55, 1), new Rect(gx, iy, cols * cw - 8, 220), 12, 12);
+            double iy = gy + rows * ch + 8;
+            dc.DrawRoundedRectangle(Gfx.B(0xD0131A2A), Gfx.P(0xFF2C3A55, 1), new Rect(gx, iy, cols * cw - 8, rows > 2 ? 196 : 220), 12, 12);
             if (show >= 0)
             {
                 BFighterDef d = BrawlData.Fighters[show];
@@ -1184,6 +1184,15 @@ namespace ClassicGames
                     for (int i = 0; i < 60 * 600; i++)
                     {
                         if (Sim.Hazard == "javelina" && (level == 2 ? Sim.HazPhase == 1 && Sim.HazT < 40 : Sim.HazPhase == 2 && (Sim.HazX - Sim.HazDir * 100) * Sim.HazDir > -40)) break;
+                        Update(1.0 / 60);
+                    }
+                    break;
+                case "Pecans":
+                    // the orchard's tree shaker: -Level 1 the pecans falling, 2 the warning (the shadows and the sign)
+                    StagePick = BrawlData.StageIndex("orchard"); NewGame(); Simulate(demo > 0 ? demo : 3);
+                    for (int i = 0; i < 60 * 600; i++)
+                    {
+                        if (Sim.Hazard == "pecans" && (level == 2 ? Sim.HazPhase == 1 && Sim.HazT < 40 : Sim.HazPhase == 2 && Sim.HazY >= BrawlSim.NutDrop + 10)) break;
                         Update(1.0 / 60);
                     }
                     break;

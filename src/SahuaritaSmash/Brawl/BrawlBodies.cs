@@ -64,6 +64,7 @@ namespace ClassicGames
             // the animals and the specimen keep their own drawings; these only set their proportions
             all["specimen"] = new BodyStyle { Head = 0.14, Leg = 0.26, Arm = 0.36, Torso = 0.38, Bulge = 0.12, ArmTaper = 0.6, LegTaper = 0.6 };
             all["dusty"] = new BodyStyle { Head = 0.12, Leg = 0.44, Arm = 0.24, Torso = 0.22, ArmTaper = 0.55, LegTaper = 0.55, Bulge = 0.02 };
+            all["gila"] = new BodyStyle { Head = 0.2, Leg = 0.24, Arm = 0.22, Torso = 0.36, ArmW = 0.2, LegW = 0.24, BodyW = 0.8, ArmTaper = 0.7, LegTaper = 0.7, Bulge = 0.16 };
             all["sam"] = new BodyStyle { Head = 0.16, Leg = 0.22, Arm = 0.3, Torso = 0.46, ArmTaper = 0.75, LegTaper = 0.85, Bulge = 0.16 };
         }
     }

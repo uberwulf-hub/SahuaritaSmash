@@ -123,7 +123,7 @@ namespace ClassicGames
         public double Gravity = 1;
         /// <summary>The stage's surprise (when Surprises is on): wind (monsoon gusts), cart (a mine cart along the
         /// ground), meteor (pebbles from the sky), laser (the lab's sweeping beam), javelina (a herd stampeding across the
-        /// ground) or "" (none). Several, split by spaces, take turns at random.</summary>
+        /// ground), pecans (the orchard's tree shaker: nuts fall where their shadows show) or "" (none). Several, split by spaces, take turns at random.</summary>
         public string Hazard = "";
         public int Song;
         public uint Sky1, Sky2, Ground, GroundTop, Accent;
@@ -327,6 +327,18 @@ namespace ClassicGames
             m.H(22, 28, 0, 140, 32, 10, 86, 45, 70); m.Sound = "brawl-moose"; m.SoundAt = 6;
             m = Special(f, "dspec", "Timber stomp", "dive", 58); m.Kind = "dive"; m.V(14, 58, 0, -17); m.H(14, 58, 0, 10, 30, 11, 285, 20, 60);
             m.LandHit = new BHit { X = 0, Y = 10, R = 96, Dmg = 15, Ang = 70, Base = 55, Grow = 75 }; m.Sound = "brawl-strong"; m.SoundAt = 13;
+
+            // ---- Arizona, added later (kept last so the fighters' numbers in saved matches stay the same)
+            f = New("gila", "Gila Gus", Groups[1], "a Gila monster", "A beaded orange-and-black lizard from the washes near home, slow and heavy and in no hurry. A tongue that flicks, a bite that won't let go, and a tail that sweeps the ground.");
+            f.Weight = 122; f.Height = 74; f.Width = 64; f.Walk = 2.7; f.Run = 6.3; f.Air = 4.6; f.Grav = 0.74; f.Fall = 12; f.Jump = 14.6; f.DJump = 13;
+            f.Main = 0xFFF08A3C; f.Second = 0xFF2A1A14; f.Skin = 0xFFF6B27A; f.Trim = 0xFFFDE7C8; f.Dark = 0xFF1A0F0A;
+            Normals(f, 1.1, 1.12, "fist");
+            m = Special(f, "nspec", "Tongue flick", "lash", 26); m.H(8, 11, 70, 32, 15, 7, 361, 26, 70); m.Extra = "tongue"; m.Sound = "brawl-hiss"; m.SoundAt = 7;
+            m = Special(f, "sspec", "Hang-on bite", "headbutt", 48); m.Kind = "cmdgrab"; m.V(6, 16, 7, 0); m.H(12, 16, 42, 30, 22, 0, 0, 0, 0); m.Hits[0].Grab = true;
+            m.ThrowHit = new BHit { Dmg = 13, Ang = 35, Base = 60, Grow = 74 }; m.Extra = "chomp"; m.Sound = "brawl-chomp"; m.SoundAt = 11;
+            m = Special(f, "uspec", "Rock hop", "leap", 42); m.Kind = "rise"; m.V(8, 28, 3, 17); m.Drift = 3; m.Float = true; m.Helpless = true;
+            m.H(8, 24, 10, 50, 26, 8, 75, 40, 70); m.Sound = "brawl-whoosh"; m.SoundAt = 7;
+            m = Special(f, "dspec", "Tail sweep", "spin", 46); m.H(8, 28, 0, 18, 64, 3, 30, 15, 20).Multi(6).H(30, 32, 0, 18, 70, 7, 30, 45, 72); m.V(8, 32, 0, 0); m.Drift = 2; m.Extra = "tail"; m.Sound = "brawl-spin"; m.SoundAt = 7;
         }
 
         // ---------------------------------------------------------------- the stages
@@ -377,6 +389,11 @@ namespace ClassicGames
             Ground(s, 330); Soft(s, -470, -330, 60, "tank"); Soft(s, 330, 470, 60, "tank"); Soft(s, -255, -105, 165, "catwalk"); Soft(s, 105, 255, 165, "catwalk");
             Moving(s, -60, 60, 262, "gantry", 150, 0, 600);
             s.Hazard = "laser"; s.Sky1 = 0xFF111827; s.Sky2 = 0xFF3F1D24; s.Ground = 0xFF3F3F46; s.GroundTop = 0xFF71717A; s.Accent = 0xFFEF4444;
+
+            s = Stage("orchard", "Pecan Orchard", "Sahuarita", "Rows of pecan trees by the Santa Cruz River, the town's own. Fight on the branches, the stacked harvest bins and the picker's basket going up and down. When the tree shaker rumbles, get out from under: pecans rain down where their shadows show.");
+            Ground(s, 420); Soft(s, -380, -230, 120, "branch"); Soft(s, -140, 10, 225, "branch"); Soft(s, 250, 360, 76, "bins");
+            Moving(s, 80, 190, 170, "picker", 0, 70, 420);
+            s.Hazard = "pecans"; s.Sky1 = 0xFF93C5FD; s.Sky2 = 0xFFFDE68A; s.Ground = 0xFF5B3A24; s.GroundTop = 0xFF8A5A36; s.Accent = 0xFF3F7D3A;
         }
     }
 }

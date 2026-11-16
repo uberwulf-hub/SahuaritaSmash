@@ -52,7 +52,7 @@ namespace ClassicGames
 
         static void BrawlDataChecks()
         {
-            Check("brawl: ten fighters from five groups and five stages", BrawlData.Fighters.Count == 10 && BrawlData.Fighters.Select(f => f.Group).Distinct().Count() == 5 && BrawlData.Stages.Count == 5, BrawlData.Fighters.Count + " " + BrawlData.Stages.Count);
+            Check("brawl: eleven fighters from five groups and six stages", BrawlData.Fighters.Count == 11 && BrawlData.Fighters.Select(f => f.Group).Distinct().Count() == 5 && BrawlData.Stages.Count == 6, BrawlData.Fighters.Count + " " + BrawlData.Stages.Count);
             var missing = new List<string>(); var bad = new List<string>();
             foreach (BFighterDef f in BrawlData.Fighters)
             {
@@ -71,7 +71,7 @@ namespace ClassicGames
             }
             Check("brawl: every fighter has every move and four named specials", missing.Count == 0, string.Join(", ", missing.Take(6)));
             Check("brawl: every move's hits are in its frames, and every attack winds up first (3+ frames)", bad.Count == 0, string.Join(", ", bad.Take(6)));
-            Check("brawl: fighter and stage ids are unique", BrawlData.Fighters.Select(f => f.Id).Distinct().Count() == 10 && BrawlData.Stages.Select(s => s.Id).Distinct().Count() == 5, "");
+            Check("brawl: fighter and stage ids are unique", BrawlData.Fighters.Select(f => f.Id).Distinct().Count() == 11 && BrawlData.Stages.Select(s => s.Id).Distinct().Count() == 6, "");
             // hits out at the same time land once between them (groups)
             BMove lash = BrawlData.Fighter("specimen").M("nspec");
             BMove cop = BrawlData.Fighter("bloom").M("uspec");
@@ -396,7 +396,7 @@ namespace ClassicGames
             }
             var unknown = asked.Where(n => !BrawlSfx.Names.Contains(n)).ToList();
             Check("brawl: every sound the fighters and stages use exists", unknown.Count == 0, string.Join(", ", unknown));
-            for (int s = 0; s < 5; s++) { Song song = Music.BrawlSong(s); if (song == null) bad.Add("song " + s); }
+            for (int s = 0; s < 6; s++) { Song song = Music.BrawlSong(s); if (song == null) bad.Add("song " + s); }
             GameTunes t = Music.For("Brawl");
             Check("brawl: a tune for every stage and the menus, and the stings", bad.Count == 0 && t.Theme != null && t.LevelClear != null && t.HighScore != null && t.GameOver != null && t.Extra2 != null, "");
         }

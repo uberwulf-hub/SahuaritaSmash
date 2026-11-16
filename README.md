@@ -3,11 +3,12 @@
 A family platform fighter from Sahuarita, Arizona, for Windows and Android. Up to four players (people or the
 computer) knock each other off the stage; nobody gets hurt: fighters get bonked and twinkle away.
 
-- **Ten fighters:** Bloom, Specimen, Trooper and Juniper from Classic Games; Arizona Dusty the roadrunner and Saguaro
-  Sam; Teddy Roosevelt and Ben Franklin; the Firewall Knight; Paul Bunyan. Each has 13 attacks of its own and four
-  specials.
-- **Five stages** with surprises that always warn first: the mesa (monsoon wind, a javelina stampede), the copper mine
-  (mine carts), the server room (fans), the moon (meteors) and the lab (a sweeping laser).
+- **Eleven fighters:** Bloom, Specimen, Trooper and Juniper from Classic Games; from Arizona Dusty the roadrunner,
+  Saguaro Sam and Gila Gus the Gila monster; Teddy Roosevelt and Ben Franklin; the Firewall Knight; Paul Bunyan. Each
+  has 13 attacks of its own and four specials.
+- **Six stages** with surprises that always warn first: the mesa (monsoon wind, a javelina stampede), the copper mine
+  (mine carts), the server room (fans), the moon (meteors), the lab (a sweeping laser) and Sahuarita's pecan orchard
+  (the tree shaker: pecans fall where their shadows show).
 - **The ladder:** six matches against the computer, harder each round; the last one is against a giant.
 - **Play online:** on your home network, or over the internet with a 4-letter code (like Race Track Mayhem).
 
