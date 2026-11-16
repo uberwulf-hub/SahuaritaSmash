@@ -50,6 +50,21 @@ namespace ClassicGames
             }
         }
 
+        /// <summary>A song that takes as long to decode as the check says (a slow phone).</summary>
+        sealed class SlowSongs : IMusicSource
+        {
+            public readonly ManualResetEventSlim Go = new ManualResetEventSlim(false);
+            public string ReadIndex() { return "menu menu.mp3 1 3 1\n"; }
+            public bool Exists(string file) { return true; }
+            public short[] DecodeMono16(string file, out int rate)
+            {
+                Go.Wait(10000); rate = 22050;
+                var a = new short[rate * 4];
+                for (int i = 0; i < a.Length; i++) a[i] = (short)(6000 * Math.Sin(i * 2 * Math.PI * 330 / rate));
+                return a;
+            }
+        }
+
         public static void SoundOutChecks()
         {
             var o = new FakeOut();
@@ -85,6 +100,41 @@ namespace ClassicGames
                 Check("sound: a looping song is trimmed at its loop's end (nothing after it plays)", mesa != null && mesa.Pcm.Length == mesa.LoopB && mesa.LoopB == 22050 * 3, mesa == null ? "null" : mesa.Pcm.Length + " " + mesa.LoopB);
             }
             finally { BrawlMusic.Reset(); BrawlMusic.Source = before; BrawlMusic.Enabled = en; }
+
+            // 0.3.1 (Andrew: "the music starts off for a second with the old soundtrack, then switches over to the suno
+            // one"): the game waits for a recorded song still being decoded instead of playing the built-in tune first,
+            // and only plays the built-in tune if the song takes too long
+            var slow = new SlowSongs(); double wait = BrawlGame.SongWaitSeconds;
+            try
+            {
+                BrawlMusic.Reset(); BrawlMusic.Enabled = true; BrawlMusic.Source = slow; Audio.StopMusic();
+                var g = new BrawlGame { Player = "Kim", Rng = new Random(1) };
+                g.Begin();
+                bool builtIn = false;
+                for (int i = 0; i < 20; i++) { g.Update(1.0 / 60); if (Audio.Current != null && !Audio.Current.Recorded) builtIn = true; }
+                bool waited = Audio.Current == null && g.WaitingForSong;
+                slow.Go.Set();
+                sw.Restart();
+                while (BrawlMusic.Get("menu") == null && sw.ElapsedMilliseconds < 3000) Thread.Sleep(10);
+                for (int i = 0; i < 5; i++) { g.Update(1.0 / 60); if (Audio.Current != null && !Audio.Current.Recorded) builtIn = true; }
+                bool recorded = Audio.Current != null && Audio.Current.Recorded && !g.WaitingForSong;
+                Check("sound: the game waits for the recorded menu song while it decodes and never plays the built-in tune first", waited && recorded && !builtIn, waited + " " + recorded + " " + builtIn);
+
+                // a song that takes too long: after SongWaitSeconds the built-in tune plays instead
+                var stuck = new SlowSongs();
+                BrawlMusic.Reset(); BrawlMusic.Source = stuck; Audio.StopMusic(); BrawlGame.SongWaitSeconds = 0.05;
+                var g2 = new BrawlGame { Player = "Kim", Rng = new Random(1) };
+                g2.Begin(); g2.Update(1.0 / 60);
+                Thread.Sleep(120);
+                for (int i = 0; i < 3; i++) g2.Update(1.0 / 60);
+                Check("sound: a recorded song that takes too long gives way to the built-in tune", Audio.Current == g2.Tunes.Theme && !g2.WaitingForSong, Audio.Current == null ? "quiet" : Audio.Current.Name);
+                stuck.Go.Set();
+            }
+            finally { slow.Go.Set(); BrawlGame.SongWaitSeconds = wait; BrawlMusic.Reset(); BrawlMusic.Source = before; BrawlMusic.Enabled = en; Audio.StopMusic(); }
+
+            // the phone's volume buttons (and media keys) are never taken by the game's screen
+            Check("sound: the volume and media keys are left to the device, the game's keys are not",
+                SahuaritaSmash.Views.GameView.SystemKey(Avalonia.Input.Key.VolumeUp) && SahuaritaSmash.Views.GameView.SystemKey(Avalonia.Input.Key.VolumeDown) && SahuaritaSmash.Views.GameView.SystemKey(Avalonia.Input.Key.VolumeMute) && !SahuaritaSmash.Views.GameView.SystemKey(Avalonia.Input.Key.A) && !SahuaritaSmash.Views.GameView.SystemKey(Avalonia.Input.Key.Escape), "");
         }
     }
 }

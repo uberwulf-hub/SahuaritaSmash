@@ -5,6 +5,12 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Fixed
+- The phone's volume buttons turn the game's music and sounds up and down again (the game's screen was taking them).
+- Your own songs no longer start with a second of the old built-in tune: the game waits for the song to be ready (the
+  first screen may be quiet for a moment while the app starts), and only plays the built-in tune if a song takes very
+  long or can't be read.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

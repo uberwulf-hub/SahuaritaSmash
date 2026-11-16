@@ -119,6 +119,17 @@ namespace ClassicGames
         /// <summary>Starts decoding these (the next stage, the victory) so they are ready in time.</summary>
         public static void Want(params string[] roles) { foreach (string r in roles) Get(r); }
         public static bool Has(string role) { return Find(role) != null; }
+        /// <summary>A recorded song for this role is ready or on its way (being decoded, or there to decode): the game
+        /// waits for it instead of starting the built-in tune first. False once it failed to decode, or when there is none.</summary>
+        public static bool Coming(string role)
+        {
+            lock (sync)
+            {
+                if (ready.ContainsKey(role) || loading.Contains(role)) return true;
+                if (failed.Contains(role)) return false;
+            }
+            return Find(role) != null;
+        }
 
         static void Load(Entry e)
         {
