@@ -5,6 +5,8 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-16
+
 ### Fixed
 - The phone's volume buttons turn the game's music and sounds up and down again (the game's screen was taking them).
 - Your own songs no longer start with a second of the old built-in tune: the game waits for the song to be ready (the
