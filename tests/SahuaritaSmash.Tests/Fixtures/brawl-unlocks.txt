@@ -1,0 +1,6 @@
+# Sahuarita Smash! colours unlocked: player, fighter, extra colours (1 = the second, 2 = the third too)
+version	1
+Kim	bloom	2
+Kim	gila	1	from-a-newer-version
+Ben	sam	1
+something a newer version wrote

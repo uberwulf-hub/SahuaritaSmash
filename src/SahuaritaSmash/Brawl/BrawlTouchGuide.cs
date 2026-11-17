@@ -215,7 +215,7 @@ namespace ClassicGames
             Audio.Ui("select");
             if (row == RowGuide) { guideCard = 0; guideFromFight = false; return; }
             if (row == 4 && TouchRows == 6) { Menu = Screen.Keys; KeyRow = 0; KeyCol = 0; KeyListening = false; return; }
-            Menu = Screen.Title; Sel = 3;
+            Menu = Screen.Title; Sel = 4;
         }
 
         void TouchPageKey(Key k)
@@ -230,7 +230,7 @@ namespace ClassicGames
         bool TouchPageBack()
         {
             if (GuideShowing) { guideCard = -1; return true; }
-            Menu = Screen.Title; Sel = 3; return true;
+            Menu = Screen.Title; Sel = 4; return true;
         }
 
         void DrawTouchPage(DrawingContext dc)
@@ -312,7 +312,8 @@ namespace ClassicGames
             else if (k == Key.Escape || k == Key.Back || k == Key.P || k == Key.Q) { Audio.Ui("back"); GuideFinished(); }
         }
 
-        protected override bool PausedKey(Key k)
+        /// <summary>Keys while the guide shows (called first by PausedKey in BrawlPractice.cs).</summary>
+        bool GuidePausedKey(Key k)
         {
             if (!GuideShowing) return false;
             GuideKey(k);

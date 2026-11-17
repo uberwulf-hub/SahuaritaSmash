@@ -85,6 +85,9 @@ namespace ClassicGames
         public BFighter[] F;
         public int Frame;
         public bool TimeMode, Surprises = true, Sudden;
+        /// <summary>The practice room (BrawlPractice.cs): nobody loses a life, falling off brings you straight back, the
+        /// match never ends. Off in every other match, which it leaves exactly as before.</summary>
+        public bool Practice;
         public int TimeLeft, StartLives = 3;
         public bool Over; public int Winner = -1; public int OverT;
         /// <summary>"GAME!" is showing: the match has been decided, a moment before the results.</summary>
@@ -213,7 +216,7 @@ namespace ClassicGames
             if (f.St == BS.Out)
             {
                 f.T++;
-                if (f.T >= 100 && (f.Stocks > 0 || TimeMode) && !Decided) { Spawn(f, true); Ev("respawn", "", f.X, f.Y, 0, f.Slot); }
+                if (f.T >= (Practice ? 30 : 100) && (f.Stocks > 0 || TimeMode) && !Decided) { Spawn(f, true); Ev("respawn", "", f.X, f.Y, 0, f.Slot); }
                 return;
             }
             if (f.Hitlag > 0) { f.Hitlag--; return; }
@@ -1203,7 +1206,7 @@ namespace ClassicGames
             Sfx(outTop ? "brawl-twinkle" : "brawl-ko", ex, 1);
             if (f.Last >= 0 && f.LastT < 480 && f.Last != f.Slot) { F[f.Last].KOs++; f.Falls++; }
             else f.SDs++;
-            if (!TimeMode) f.Stocks--;
+            if (!TimeMode && !Practice) f.Stocks--;
             f.St = BS.Out; f.T = 0; f.Mv = null; f.X = ex; f.Y = ey;
             if (!TimeMode && f.Stocks <= 0)
             {
@@ -1214,7 +1217,7 @@ namespace ClassicGames
 
         void CheckEnd()
         {
-            if (Decided) return;
+            if (Decided || Practice) return;
             if (TimeMode)
             {
                 TimeLeft--;

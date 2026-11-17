@@ -25,12 +25,16 @@ namespace ClassicGames
         public int Stage, Lives = 3, Minutes, Delay = 4;
         public bool Surprises = true;
         public uint Seed = 1;
+        /// <summary>Which match of the room this is (1, 2, ... a rematch is the next number). Every match message
+        /// carries it, so a late message from the match before is never taken for one of this match's.</summary>
+        public int Round = 1;
         public readonly List<Seat> Seats = new List<Seat>();
 
         public byte[] ToPacket()
         {
             var w = new NetWriter(NetProtocol.Start).I(Stage).I(Lives).I(Minutes).I(Delay).Bool(Surprises).U(Seed).I(Seats.Count);
             foreach (Seat s in Seats) w.I(s.Owner).I(s.Fighter).I(s.BotLevel).S(s.Name);
+            w.I(Round);
             return w.Done();
         }
 
@@ -40,6 +44,7 @@ namespace ClassicGames
             int n = r.I();
             if (n < 2 || n > 4) throw new FormatException("seats");
             for (int i = 0; i < n; i++) m.Seats.Add(new Seat { Owner = r.I(), Fighter = r.I(), BotLevel = r.I(), Name = r.S() });
+            m.Round = r.I();
             m.Check();
             return m;
         }
@@ -81,6 +86,8 @@ namespace ClassicGames
         public string Broken;
         /// <summary>Frames waited for someone's buttons (for the "waiting for ..." note and the checks).</summary>
         public int Stalls;
+        /// <summary>Messages from an earlier match of the room that arrived late and were left out (the checks).</summary>
+        public int Stale;
         /// <summary>The checks: every frame's buttons as stepped (frame, then each seat's packed buttons; computer
         /// players' seats are -1, since replaying works them out again).</summary>
         public Action<int, int[]> Stepped;
@@ -114,7 +121,7 @@ namespace ClassicGames
             int upto = Sim.Frame + Setup.Delay;
             if (nextLocal[seat] > upto) return;
             int first = nextLocal[seat], count = upto - first + 1;
-            var w = new NetWriter(NetProtocol.Inputs).I(seat).I(first).I(count);
+            var w = new NetWriter(NetProtocol.Inputs).I(Setup.Round).I(seat).I(first).I(count);
             for (int f = first; f <= upto; f++) { known[seat][f] = packed; w.I(packed); }
             nextLocal[seat] = upto + 1;
             if (SendAll != null) SendAll(w.Done());
@@ -123,6 +130,8 @@ namespace ClassicGames
         /// <summary>A match packet from another device (inputs, checksums, a seat handed to the computer).</summary>
         public void Receive(int from, NetReader r)
         {
+            if (r.Kind != NetProtocol.Inputs && r.Kind != NetProtocol.Check && r.Kind != NetProtocol.Drop) return;
+            if (r.I() != Setup.Round) { Stale++; return; }   // from the match before a rematch: not this one's
             switch (r.Kind)
             {
                 case NetProtocol.Inputs:
@@ -159,7 +168,7 @@ namespace ClassicGames
                 foreach (int f in known[seat].Keys) if (f > last) last = f;
                 int fromFrame = last + 1;
                 Hand(seat, fromFrame);
-                if (SendAll != null) SendAll(new NetWriter(NetProtocol.Drop).I(seat).I(fromFrame).Done());
+                if (SendAll != null) SendAll(new NetWriter(NetProtocol.Drop).I(Setup.Round).I(seat).I(fromFrame).Done());
             }
         }
 
@@ -227,7 +236,7 @@ namespace ClassicGames
             {
                 long sum = Sim.Checksum();
                 if (Me == 1) Compare(1, Sim.Frame, sum);
-                else if (SendAll != null) SendAll(new NetWriter(NetProtocol.Check).I(Sim.Frame).L(sum).Done());
+                else if (SendAll != null) SendAll(new NetWriter(NetProtocol.Check).I(Setup.Round).I(Sim.Frame).L(sum).Done());
             }
             return true;
         }

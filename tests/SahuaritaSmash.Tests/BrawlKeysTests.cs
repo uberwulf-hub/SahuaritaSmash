@@ -57,7 +57,7 @@ namespace ClassicGames
             // the Controls screen: Enter waits for a key, the next key is taken (M too, even though M is the music key elsewhere)
             var c = new BrawlGame { Player = "Kim", Rng = new Random(4) };
             c.Begin();
-            c.Menu = BrawlGame.Screen.Title; c.Sel = 3; c.Press(Key.Enter);
+            c.Menu = BrawlGame.Screen.Title; c.Sel = 4; c.Press(Key.Enter);
             bool onKeys = c.Menu == BrawlGame.Screen.Keys;
             c.Press(Key.Down); c.Press(Key.Enter);   // the left set's "Move right"
             bool waiting = c.KeyListening;
@@ -67,7 +67,7 @@ namespace ClassicGames
             Check("brawl keys: the Controls screen waits for a key, refuses the game's own keys and takes the next one", onKeys && waiting && stillWaiting && !c.KeyListening && c.Keys.Set[0][BrawlKeys.MoveRight] == Key.L && c.Keys.Set[1][BrawlKeys.Strong] == Key.D,
                 onKeys + " " + waiting + " " + stillWaiting + " " + c.Keys.Fields());
             c.Press(Key.Escape);
-            Check("brawl keys: Esc goes back to the menu on Controls", c.Menu == BrawlGame.Screen.Title && c.Sel == 3, c.Menu.ToString());
+            Check("brawl keys: Esc goes back to the menu on Controls", c.Menu == BrawlGame.Screen.Title && c.Sel == 4, c.Menu.ToString());
         }
 
         // the button buffer and the computer's shield (Andrew, 2026-10-29: Normal felt tough, "slow to react")

@@ -112,6 +112,29 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `Dress`/`HeadOf` art; a new stage its `BrawlScenery` cases (layers, sky, light, textures, platform looks under / over),
   a built-in `Music.BrawlSong` tune and a `BrawlMusic.Roles` entry (a recorded Suno song can be added later), and the
   menus fit up to 15 fighters (three rows of five). Checks and snapshots (`Fight-6`, `Moves-11`, `Pecans-1|2`) cover them.
+- **Practice, colours and the online rematch (2026-11-17):** `Brawl\BrawlPractice.cs` is the title's Practice (setup
+  screen `Screen.Practice`, rows 78 game units tall so they tap on a phone; a match of you and a dummy with
+  `BrawlSim.Practice`: no life is lost, a fall comes back after 30 frames, the match never ends; `BrawlSim.Practice` is
+  false everywhere else and leaves normal matches exactly as before: `PracticeChecks` compares three matches' checksums
+  with numbers taken from the code before it). The dummy's buttons (`DummyInput`: stands / walks / jumps / shields /
+  `BrawlBot` level 1) come from the match only. Its pause menu (`PausedKey`, `DrawPracticePause`) changes the dummy, puts
+  damage back to 0%, turns surprises on or off and shows the moves list (`DrawMovesList`, `BrawlSignatures.HowTo`); a
+  short list is drawn at the top right while playing. Practice never saves anything (no scores, not kept for an update).
+  Colours: `Engine\Brawl\BrawlUnlocks.cs` is `brawl-unlocks.txt` next to the scores (version line, then player, fighter
+  id, extra colours 1 or 2; unknown lines and fields kept; through `SafeFile`; an unreadable file is never written;
+  fixture `Fixtures\brawl-unlocks.txt`). Climbing the ladder unlocks colour 2, on Hard colour 3 too (`UnlockForLadder`,
+  shown over the ladder's end by `DrawOver`). `Brawl\BrawlColours.cs` has each fighter's two extra palettes by id (Main,
+  Second, Trim, Dark, and Skin only for fighters whose skin is a colour of their own; people's skin is never changed) and
+  turns an unlisted fighter's colours round the colour wheel, so **a new fighter should get a table entry**; the coloured
+  copy of a `BFighterDef` is swapped into `f.D` only while drawing (`BrawlView.DrawFighterIn`, `View.Colours` by slot),
+  so `BrawlSim` never sees it. `Brawl\BrawlColourPick.cs`: the chips (80 units square) under the fighter on the fight,
+  ladder and practice screens, C on the keyboard, `MatchColours` (the same fighter twice gets different unlocked
+  colours). Online uses the usual colours. Rematch: `Brawl\BrawlRematch.cs` (the host's Rematch / Back to the lobby,
+  the guest's Leave, 80 units tall) and `NetSession.Rematch`: a new Start with the same seats (people who left are left
+  out), a new seed and the next `NetMatchSetup.Round`; Inputs, Check and Drop carry the round first and `NetMatch` drops
+  another round's (`Stale`); `NetProtocol.Version` 3. Checks: groups `practice`, `colours`, `rematch` (`ModesChecks.cs`;
+  scenes `Practice`, `PracticeFight`, `PracticePause`, `SelectColours`, `LadderColours`, `LadderUnlock`, `Colours -Level
+  1-3`, wide and phone-sized).
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

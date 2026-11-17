@@ -86,7 +86,7 @@ namespace ClassicGames
                 Status = OnlineStatus,
                 BackHit = r => AddKeyHit(r, "Back", Key.Enter),
             };
-            Ladder = false;
+            Ladder = false; Practice = false;
             NewGame();
         }
 
@@ -134,6 +134,7 @@ namespace ClassicGames
                 if (i < 4) View.Tags[i] = m.IsBot(i) ? "CPU" : m.IsMine(i) ? "YOU" : "P" + (i + 1);
             }
             StageIndex = m.Setup.Stage;
+            Array.Clear(View.Colours, 0, View.Colours.Length);   // online: the usual colours (BrawlColours.cs)
             View.Fx.Clear(); View.Follow(Sim, true);
             Step = Stage.Countdown; stageT = 0; acc = 0; resultsDone = false; waitT = 0;
         }
@@ -167,7 +168,7 @@ namespace ClassicGames
                     if (Sel == 0) HostHome();
                     else if (Sel == 1) HostInternet();
                     else if (Sel == 2) { Menu = Screen.OnlineJoin; Sel = 0; joinText = ""; onlineNote = ""; lookAt = 0; }
-                    else { Menu = Screen.Title; Sel = 4; }
+                    else { Menu = Screen.Title; Sel = 5; }
                     return;
                 case Screen.OnlineJoin:
                     {
@@ -229,7 +230,7 @@ namespace ClassicGames
 
         bool OnlineBack()
         {
-            if (Menu == Screen.Online) { Menu = Screen.Title; Sel = 4; return true; }
+            if (Menu == Screen.Online) { Menu = Screen.Title; Sel = 5; return true; }
             if (Menu == Screen.OnlineJoin) { Menu = Screen.Online; Sel = 2; return true; }
             LeaveOnline("You left the game.");
             Menu = Screen.Online; Sel = 0;
