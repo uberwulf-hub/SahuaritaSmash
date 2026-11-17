@@ -33,6 +33,7 @@ namespace ClassicGames
             { "knight",   new[] { P("Gold",    0xFFCA8A04, 0xFF713F12, 0xFF38BDF8, 0xFF422006, 0xFFFDE68A), P("Shadow", 0xFF1F2937, 0xFF111827, 0xFF4ADE80, 0xFF030712, 0xFF4B5563) } },
             { "paul",     new[] { P("Mustard", 0xFFD97706, 0xFF3F3F46, 0xFF7C4A1E, 0xFF78350F), P("Pine", 0xFF15803D, 0xFF78350F, 0xFFFBBF24, 0xFF052E16) } },
             { "gila",     new[] { P("Blossom", 0xFFF472B6, 0xFF2A1A14, 0xFFFFF1F2, 0xFF1A0F0A, 0xFFFBCFE8), P("Turquoise", 0xFF22D3EE, 0xFF0F172A, 0xFFECFEFF, 0xFF020617, 0xFFA5F3FC) } },
+            { "pecos",    new[] { P("Sunset", 0xFFB45309, 0xFF3F2614, 0xFF0EA5E9, 0xFF451A03), P("Night rider", 0xFF1F2937, 0xFF57534E, 0xFFFACC15, 0xFF0B0F19) } },
         };
 
         static readonly Dictionary<string, BFighterDef[]> made = new Dictionary<string, BFighterDef[]>();
