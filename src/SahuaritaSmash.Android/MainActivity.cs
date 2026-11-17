@@ -19,6 +19,7 @@ public class MainActivity : AvaloniaMainActivity
     protected override void OnCreate(global::Android.OS.Bundle savedInstanceState)
     {
         App.QuitApp = () => Finish();
+        App.Haptic = Buzz;   // a short buzz on hits (Touch controls > Vibration)
         // the phone's volume buttons turn the game up and down (not the ringer), even between sounds
         VolumeControlStream = global::Android.Media.Stream.Music;
         // hosting on the home network: hear the others' "who's hosting?" (Android drops broadcasts without this)
@@ -55,6 +56,30 @@ public class MainActivity : AvaloniaMainActivity
             c.SystemBarsBehavior = AndroidX.Core.View.WindowInsetsControllerCompat.BehaviorShowTransientBarsBySwipe;
         }
         catch (System.Exception ex) { ClassicGames.CrashLog.Write("hiding the system bars", ex, false); }
+    }
+
+    /// <summary>A short buzz of the phone (API 26+: VibrationEffect; Android 12+ through VibratorManager). Phones
+    /// without a vibrator, or anything going wrong, simply don't buzz.</summary>
+    void Buzz(int ms)
+    {
+        try
+        {
+            global::Android.OS.Vibrator v = null;
+            if (global::Android.OS.Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.S)
+            {
+                var vm = GetSystemService(VibratorManagerService) as global::Android.OS.VibratorManager;
+                if (vm != null) v = vm.DefaultVibrator;
+            }
+            else
+            {
+#pragma warning disable CA1422
+                v = GetSystemService(VibratorService) as global::Android.OS.Vibrator;
+#pragma warning restore CA1422
+            }
+            if (v == null || !v.HasVibrator) return;
+            v.Vibrate(global::Android.OS.VibrationEffect.CreateOneShot(ms, global::Android.OS.VibrationEffect.DefaultAmplitude));
+        }
+        catch (System.Exception ex) { ClassicGames.CrashLog.Write("the phone's buzz", ex, false); }
     }
 
     public override void OnWindowFocusChanged(bool hasFocus)

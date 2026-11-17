@@ -29,6 +29,11 @@ namespace SahuaritaSmash.Views
         readonly Dictionary<long, Button> held = new Dictionary<long, Button>();
         long stickPointer = -1;
         Size size;
+        /// <summary>The button size (Touch controls page: Small 0.85, Normal 1, Large 1.25; Services\TouchSettings.cs).</summary>
+        public double Scale = 1;
+        /// <summary>Left-handed: the stick on the right half, the buttons mirrored to the left.</summary>
+        public bool LeftHanded;
+        double laidScale = -1; bool laidLefty;
 
         public TouchControls()
         {
@@ -43,11 +48,15 @@ namespace SahuaritaSmash.Views
         /// <summary>Places everything for a screen of this size (landscape): the buttons in an arc by the right edge.</summary>
         public void Layout(Size s)
         {
-            if (s == size) return;
-            size = s;
+            if (s == size && Scale == laidScale && LeftHanded == laidLefty) return;
+            size = s; laidScale = Scale; laidLefty = LeftHanded;
             double u = Math.Max(1, Math.Min(s.Width, s.Height) / 400.0);   // 1 on a 400-tall phone screen
-            double big = Math.Max(36, 40 * u), small = Math.Max(28, 31 * u), pad = 14 * u;
+            double big = Math.Max(36, 40 * u) * Scale, small = Math.Max(28, 31 * u) * Scale, pad = 14 * u;
             double rx = s.Width - pad, by = s.Height - pad;
+            // a large size on a narrow screen: as big as still fits on its half; never under 44 across
+            double room = s.Width * 0.5 - pad - 4, need = big * 5.45 + small;
+            if (need > room) { big *= room / need; small *= room / need; }
+            big = Math.Max(22, big); small = Math.Max(22, small);
             // Attack and Shield big along the bottom, where the thumb rests; Special, Strong and Grab above them
             double mid = (big + small) / 2;
             Place(Buttons[0], rx - big * 1.3, by - big * 1.3, big);           // Attack
@@ -55,8 +64,10 @@ namespace SahuaritaSmash.Views
             Place(Buttons[2], rx - big * 1.2, by - big * 3.65, small);        // Special
             Place(Buttons[3], rx - big * 3.25, by - big * 3.35, small);       // Strong
             Place(Buttons[4], rx - big * 5.45, by - big * 2.6, small);        // Grab
-            Place(Pause, s.Width / 2, pad + small * 0.8, small * 0.8);
-            StickReach = 70 * u;
+            if (LeftHanded) foreach (Button b in Buttons) b.Center = new Point(s.Width - b.Center.X, b.Center.Y);
+            double pr = Math.Max(22, small * 0.8);
+            Place(Pause, s.Width / 2, pad + pr, pr);
+            StickReach = 70 * u * Math.Max(1, Scale);
         }
 
         static void Place(Button b, double x, double y, double r) { b.Center = new Point(x, y); b.R = r; }
@@ -80,7 +91,7 @@ namespace SahuaritaSmash.Views
         {
             Button b = ButtonAt(p);
             if (b != null) { held[id] = b; b.Down = true; Update(); return true; }
-            if (p.X < size.Width * 0.5 && stickPointer < 0) { stickPointer = id; StickHome = p; StickAt = p; Update(); return true; }
+            if ((LeftHanded ? p.X > size.Width * 0.5 : p.X < size.Width * 0.5) && stickPointer < 0) { stickPointer = id; StickHome = p; StickAt = p; Update(); return true; }
             return false;
         }
 
@@ -150,7 +161,7 @@ namespace SahuaritaSmash.Views
             else
             {
                 // where the stick will be: a faint ring and a word, so a first-timer knows
-                Point hint = new Point(size.Width * 0.14, size.Height * 0.72);
+                Point hint = new Point(size.Width * (LeftHanded ? 0.86 : 0.14), size.Height * 0.72);
                 dc.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)), 2), hint, StickReach, StickReach);
                 var t = new FormattedText("Move", System.Globalization.CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, face, 15, new SolidColorBrush(Color.FromArgb(140, 255, 255, 255)));
                 dc.DrawText(t, new Point(hint.X - t.Width / 2, hint.Y - t.Height / 2));

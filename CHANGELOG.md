@@ -9,6 +9,14 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 - Bluetooth game controllers work on Android phones and tablets: pair an Xbox, PlayStation or other gamepad with
   the phone and play with it, up to four at once (the first one picked up is controller 1). The game says
   "Controller 1 connected", and the touch controls keep working beside the first controller.
+- On a phone, the pause menu now shows how to play by touch, in big letters: a picture of the buttons and your
+  fighter's moves and specials the touch way (instead of the keyboard table).
+- Touch controls settings (on the title screen while playing by touch): bigger or smaller buttons, a left-handed
+  layout (the stick on the right, the buttons on the left) and vibration on or off. Each phone remembers its own.
+- The phone gives a short buzz when your fighter lands a hit or gets hit (a longer one for a big hit or a bonk off
+  the stage). It can be turned off under Touch controls.
+- The first time you fight on a phone, a short guide shows how the touch controls work (four cards you can skip). It
+  can be shown again from Touch controls.
 
 ## [0.3.1] - 2026-11-16
 
