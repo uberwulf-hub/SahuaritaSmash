@@ -30,7 +30,7 @@ namespace ClassicGames
         protected override bool HasSetup { get { return true; } }
         protected override bool ClearsTapsItself { get { return true; } }
 
-        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings, Online, OnlineJoin, OnlineLobby }   // Online*: BrawlOnline.cs (Sauce Edition)   // Lineup, Moves, Swings: snapshots only
+        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings, Online, OnlineJoin, OnlineLobby, Touch }   // Online*: BrawlOnline.cs (Sauce Edition)   // Lineup, Moves, Swings: snapshots only
         public Screen Menu = Screen.Title;
         public int Sel;
         // who plays: 0 off, 1 a person, 2 the computer; Level: 0 Easy, 1 Normal, 2 Hard, 3 Champion; Pick: a fighter, -1 any
@@ -242,6 +242,7 @@ namespace ClassicGames
         {
             if (Menu == Screen.Title) return false;
             if (OnlineScreen) return OnlineBack();   // online
+            if (Menu == Screen.Touch) return TouchPageBack();   // touch (BrawlTouchGuide.cs)
             Sel = Menu == Screen.Keys ? 3 : 0; Menu = Screen.Title; return true;
         }
 
@@ -260,7 +261,7 @@ namespace ClassicGames
                         if (Sel == 0) { Menu = Screen.Select; Sel = 0; }
                         else if (Sel == 1) { Menu = Screen.Ladder; Sel = 0; }
                         else if (Sel == 2) { Menu = Screen.Help; }
-                        else if (Sel == 3) { Menu = Screen.Keys; KeyRow = 0; KeyCol = 0; KeyListening = false; }
+                        else if (Sel == 3) OpenControls();   // the keys, or the Touch controls page (BrawlTouchGuide.cs)
                         else if (Sel == 4) { Menu = Screen.Online; Sel = 0; onlineNote = ""; }   // online (Sauce Edition)
                         else RequestExit();
                         return;
@@ -268,6 +269,7 @@ namespace ClassicGames
                 case Screen.Keys:
                     KeysScreenKey(k);
                     return;
+                case Screen.Touch: TouchPageKey(k); return;   // BrawlTouchGuide.cs
                 case Screen.Help:
                     if (k == Key.Enter || k == Key.Space) { Audio.Ui("back"); Menu = Screen.Title; }
                     return;
@@ -474,6 +476,7 @@ namespace ClassicGames
         protected override void Tick(double dt)
         {
             if (Sim == null) return;
+            if (GuideCheck()) return;   // the first-time guide on a phone (BrawlTouchGuide.cs)
             if (Step != Stage.Results || WaitingForSong) MusicCatchUp();
             stageT += dt;
             bool startNow = PadStart(); if (startNow && !padStartWas && Step == Stage.Fight) Pause(); padStartWas = startNow;
@@ -511,6 +514,7 @@ namespace ClassicGames
                 WorldSteps++;
                 ClearTaps();
                 Sounds();
+                Feel();   // the phone's buzz (BrawlTouchGuide.cs)
                 View.Take(Sim);
                 if (Sim.Over) break;
             }
@@ -690,6 +694,7 @@ namespace ClassicGames
                 case Screen.Select: DrawSelect(dc); break;
                 case Screen.Help: DrawHelp(dc); break;
                 case Screen.Keys: DrawKeys(dc); break;
+                case Screen.Touch: DrawTouchPage(dc); break;
                 case Screen.Lineup: DrawLineup(dc); break;
                 case Screen.Swings: DrawSwings(dc); break;
                 case Screen.Moves: DrawMoves(dc); break;
@@ -721,7 +726,7 @@ namespace ClassicGames
             }
             Logo(dc, 40, 84);
             Gfx.Text(dc, "Knock your friends off the stage. Nobody gets hurt: they just fly off with a twinkle.", Width / 2, 236, 18, 0xFFE5E7EB, 0.5, Gfx.Ui);
-            DrawMenu(dc, Width / 2, 280, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "How to play", "Controls (change the keys)", "Play online (with others)", "Quit" }, Sel, i => Sel = i);
+            DrawMenu(dc, Width / 2, 280, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "How to play", ControlsItem, "Play online (with others)", "Quit" }, Sel, i => Sel = i);
         }
 
         void DrawHelp(DrawingContext dc)
@@ -753,13 +758,15 @@ namespace ClassicGames
         // mappings here like on specimen zero")
         protected override void DrawPause(DrawingContext dc)
         {
+            if (GuideShowing) { DrawGuide(dc); return; }   // the first-time guide on a phone (BrawlTouchGuide.cs)
             if (Sim == null || Net != null) { base.DrawPause(dc); return; }
             double w = 1180, h = 620, x = (Width - w) / 2, y = (Height - h) / 2, menuW = 360;
             dc.DrawRectangle(Gfx.B(0xA0000000), null, new Rect(0, 0, Width, Height));
             Gfx.Panel(dc, new Rect(x, y, w, h), 0xF0101522, 0xFFFB923C);
             Gfx.Text(dc, "Paused", x + 40 + menuW / 2, y + 20, 34, 0xFFFDE047, 0.5, Gfx.UiBold);
             BigButtons(dc, x + 30, y + 84, menuW, PauseMenu("Main menu"), new[] { "P / Esc", "R", "Q", "M", "N" }, new[] { Key.Escape, Key.R, Key.Q, Key.M, Key.N });
-            DrawPauseControls(dc, x + 440, y + 26, x + w - 30, y + h - 20);
+            if (TouchMode) DrawTouchPauseGuide(dc, x + 440, y + 26, x + w - 30, y + h - 20);   // BrawlTouchGuide.cs
+            else DrawPauseControls(dc, x + 440, y + 26, x + w - 30, y + h - 20);
         }
 
         /// <summary>The buttons as a table (rows: header + 8 actions; columns: action, left keys, right keys, controller),

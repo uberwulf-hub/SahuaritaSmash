@@ -1,0 +1,7 @@
+Sahuarita Smash! touch controls
+version=1
+size=large
+hand=left
+vibration=off
+guide=done
+stick=floating

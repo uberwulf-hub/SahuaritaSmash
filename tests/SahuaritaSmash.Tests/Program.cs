@@ -58,6 +58,7 @@ namespace ClassicGames
             Run("brawl-snapshots", only, BrawlSnapshotChecks);
             Run("sound", only, SoundOutChecks);
             Run("touch", only, TouchChecks);
+            Run("touch-phone", only, TouchPhoneChecks);
             Run("net", only, NetChecks);
             Run("net-lobby", only, NetSessionChecks);
             Run("net-relay", only, NetRelayChecks);
