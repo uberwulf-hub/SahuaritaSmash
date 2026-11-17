@@ -10,7 +10,7 @@ namespace ClassicGames
     public static class NetProtocol
     {
         /// <summary>Changes whenever a message or the match's rules change in a way devices must agree on.</summary>
-        public const int Version = 2;   // 2 (0.3.0): Gila Gus and the Pecan Orchard, so fighters and stages are counted differently
+        public const int Version = 3;   // 2 (0.3.0): Gila Gus and the Pecan Orchard; 3: Pecos Bill and Monsoon Wash (fighters and stages counted differently)
         /// <summary>Tells this game apart from others sharing the relay (Race Track Mayhem uses it too).</summary>
         public const string Game = "SahuaritaSmash";
 

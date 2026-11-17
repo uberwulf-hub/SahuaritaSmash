@@ -1210,6 +1210,15 @@ namespace ClassicGames
                         Update(1.0 / 60);
                     }
                     break;
+                case "Flood":
+                    // the wash's flash flood: -Level 1 the wave running across, 2 the warning (the sign and the trickle)
+                    StagePick = BrawlData.StageIndex("wash"); NewGame(); Simulate(demo > 0 ? demo : 3);
+                    for (int i = 0; i < 60 * 600; i++)
+                    {
+                        if (Sim.Hazard == "flood" && (level == 2 ? Sim.HazPhase == 1 && Sim.HazT < 30 : Sim.HazPhase == 2 && (Sim.HazX - Sim.Main.L) * (Sim.Main.R - Sim.HazX) > 0 && Math.Abs(Sim.HazX) < 120)) break;
+                        Update(1.0 / 60);
+                    }
+                    break;
                 default: Simulate(demo > 0 ? demo : 8); break;
             }
             return "stage " + Sim.Stage.Name + ", " + Step + ", frame " + Sim.Frame + ", " + string.Join(", ", Sim.F.Select(f => f.D.Name + " " + f.Percent + "% x" + f.Stocks).ToArray());

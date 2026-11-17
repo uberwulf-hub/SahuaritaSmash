@@ -132,6 +132,7 @@ namespace ClassicGames
                         Poly(dc, Gfx.B(i % 2 == 0 ? 0xD0F97316 : 0xD0FDE047), null, new Point(b.X - 6, b.Y), new Point(b.X, b.Y + h), new Point(b.X + 6, b.Y));
                     }
                     break;
+                case "crack": case "gust": PecosSig(dc, f, r, extra, tip, t); break;
                 case "chips":
                     for (int i = 0; i < 5; i++)
                     {

@@ -61,6 +61,9 @@ namespace ClassicGames
             // Paul Bunyan: a giant V, huge arms tapering to big fists, a beard, big boots
             all["paul"] = new BodyStyle { Real = true, Head = 0.125, Leg = 0.4, Arm = 0.37, Torso = 0.34, ArmW = 0.27, LegW = 0.29, BodyW = 0.8, ArmTaper = 0.66, LegTaper = 0.78, Bulge = 0.2,
                 Shoulders = 1.36, Hips = 0.88, HeadW = 1.0, HeadH = 1.08, Jaw = 1.0, Chin = 0.06, Hand = "fist", Foot = "bigboot" };
+            // Pecos Bill: tall and lanky, long legs a little bowed, narrow hips, a long face, cowboy boots
+            all["pecos"] = new BodyStyle { Real = true, Head = 0.13, Leg = 0.43, Arm = 0.35, Torso = 0.3, ArmW = 0.17, LegW = 0.2, BodyW = 0.6, ArmTaper = 0.78, LegTaper = 0.8, Bulge = 0.06,
+                Shoulders = 1.08, Hips = 0.82, HeadW = 0.92, HeadH = 1.08, Jaw = 0.9, Chin = 0.06, Hand = "glove", Foot = "cowboy" };
             // the animals and the specimen keep their own drawings; these only set their proportions
             all["specimen"] = new BodyStyle { Head = 0.14, Leg = 0.26, Arm = 0.36, Torso = 0.38, Bulge = 0.12, ArmTaper = 0.6, LegTaper = 0.6 };
             all["dusty"] = new BodyStyle { Head = 0.12, Leg = 0.44, Arm = 0.24, Torso = 0.22, ArmTaper = 0.55, LegTaper = 0.55, Bulge = 0.02 };
@@ -200,6 +203,19 @@ namespace ClassicGames
                             new Point(p.X + w * 0.95, p.Y + w * 0.35), new Point(p.X - w * 0.55, p.Y + w * 0.3));
                         dc.DrawLine(Gfx.P(0xFF0C0A09, w * 0.16), new Point(p.X - w * 0.6, p.Y - w * 0.33), new Point(p.X + w * 0.85, p.Y - w * 0.33));   // the sole
                         if (kind == "tallboot") dc.DrawLine(Gfx.P(Gfx.Mix(c, 0xFFFFFFFF, 0.25), w * 0.12), new Point(p.X - w * 0.5, p.Y + shaft - w * 0.25), new Point(p.X + w * 0.45, p.Y + shaft - w * 0.25));
+                        return;
+                    }
+                case "cowboy":
+                    {
+                        // a cowboy boot: a tall stitched shaft, a pointed toe, a block heel and a little spur behind
+                        double shaft = w * 1.6;
+                        dc.DrawRoundedRectangle(Gfx.B(c), o, new Rect(p.X - w * 0.5, p.Y - w * 0.1, w * 0.95, shaft), w * 0.15, w * 0.15);
+                        dc.DrawLine(Gfx.P(Gfx.Mix(c, 0xFFFDE68A, 0.45), w * 0.08), new Point(p.X - w * 0.2, p.Y + shaft * 0.25), new Point(p.X + w * 0.05, p.Y + shaft * 0.8));
+                        Poly(dc, Gfx.B(c), o, new Point(p.X - w * 0.55, p.Y - w * 0.25), new Point(p.X + w * 0.6, p.Y - w * 0.3), new Point(p.X + w * 1.45, p.Y - w * 0.22),
+                            new Point(p.X + w * 0.75, p.Y + w * 0.3), new Point(p.X - w * 0.5, p.Y + w * 0.32));
+                        dc.DrawRectangle(Gfx.B(0xFF1C1209), null, new Rect(p.X - w * 0.55, p.Y - w * 0.42, w * 0.38, w * 0.22));   // the heel
+                        dc.DrawLine(Gfx.P(0xFF9CA3AF, w * 0.1), new Point(p.X - w * 0.5, p.Y - w * 0.05), new Point(p.X - w * 0.85, p.Y - w * 0.05));
+                        dc.DrawEllipse(Gfx.B(0xFFD1D5DB), Gfx.P(0xFF4B5563, 1), new Point(p.X - w * 0.92, p.Y - w * 0.05), w * 0.13, w * 0.13);   // the spur's wheel
                         return;
                     }
                 case "bigboot":

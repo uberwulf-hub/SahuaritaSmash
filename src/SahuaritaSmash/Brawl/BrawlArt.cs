@@ -150,6 +150,7 @@ namespace ClassicGames
             dc.PushTransform(new TranslateTransform(ox, oy));
             DrawHazardBack(dc, sim, t);
             DrawPlatforms(dc, sim, t);
+            if (sim.Hazard == "flood" && sim.HazPhase == 2) DrawFlood(dc, sim, t, true);   // the water's surface, behind the fighters
             foreach (BShot s in sim.Shots) if (s.On && s.D.Wall) DrawShot(dc, s, sim, t);
             // fighters: the one being thrown above the thrower; those flashing invulnerable a little see-through
             foreach (BFighter f in sim.F) if (f.Playing) DrawFighter(dc, f, sim, t);
@@ -258,6 +259,7 @@ namespace ClassicGames
 
         void DrawHazardFront(DrawingContext dc, BrawlSim sim, double t)
         {
+            if (sim.Hazard == "flood" && sim.HazPhase > 0) { DrawFlood(dc, sim, t, false); return; }
             if (sim.Hazard == "pecans" && sim.HazPhase > 0) DrawPecanWarning(dc, sim, t);
             if (sim.HazPhase != 2) return;
             switch (sim.Hazard)
@@ -715,6 +717,7 @@ namespace ClassicGames
                 case "slam": wind = P(-15, 0.1, 120, 20, 110, 20, -75, -10, -100, 0); strike = P(25, 0.35, -40, 0, -50, 0, -60, -40, -120, -30); return;
                 case "sweep": wind = P(10, 0.6, -40, 40, -140, 40, -30, -80, -120, -50); strike = P(-10, 0.65, -20, 30, -160, 30, 0, 0, -170, 0); return;
                 case "twirl": wind = P(0, 0.1, 10, 0, 170, 0, -80, -10, -100, 0); strike = P(0, 0.1, 0, 0, 180, 0, -75, -15, -105, 0); return;
+                case "howl": wind = P(14, 0.4, -70, 90, -120, 90, -65, -30, -110, -20); wind.Head = -20; strike = P(-18, 0.12, 40, 30, 150, -20, -72, -10, -108, -10); strike.Head = 38; return;
                 case "ride": wind = P(0, 0.55, -40, 60, -110, 40, -30, -70, -150, -40); strike = P(14, 0.55, -10, 0, -120, 40, -20, -80, -150, -40); return;
             }
             wind = Stand; strike = Stand;
@@ -1014,6 +1017,7 @@ namespace ClassicGames
                 case "teddy": pants = d.Main; shoe = 0xFF3F2A14; break;
                 case "ben": pants = 0xFF1F2937; shoe = 0xFF111111; break;
                 case "paul": pants = 0xFF1E40AF; shoe = 0xFF451A03; break;
+                case "pecos": pants = d.Second; shoe = d.Dark; hand = 0xFF9A6B3F; break;
                 case "bloom": pants = 0xFF0F766E; shoe = 0xFFF472B6; break;
             }
             BodyStyle st = BodyStyle.For(d.Id);
@@ -1095,6 +1099,7 @@ namespace ClassicGames
                     dc.DrawEllipse(Gfx.B(Gfx.Alpha(0xFFF97316, glow)), null, new Point(cx + w * 0.05, a.Y + len * 0.62), w * 0.2, w * 0.2);
                     dc.DrawEllipse(Gfx.B(0xFFFDE68A), null, new Point(cx + w * 0.05, a.Y + len * 0.62), w * 0.08, w * 0.08);
                     break;
+                case "pecos": PecosTorso(dc, cx, a.Y, len, w, t); break;
                 case "paul":
                     for (int i = 1; i < 4; i++) dc.DrawLine(Gfx.P(0x90180000, 3), new Point(cx - w / 2 + 3, a.Y + len * i / 4), new Point(cx + w / 2 - 3, a.Y + len * i / 4));
                     for (int i = 1; i < 3; i++) dc.DrawLine(Gfx.P(0x90180000, 3), new Point(cx - w / 2 + w * i / 3, a.Y + 2), new Point(cx - w / 2 + w * i / 3, top - 2));
@@ -1243,6 +1248,7 @@ namespace ClassicGames
                         else dc.DrawGeometry(null, Gfx.P(d.Trim, 2), Cap(new Point(h.X + R * 0.65, h.Y + R * 0.05), R * 0.62, 205, 330));
                         break;
                     }
+                case "pecos": PecosHead(dc, f, h, R, hurt, st, t); break;
                 default: Skull(dc, h, R, d.Skin, st); FaceEyes(dc, h, R, hurt, st); break;
             }
         }
@@ -1572,6 +1578,7 @@ namespace ClassicGames
                 case "spark":
                     if (active) for (int i = 0; i < 8; i++) { double a = i * 45 + t * 400; Point s = Off(new Point(0, 22), a, 20); Point e = Off(new Point(0, 22), a + 15, 52); dc.DrawLine(Gfx.P(0xFFFEF9C3, 2.5), s, e); }
                     break;
+                case "rope": case "twister": case "howl": PecosExtra(dc, f, r, extra, active, t); break;
                 default: SigFront(dc, f, r, extra, active, t); break;
                 case "flower":
                     if (f.MF > 20)

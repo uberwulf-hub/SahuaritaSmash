@@ -16,7 +16,8 @@ namespace ClassicGames
             "brawl-dodge", "brawl-break", "brawl-thud", "brawl-grab", "brawl-pummel", "brawl-ledge", "brawl-shieldhit", "brawl-counter-hit",
             "brawl-smash", "brawl-hit1", "brawl-hit2", "brawl-reflect", "brawl-fizzle", "brawl-boom", "brawl-bell", "brawl-beep", "brawl-hum",
             "brawl-whistle", "brawl-wind", "brawl-twinkle", "brawl-ko", "brawl-sudden", "brawl-game", "brawl-go",
-            "brawl-snort", "brawl-squeal", "brawl-hooves", "brawl-hiss", "brawl-chomp", "brawl-shaker", "brawl-pecan" };
+            "brawl-snort", "brawl-squeal", "brawl-hooves", "brawl-hiss", "brawl-chomp", "brawl-shaker", "brawl-pecan",
+            "brawl-rope", "brawl-twister", "brawl-howl", "brawl-thunder", "brawl-trickle", "brawl-flood", "brawl-splash" };
 
         static float[] Buf(double s) { return new float[(int)(s * Rate)]; }
 
@@ -56,6 +57,21 @@ namespace ClassicGames
                 double t = (double)i / Rate;
                 double env = Math.Exp(-t * decay) * Math.Min(1, i / 40.0) * Math.Min(1, (n - i) / 260.0);
                 b[s0 + i] += (float)(v * env * vol);
+            }
+        }
+
+        /// <summary>A coyote's howl: a sine sliding up from f0 to f1 and back down a little, with a wavering vibrato.</summary>
+        static void Howl(float[] b, double start, double len, double f0, double f1, double vol)
+        {
+            int s0 = (int)(start * Rate), n = (int)(len * Rate);
+            double ph = 0;
+            for (int i = 0; i < n && s0 + i < b.Length; i++)
+            {
+                double k = (double)i / n, t = (double)i / Rate;
+                double f = (k < 0.3 ? f0 + (f1 - f0) * (k / 0.3) : f1 - (f1 - f0) * 0.35 * ((k - 0.3) / 0.7)) * (1 + 0.025 * Math.Sin(t * 2 * Math.PI * 6));
+                ph += f / Rate; ph -= Math.Floor(ph);
+                double env = Math.Min(1, i / 400.0) * Math.Min(1, (n - i) / 2000.0);
+                b[s0 + i] += (float)(Math.Sin(ph * 2 * Math.PI) * env * vol);
             }
         }
 
@@ -152,6 +168,15 @@ namespace ClassicGames
                 case "brawl-chomp": b = Buf(0.3); Noise(b, 0, 0.05, 0.4, 2, 40, 55); Tone(b, 0.04, 0.1, 260, 120, 2, 0.3, 20); Noise(b, 0.12, 0.04, 0.3, 2, 50, 56); Lowpass(b, 0.4); break;
                 case "brawl-shaker": b = Buf(1.4); Tone(b, 0, 1.35, 55, 70, 3, 0.16, 0.5); Tone(b, 0, 1.35, 110, 130, 0, 0.05, 0.5); for (int i = 0; i < 14; i++) Noise(b, 0.2 + i * 0.08, 0.05, 0.12, 2, 40, 57 + i); Lowpass(b, 0.25); break;
                 case "brawl-pecan": b = Buf(0.2); Tone(b, 0, 0.08, 900, 500, 4, 0.3, 40); Noise(b, 0, 0.03, 0.15, 2, 80, 72); break;
+                // Pecos Bill: a lasso whirring overhead and snapping out, a little whirlwind, a coyote's yip and howl (a
+                // sliding, wavering tone); the wash's flood: far thunder rolling, a trickle, rushing water and a splash
+                case "brawl-rope": b = Buf(0.45); for (int i = 0; i < 4; i++) Noise(b, i * 0.06, 0.05, 0.18 + i * 0.03, 1, 30, 73 + i); Tone(b, 0.24, 0.12, 1400, 300, 4, 0.12, 20); Noise(b, 0.25, 0.04, 0.35, 1, 60, 77); Lowpass(b, 0.45); break;
+                case "brawl-twister": b = Buf(0.9); Noise(b, 0, 0.85, 0.32, 1, 1.5, 78); Lowpass(b, 0.08); Tone(b, 0, 0.8, 260, 720, 4, 0.06, 1); Tone(b, 0.1, 0.7, 520, 1200, 4, 0.03, 1); break;
+                case "brawl-howl": b = Buf(1.0); Tone(b, 0, 0.1, 700, 1100, 4, 0.18, 4); Tone(b, 0.12, 0.08, 800, 1150, 4, 0.16, 4); Howl(b, 0.24, 0.7, 520, 980, 0.22); Lowpass(b, 0.5); break;
+                case "brawl-thunder": b = Buf(1.6); Noise(b, 0, 1.55, 0.6, 4, 1.8, 79); Noise(b, 0.25, 0.9, 0.45, 6, 2.5, 80); Lowpass(b, 0.04); break;
+                case "brawl-trickle": b = Buf(0.8); for (int i = 0; i < 12; i++) Tone(b, i * 0.06, 0.05, 900 + (i * 137 % 600), 1300 + (i * 211 % 500), 4, 0.07, 30); Noise(b, 0, 0.75, 0.08, 1, 1, 81); Lowpass(b, 0.3); break;
+                case "brawl-flood": b = Buf(1.6); Noise(b, 0, 1.55, 0.45, 1, 0.8, 82); Lowpass(b, 0.12); Noise(b, 0, 1.5, 0.2, 3, 1.2, 83); break;
+                case "brawl-splash": b = Buf(0.4); Noise(b, 0, 0.35, 0.5, 1, 9, 84); Lowpass(b, 0.35); Tone(b, 0, 0.12, 300, 120, 4, 0.2, 12); break;
                 case "brawl-sudden": b = Buf(1.0); Notes(b, 0, 0.12, 0, 0.12, 69, 68, 67, 66, 65); break;
                 case "brawl-game": b = Buf(0.7); Tone(b, 0, 0.6, 100, 50, 4, 0.5, 4); Noise(b, 0, 0.3, 0.3, 2, 8, 47); Lowpass(b, 0.3); break;
                 case "brawl-go": b = Buf(0.5); Notes(b, 0, 0.09, 0, 0.12, 74, 78, 81, 86); break;

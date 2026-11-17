@@ -16,7 +16,7 @@ namespace ClassicGames
 {
     public static class BrawlMusic
     {
-        public static readonly string[] Roles = { "menu", "mesa", "copper", "server", "moon", "lab", "orchard", "victory", "select", "results", "defeat", "hold" };   // select, results, defeat, hold: built-in tunes until there are songs (Music.BrawlFill)
+        public static readonly string[] Roles = { "menu", "mesa", "copper", "server", "moon", "lab", "orchard", "wash", "victory", "select", "results", "defeat", "hold" };   // select, results, defeat, hold: built-in tunes until there are songs (Music.BrawlFill)
         /// <summary>Where the songs are (a folder decoded by Windows' Media Foundation, as in App Hub; null = none, the
         /// built-in tunes play). Source, when set, takes its place (Android: the app's assets and the phone's decoder).</summary>
         public static string Folder;
@@ -36,7 +36,7 @@ namespace ClassicGames
         /// "the music doesn't seem to transition quite right"). Loops are trimmed at their end, which nothing plays.</summary>
         public const int Keep = 12;
         /// <summary>The order songs are decoded in when the game starts: the menu first, then the rest.</summary>
-        public static readonly string[] PreloadOrder = { "menu", "select", "mesa", "copper", "server", "moon", "lab", "orchard", "victory", "defeat", "results", "hold" };
+        public static readonly string[] PreloadOrder = { "menu", "select", "mesa", "copper", "server", "moon", "lab", "orchard", "wash", "victory", "defeat", "results", "hold" };
 
         static IMusicSource Current { get { return Source ?? (string.IsNullOrEmpty(Folder) ? null : new FolderMusic(Folder)); } }
 

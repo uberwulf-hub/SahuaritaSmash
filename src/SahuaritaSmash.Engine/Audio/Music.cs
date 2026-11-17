@@ -21,7 +21,7 @@ namespace ClassicGames
             var all = new List<Song>();
             GameTunes t = For("Brawl");
             foreach (Song s in new[] { t.Theme, t.GameOver, t.HighScore, t.LevelClear, t.LifeLost, t.Extra, t.Extra2 }) if (s != null) all.Add(s);
-            for (int i = 0; i < 6; i++) all.Add(BrawlSong(i));
+            for (int i = 0; i < 7; i++) all.Add(BrawlSong(i));
             for (int i = 0; i < 4; i++) all.Add(BrawlFill(i));
             return all;
         }
@@ -29,11 +29,11 @@ namespace ClassicGames
         // ------------------------------------------------------------------ Sahuarita Smash: a tune for every stage
         // All original, eight bars each: a twangy A minor gallop for the mesa, E minor rock for the copper pit, C minor
         // synth arpeggios for the server room, a slow Lydian float for the moon, a tense D minor pulse for the lab, and a
-        // bright G major picking tune for the pecan orchard.
-        static readonly Song[] brawlSongs = new Song[6];
+        // bright G major picking tune for the pecan orchard, and a stormy E minor groove for the monsoon wash.
+        static readonly Song[] brawlSongs = new Song[7];
         public static Song BrawlSong(int stage)
         {
-            stage = Math.Max(0, Math.Min(5, stage));
+            stage = Math.Max(0, Math.Min(6, stage));
             lock (brawlSongs)
             {
                 if (brawlSongs[stage] != null) return brawlSongs[stage];
@@ -84,13 +84,22 @@ namespace ClassicGames
                             "k:2 h:2 s:2 h:2 k:2 h:1 k:1 s:2 h:2", 0.25, 0.125);
                         s.Gain = 0.85;
                         break;
-                    default:
+                    case 5:
                         s = S("Sahuarita Smash: Pecan Orchard", 132, true,
                             "G4:2 B4:2 D5:2 G5:2 E5:4 D5:4 | C5:2 E5:2 G5:2 E5:2 D5:8 | B4:2 D5:2 G5:2 B5:2 A5:4 G5:4 | E5:4 F#5:4 G5:8 |" +
                             "C6:4 B5:2 A5:2 G5:4 E5:4 | D5:4 E5:2 G5:2 A5:8 | B5:2 A5:2 G5:2 E5:2 D5:2 E5:2 F#5:4 | G5:12 .:4",
                             "[B4:2 D5:2]x4 [C5:2 E5:2]x4 [B4:2 D5:2]x4 [A4:2 F#4:2]x4 [C5:2 E5:2]x4 [A4:2 D5:2]x4 [B4:2 D5:2]x2 [A4:2 C5:2]x2 [B4:2 D5:2]x4",
                             "[G2:4 D2:4]x2 [C2:4 G2:4]x2 [G2:4 D2:4]x2 [D2:4 A2:4]x2 [C2:4 G2:4]x2 [D2:4 A2:4]x2 G2:4 D2:4 D2:4 A2:4 [G2:4 D2:4]x2",
                             "k:4 h:2 s:2 h:4 s:4", 0.125, 0.25);
+                        s.Gain = 0.85;
+                        break;
+                    default:
+                        s = S("Sahuarita Smash: Monsoon Wash", 116, true,
+                            "E5:3 G5:1 B5:4 A5:2 G5:2 F#5:4 | E5:2 .:2 E5:2 F#5:2 G5:4 B4:4 | C5:3 E5:1 G5:4 F#5:2 E5:2 D5:4 | B4:8 D#5:4 F#5:4 |" +
+                            "E5:3 G5:1 B5:4 C6:2 B5:2 A5:4 | G5:2 F#5:2 E5:4 D5:4 B4:4 | C5:2 E5:2 A5:4 G5:2 F#5:2 D#5:4 | E5:12 .:4",
+                            "[.:2 G4:2]x4 [.:2 B4:2]x4 [.:2 G4:2]x4 [.:2 F#4:2]x4 [.:2 G4:2]x4 [.:2 B4:2]x4 [.:2 E4:2]x2 [.:2 D#4:2]x2 [.:2 G4:2]x4",
+                            "[E2:2 E2:1 E3:1]x4 [E2:2 E2:1 E3:1]x4 [C2:2 C2:1 C3:1]x4 [B1:2 B1:1 B2:1]x4 [E2:2 E2:1 E3:1]x4 [G1:2 G1:1 G2:1]x4 [C2:2 C2:1 C3:1]x2 [B1:2 B1:1 B2:1]x2 [E2:2 E2:1 E3:1]x4",
+                            "k:3 k:1 h:2 s:2 h:2 k:2 s:2 h:2", 0.25, 0.5);
                         s.Gain = 0.85;
                         break;
                 }

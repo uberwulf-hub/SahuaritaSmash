@@ -108,7 +108,7 @@ namespace ClassicGames
         public double MoveX, MoveY, Period;
         public double OX, OY, DX, DY;   // current offset and its change this frame (BrawlSim)
         /// <summary>How it is drawn (pictures only): ledge, arch, saguaro, terrace, lift, bucket, rack, tray, rock, crystal, tank,
-        /// catwalk, gantry; "" = a plain slab.</summary>
+        /// catwalk, gantry, branch, bins, picker, log, bridge, culvert; "" = a plain slab.</summary>
         public string Look = "";
         public double L { get { return X1 + OX; } }
         public double R { get { return X2 + OX; } }
@@ -123,7 +123,7 @@ namespace ClassicGames
         public double Gravity = 1;
         /// <summary>The stage's surprise (when Surprises is on): wind (monsoon gusts), cart (a mine cart along the
         /// ground), meteor (pebbles from the sky), laser (the lab's sweeping beam), javelina (a herd stampeding across the
-        /// ground), pecans (the orchard's tree shaker: nuts fall where their shadows show) or "" (none). Several, split by spaces, take turns at random.</summary>
+        /// ground), pecans (the orchard's tree shaker: nuts fall where their shadows show), flood (the wash: a wave of muddy water along the ground) or "" (none). Several, split by spaces, take turns at random.</summary>
         public string Hazard = "";
         public int Song;
         public uint Sky1, Sky2, Ground, GroundTop, Accent;
@@ -339,6 +339,18 @@ namespace ClassicGames
             m = Special(f, "uspec", "Rock hop", "leap", 42); m.Kind = "rise"; m.V(8, 28, 3, 17); m.Drift = 3; m.Float = true; m.Helpless = true;
             m.H(8, 24, 10, 50, 26, 8, 75, 40, 70); m.Sound = "brawl-whoosh"; m.SoundAt = 7;
             m = Special(f, "dspec", "Tail sweep", "spin", 46); m.H(8, 28, 0, 18, 64, 3, 30, 15, 20).Multi(6).H(30, 32, 0, 18, 70, 7, 30, 45, 72); m.V(8, 32, 0, 0); m.Drift = 2; m.Extra = "tail"; m.Sound = "brawl-spin"; m.SoundAt = 7;
+
+            // ---- legends, added later (kept last, like Gila Gus)
+            f = New("pecos", "Pecos Bill", Groups[4], "the cowboy of the tall tales", "Raised by coyotes and never thrown by anything. The longest lasso in the West: he ropes you from afar, rides a little twister and howls like a coyote.");
+            f.Weight = 104; f.Height = 104; f.Width = 46; f.Walk = 3.3; f.Run = 7.0; f.Air = 5.0; f.Grav = 0.68; f.Fall = 11.5; f.Jump = 14.8; f.DJump = 13.4;
+            f.Main = 0xFF3B6EA5; f.Second = 0xFF7A4A24; f.Skin = 0xFFE9B48A; f.Trim = 0xFFDC2626; f.Dark = 0xFF3F2614;
+            Normals(f, 1.18, 1.04, "fist");
+            m = Special(f, "nspec", "Lasso", "lash", 38); m.H(12, 15, 110, 52, 20, 9, 361, 30, 82).H(12, 15, 62, 52, 17, 7, 361, 25, 76); m.Extra = "rope"; m.Sound = "brawl-rope"; m.SoundAt = 10;
+            m = Special(f, "sspec", "Lasso pull", "lash", 48); m.Kind = "cmdgrab"; m.H(14, 17, 112, 48, 21, 0, 0, 0, 0); m.Hits[0].Grab = true;
+            m.ThrowHit = new BHit { Dmg = 11, Ang = 45, Base = 58, Grow = 72 }; m.Extra = "rope"; m.Sound = "brawl-rope"; m.SoundAt = 12;
+            m = Special(f, "uspec", "Ride the twister", "rise", 46); m.Kind = "rise"; m.V(6, 34, 0, 13.5); m.Drift = 3.6; m.Float = true; m.Helpless = true;
+            m.H(8, 30, 0, 30, 40, 2, 80, 12, 12).Multi(6).H(32, 34, 0, 40, 44, 5, 80, 45, 70); m.Extra = "twister"; m.Sound = "brawl-twister"; m.SoundAt = 5;
+            m = Special(f, "dspec", "Coyote howl", "howl", 44); m.H(12, 15, 34, 52, 46, 6, 35, 58, 42).H(12, 15, -34, 52, 46, 6, 145, 58, 42); m.Extra = "howl"; m.Sound = "brawl-howl"; m.SoundAt = 9;
         }
 
         // ---------------------------------------------------------------- the stages
@@ -394,6 +406,10 @@ namespace ClassicGames
             Ground(s, 420); Soft(s, -380, -230, 120, "branch"); Soft(s, -140, 10, 225, "branch"); Soft(s, 250, 360, 76, "bins");
             Moving(s, 80, 190, 170, "picker", 0, 70, 420);
             s.Hazard = "pecans"; s.Sky1 = 0xFF93C5FD; s.Sky2 = 0xFFFDE68A; s.Ground = 0xFF5B3A24; s.GroundTop = 0xFF8A5A36; s.Accent = 0xFF3F7D3A;
+
+            s = Stage("wash", "Monsoon Wash", "Sahuarita", "A dry sandy wash at the edge of town in monsoon season, a storm flashing over the mountains. Fight on a fallen log, the old footbridge and the culvert. When the thunder rolls, get up high: a wave of muddy water runs down the wash and sweeps you along.");
+            Ground(s, 410); Soft(s, -365, -205, 96, "log"); Soft(s, -115, 115, 236, "bridge"); Soft(s, 205, 365, 112, "culvert");
+            s.Hazard = "flood"; s.Sky1 = 0xFFF0B27A; s.Sky2 = 0xFF334155; s.Ground = 0xFF8A6A48; s.GroundTop = 0xFFD8B98A; s.Accent = 0xFF6B8E3A;
         }
     }
 }
