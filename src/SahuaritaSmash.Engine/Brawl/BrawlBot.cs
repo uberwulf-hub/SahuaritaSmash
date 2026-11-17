@@ -39,7 +39,7 @@ namespace ClassicGames
             if (off && !me.Ground) return Recover(sim, me);
             if (RecoverOnly) { if (me.Ground) i.X = Math.Abs(me.X) > 40 ? (me.X > 0 ? -1 : 1) : 0; return i; }
             // a javelina herd coming: jump it (better players see it sooner)
-            if (me.Ground && HerdComing(sim, me)) { i.Jump = true; Hold(i, 12, "jump"); return i; }
+            if (me.Ground && (HerdComing(sim, me) || FloodComing(sim, me))) { i.Jump = true; Hold(i, 12, "jump"); return i; }
             // keep doing what was planned for a few steps (a held direction, the button on the right frame)
             if (holdT > 0)
             {
@@ -110,6 +110,14 @@ namespace ClassicGames
                 if (ahead > 20 && ahead < look + 40) return true;
             }
             return false;
+        }
+
+        /// <summary>The wash's flood is about to reach me on the ground (better players see it sooner): jump it.</summary>
+        bool FloodComing(BrawlSim sim, BFighter me)
+        {
+            if (sim.Hazard != "flood" || sim.HazPhase != 2 || me.On != sim.Main) return false;
+            double ahead = (me.X - sim.HazX) * sim.HazDir;
+            return ahead > 10 && ahead < 50 + Level * 12;
         }
 
         BrInput Walk(BrawlSim sim, BFighter me)

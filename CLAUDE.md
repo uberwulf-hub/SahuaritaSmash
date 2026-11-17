@@ -135,6 +135,19 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   another round's (`Stale`); `NetProtocol.Version` 3. Checks: groups `practice`, `colours`, `rematch` (`ModesChecks.cs`;
   scenes `Practice`, `PracticeFight`, `PracticePause`, `SelectColours`, `LadderColours`, `LadderUnlock`, `Colours -Level
   1-3`, wide and phone-sized).
+- **Pecos Bill and Monsoon Wash (NetProtocol.Version 3):** Pecos Bill (`pecos`, Legends; the public-domain folk tale
+  only, never a film's version: a lanky cowboy, wide hat, bandana, vest, chaps, cowboy boots `Foot = "cowboy"`, and
+  arms style `rodeo`, the free hand up and waving). Specials: Lasso (`lash`, extra `rope`), Lasso pull (cmdgrab, `rope`),
+  Ride the twister (rise with a multi-hit, `twister`), Coyote howl (anim `howl`, a push on both sides, `howl`); his
+  pictures are in `Brawl\BrawlPecos.cs` (`PecosTorso`, `PecosHead`, `PecosExtra`, `PecosSig` for `crack` / `gust`).
+  Monsoon Wash (`wash`, platforms `log`, `bridge`, `culvert`; textures `washsand`, `concrete`, `cottonwood`; its sky,
+  layers, lightning and platforms in `Brawl\BrawlWash.cs`) and its surprise `flood`: warned `HazWarn` frames (thunder,
+  the sign, a trickle), then `BrawlSim.StepFlood`: the front (`HazX`) runs `FloodSpeed` along the ground, gives anyone
+  standing in it one light bonk per wave, and the water `FloodLen` behind it carries anyone standing in it
+  `FloodCarry` a frame but never past 30 px from the edge; the air, platforms and the ledge are safe;
+  `BrawlBot.FloodComing` jumps it. The water's surface is drawn after the platforms and behind the fighters, its front
+  face in front of them. Checks: group `brawl-cast` (`BrawlCastChecks.cs`: his four specials, the flood warned, bonking,
+  carrying, missing the bridge and a jumper, bots jumping it); snapshots `Fight-7`, `Moves-12`, `Flood-1|2`.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

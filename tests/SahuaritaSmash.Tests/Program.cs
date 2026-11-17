@@ -54,6 +54,7 @@ namespace ClassicGames
             SahuaritaSmash.Services.Data.UseTestFolder();
             BrawlMusic.Enabled = false;
             Run("brawl", only, BrawlChecks);
+            Run("brawl-cast", only, BrawlCastChecks);
             Run("brawl-saves", only, BrawlSaveChecks);
             Run("brawl-snapshots", only, BrawlSnapshotChecks);
             Run("sound", only, SoundOutChecks);

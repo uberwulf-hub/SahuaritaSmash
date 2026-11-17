@@ -24,7 +24,8 @@ namespace ClassicGames
         public double Lean;
         /// <summary>What the arm that isn't striking does: "" as drawn, "guard" (a boxer's fist by the chin), "two" (both
         /// hands on the weapon), "fencer" (raised behind, like a fencer's), "dancer" (out and up, graceful), "tucked"
-        /// (held in close to the chest), "flung" (thrown out behind, cartoon style).</summary>
+        /// (held in close to the chest), "flung" (thrown out behind, cartoon style), "rodeo" (flung up high and waving, like a
+        /// rider on a bucking horse).</summary>
         public string Arms = "";
         /// <summary>Elbows: below 1 straighter (stiff, military), above 1 bendier.</summary>
         public double Elbow = 1;
@@ -75,6 +76,9 @@ namespace ClassicGames
             { "knight", new MotionStyle { Amp = 1.1, Snap = 2.7, Over = 1.32, Arms = "two", Wide = 18, Low = 0.1, Lean = 4 } },
             // a lumberjack: both hands on the axe, huge wind-ups and chops that bury themselves
             { "paul", new MotionStyle { Amp = 1.22, Snap = 3.1, Over = 1.38, Arms = "two", Wide = 20, Low = 0.14, Lean = 10 } },
+            // a cowboy on a bucking bronco: the free hand flung up high and waving, bowlegged, bouncing in the knees,
+            // loose rangy swings that lean back after
+            { "pecos", new MotionStyle { Amp = 1.14, Snap = 1.9, Over = 1.26, Arms = "rodeo", Wide = 22, Low = 0.04, Lean = 12, Bounce = 0.09, Elbow = 1.15, Wobble = 6 } },
         };
 
         public static MotionStyle MotionOf(string id) { MotionStyle s; return id != null && motions.TryGetValue(id, out s) ? s : plainMotion; }
@@ -145,6 +149,7 @@ namespace ClassicGames
                     case "dancer": p.BA1 = strike ? 150 : 125; p.BA2 = -15; break;
                     case "tucked": p.BA1 = -60; p.BA2 = 115; break;
                     case "flung": p.BA1 = strike ? -165 : 175; p.BA2 = strike ? -15 : 20; break;
+                    case "rodeo": p.BA1 = strike ? 112 : 100; p.BA2 = strike ? 35 : -10; break;
                 }
             }
             p.Lean += strike ? s.Lean : -s.Lean * 0.4;
@@ -180,6 +185,7 @@ namespace ClassicGames
             if (s.Weave != 0 && fr < a) p.Lean += Math.Sin(fr * 0.9) * s.Weave;
             if (s.Scurry != 0 && !air && !LegAnim(anim)) { double w = Math.Sin(fr * 1.6); p.FL1 += w * s.Scurry; p.BL1 -= w * s.Scurry; }
             if (s.Bounce != 0 && !air) p.Crouch += Math.Abs(Math.Sin(fr * 0.45)) * s.Bounce;
+            if (s.Arms == "rodeo" && FrontArmAnim(anim)) p.BA2 += Math.Sin(fr * 0.8) * 22;   // the hand up high waves like a rider's
             if (s.Wobble != 0 && fr > b)
             {
                 double k = (fr - b) / Math.Max(1.0, len - b);

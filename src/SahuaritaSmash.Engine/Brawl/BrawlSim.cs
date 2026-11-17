@@ -111,6 +111,11 @@ namespace ClassicGames
         public static readonly double[] HerdBack = { 0, 50, 90, 150, 196 };
         public static readonly bool[] HerdAdult = { true, false, false, true, false };
         public const double HerdSpeed = 9;
+        /// <summary>The wash's flash flood: the wave's front (HazX) runs along the ground at FloodSpeed with muddy water
+        /// FloodLen behind it, FloodDepth deep. The front gives a light bonk once per wave to anyone standing in it; the
+        /// water behind carries anyone standing in it FloodCarry a frame (never over the edge). Jumping, a platform or
+        /// the ledge keeps you clear.</summary>
+        public const double FloodSpeed = 7, FloodLen = 560, FloodDepth = 24, FloodCarry = 2.2;
 
         public BrawlSim(BStageDef stage, IList<BFighterDef> fighters, int lives, int minutes, uint rngSeed)
         {
@@ -1084,12 +1089,15 @@ namespace ClassicGames
                     case "laser": HazY = Main.Top + (Rand(2) == 0 ? 26 : 120); HazX = HazDir < 0 ? Stage.BlastR : Stage.BlastL; break;
                     case "cart": HazX = HazDir > 0 ? Main.L - 120 : Main.R + 120; HazY = Main.Top; break;
                     case "javelina": HazX = HazDir > 0 ? Main.L - 150 : Main.R + 150; HazY = Main.Top; Sfx("brawl-snort", HazX, 0.7); return;
+                    case "flood": HazX = HazDir > 0 ? Main.L - 40 : Main.R + 40; HazY = Main.Top; Sfx("brawl-thunder", HazDir * 400, 0.7); return;
                 }
                 Sfx(Hazard == "cart" ? "brawl-bell" : Hazard == "laser" ? "brawl-beep" : Hazard == "fans" ? "brawl-hum" : Hazard == "meteor" ? "brawl-whistle" : "brawl-wind", HazDir * 400, 0.6);
                 return;
             }
             // the herd snorts and squeals from its side while it gathers
             if (HazPhase == 1 && Hazard == "javelina" && (HazT == 58 || HazT == 26)) Sfx(HazT == 58 ? "brawl-squeal" : "brawl-snort", HazX, 0.6);
+            // the flood: a second roll of thunder, then the water can be heard coming
+            if (HazPhase == 1 && Hazard == "flood" && HazT == 40) Sfx("brawl-trickle", HazX, 0.6);
             if (HazPhase == 1 && HazT <= 0)
             {
                 HazPhase = 2;
@@ -1097,6 +1105,7 @@ namespace ClassicGames
                 if (Hazard == "meteor") HazY = Main.Top + 700;
                 if (Hazard == "pecans") { HazY = 0; HazT = 9999; }   // ends once the last nut is down (below)
                 if (Hazard == "javelina") { HazT = 600; Sfx("brawl-hooves", HazX, 0.7); }
+                if (Hazard == "flood") { HazT = 9999; Sfx("brawl-flood", HazX, 0.7); }   // ends once the water has run past (StepFlood)
                 return;
             }
             if (HazPhase == 2)
@@ -1127,6 +1136,9 @@ namespace ClassicGames
                         break;
                     case "javelina":
                         StepHerd();
+                        break;
+                    case "flood":
+                        StepFlood();
                         break;
                     case "laser":
                         HazX += HazDir * ((Stage.BlastR - Stage.BlastL) / 40.0);
@@ -1190,6 +1202,37 @@ namespace ClassicGames
             // done once the last one has run off the far side
             double tail = HazX - HazDir * HerdBack[HerdBack.Length - 1];
             if (HazDir > 0 ? tail > Main.R + 160 : tail < Main.L - 160) HazT = 0;
+        }
+
+        /// <summary>The flash flood: the front runs across the ground, bonks anyone standing in its way once (lightly) and
+        /// the water behind it carries them along a little, never off the edge. Anyone in the air, on a platform or
+        /// hanging on the ledge is left alone. Done once the water has run past the far side.</summary>
+        void StepFlood()
+        {
+            HazX += HazDir * FloodSpeed;
+            double tail = HazX - HazDir * FloodLen;
+            double lo = Math.Min(HazX, tail), hi = Math.Max(HazX, tail);
+            foreach (BFighter f in F)
+            {
+                if (!f.Playing || f.St == BS.Ledge || f.St == BS.LedgeUp || f.St == BS.Enter || f.St == BS.Grabbed) continue;
+                bool low = f.Y < Main.Top + FloodDepth && f.Y >= Main.Top - 4 && f.X >= Main.L && f.X <= Main.R;
+                if (!low) continue;
+                // the front: one light bonk per wave
+                if (f.Invuln == 0 && HazHit[f.Slot] < 0 && Math.Abs(f.X - HazX) < 26 + f.HalfW)
+                {
+                    HazHit[f.Slot] = Frame;
+                    Sfx("brawl-splash", f.X, 0.6);
+                    Hit(null, f, new BHit { Dmg = 5, Ang = 55, Base = 38, Grow = 40 }, HazDir, 1, false);
+                    continue;
+                }
+                // the water behind: carried along, but it never washes anyone over the edge
+                if (f.Ground && f.On == Main && f.X > lo && f.X < hi)
+                {
+                    double nx = f.X + HazDir * FloodCarry;
+                    if (nx > Main.L + 30 && nx < Main.R - 30) f.X = nx;
+                }
+            }
+            if (HazDir > 0 ? tail > Main.R + 40 : tail < Main.L - 40) HazT = 0;
         }
 
         // ---------------------------------------------------------------- lives, the end
