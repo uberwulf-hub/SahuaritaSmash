@@ -62,6 +62,9 @@ namespace ClassicGames
             Run("net-lobby", only, NetSessionChecks);
             Run("net-relay", only, NetRelayChecks);
             Run("online", only, OnlineGameChecks);
+            Run("practice", only, PracticeChecks);
+            Run("colours", only, ColourChecks);
+            Run("rematch", only, RematchChecks);
             Console.WriteLine(failed == 0 ? "ALL PASSED (" + checks + " checks, " + sw.Elapsed.TotalSeconds.ToString("0.0") + " s)" : "FAILED " + failed + " of " + checks + " checks:");
             foreach (string f in failures.Take(50)) Console.WriteLine("  " + f);
             return failed;

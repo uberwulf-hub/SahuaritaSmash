@@ -5,6 +5,18 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Added
+- Practice (on the title screen): pick your fighter and a stage and try your moves on a dummy. Nobody loses: fall
+  off and you're straight back, with no timer and no scores. The dummy stands still, or walks, jumps, shields or
+  fights back (gently) if you ask; the menu also puts everyone's damage back to 0%, turns stage surprises on or off,
+  and shows all your moves with their names. Your specials and big attacks are listed on the screen while you play.
+- New colours to unlock: climb the ladder with a fighter to unlock its second colour, and climb it on Hard for a
+  third. Choose them with the colour buttons under your fighter (or C on the keyboard). Two players with the same
+  fighter get different colours when they can. Online games use the usual colours.
+- Playing online, after the results the host can tap Rematch (the same fighters on the same stage, straight into the
+  countdown for everyone) or Back to the lobby; the others see what the host is choosing and can leave.
+- Online games need everyone on this version (for the rematch).
+
 ## [0.3.1] - 2026-11-16
 
 ### Fixed

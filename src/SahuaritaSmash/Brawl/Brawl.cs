@@ -30,7 +30,7 @@ namespace ClassicGames
         protected override bool HasSetup { get { return true; } }
         protected override bool ClearsTapsItself { get { return true; } }
 
-        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings, Online, OnlineJoin, OnlineLobby }   // Online*: BrawlOnline.cs (Sauce Edition)   // Lineup, Moves, Swings: snapshots only
+        public enum Screen { Title, Select, Help, Ladder, Keys, Lineup, Moves, Swings, Online, OnlineJoin, OnlineLobby, Practice }   // Online*: BrawlOnline.cs (Sauce Edition)   // Lineup, Moves, Swings: snapshots only   // Practice: BrawlPractice.cs
         public Screen Menu = Screen.Title;
         public int Sel;
         // who plays: 0 off, 1 a person, 2 the computer; Level: 0 Easy, 1 Normal, 2 Hard, 3 Champion; Pick: a fighter, -1 any
@@ -191,7 +191,7 @@ namespace ClassicGames
             if (k != Key.Enter && k != Key.Space) return;
             if (KeyRow < BrawlKeys.Count) { KeyListening = true; Audio.Ui("select"); }
             else if (KeyRow == BrawlKeys.Count) { Keys.Reset(); SaveKeys(); Toast("Back to the usual keys"); Audio.Ui("select"); }
-            else { Menu = Screen.Title; Sel = 3; Audio.Ui("back"); }
+            else { Menu = Screen.Title; Sel = 4; Audio.Ui("back"); }
         }
 
         void DrawKeys(DrawingContext dc)
@@ -242,7 +242,7 @@ namespace ClassicGames
         {
             if (Menu == Screen.Title) return false;
             if (OnlineScreen) return OnlineBack();   // online
-            Sel = Menu == Screen.Keys ? 3 : 0; Menu = Screen.Title; return true;
+            Sel = Menu == Screen.Keys ? 4 : Menu == Screen.Practice ? 2 : 0; Menu = Screen.Title; return true;
         }
 
         int SelectRows { get { return 4 * 2 + 4; } }   // per seat: fighter, who; then stage, rules, surprises, start
@@ -252,16 +252,18 @@ namespace ClassicGames
             switch (Menu)
             {
                 case Screen.Online: case Screen.OnlineJoin: case Screen.OnlineLobby: OnlineKey(k); return;   // online
+                case Screen.Practice: PracticeKey(k); return;   // BrawlPractice.cs
                 case Screen.Title:
                     {
-                        if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 6); Audio.Ui("move"); return; }
+                        if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 7); Audio.Ui("move"); return; }
                         if (k != Key.Enter && k != Key.Space) return;
                         Audio.Ui("select");
                         if (Sel == 0) { Menu = Screen.Select; Sel = 0; }
                         else if (Sel == 1) { Menu = Screen.Ladder; Sel = 0; }
-                        else if (Sel == 2) { Menu = Screen.Help; }
-                        else if (Sel == 3) { Menu = Screen.Keys; KeyRow = 0; KeyCol = 0; KeyListening = false; }
-                        else if (Sel == 4) { Menu = Screen.Online; Sel = 0; onlineNote = ""; }   // online (Sauce Edition)
+                        else if (Sel == 2) OpenPractice();   // BrawlPractice.cs
+                        else if (Sel == 3) { Menu = Screen.Help; }
+                        else if (Sel == 4) { Menu = Screen.Keys; KeyRow = 0; KeyCol = 0; KeyListening = false; }
+                        else if (Sel == 5) { Menu = Screen.Online; Sel = 0; onlineNote = ""; }   // online (Sauce Edition)
                         else RequestExit();
                         return;
                     }
@@ -273,6 +275,7 @@ namespace ClassicGames
                     return;
                 case Screen.Ladder:
                     {
+                        if (LadderColourKey(k)) return;   // BrawlColourPick.cs
                         if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 3); Audio.Ui("move"); return; }
                         int d = IsLeft(k) ? -1 : IsRight(k) ? 1 : 0;
                         if (d != 0)
@@ -286,6 +289,7 @@ namespace ClassicGames
                     }
                 case Screen.Select:
                     {
+                        if (SelectColourKey(k)) return;   // BrawlColourPick.cs
                         if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, SelectRows); Audio.Ui("move"); return; }
                         int d = IsLeft(k) ? -1 : IsRight(k) ? 1 : 0;
                         if (k == Key.Enter || k == Key.Space)
@@ -343,13 +347,13 @@ namespace ClassicGames
         {
             if (Playing < 2) { Toast("Choose at least two fighters (a person or the computer)"); Audio.Ui("back"); return; }
             Audio.Ui("select");
-            Ladder = false;
+            Ladder = false; Practice = false;
             NewGame();
         }
 
         void StartLadder()
         {
-            Ladder = true; LadderRound = 0; LadderScore = 0;
+            Ladder = true; Practice = false; LadderRound = 0; LadderScore = 0; UnlockNote = null;
             // the foes: different fighters each round, never the one you picked; the last is a giant
             var pool = new List<int>();
             for (int i = 0; i < BrawlData.Fighters.Count; i++) if (i != LadderPick) pool.Add(i);
@@ -362,6 +366,7 @@ namespace ClassicGames
         protected override void Reset()
         {
             if (Online != null && Online.Match != null && Net != null) { ResetOnline(); return; }   // online
+            if (Practice) { ResetPractice(); return; }   // BrawlPractice.cs
             var defs = new List<BFighterDef>();
             var who = new List<int>(); var levels = new List<int>(); var seats = new List<int>(); var names = new List<string>();
             int lives = Lives, minutes = Minutes;
@@ -399,13 +404,14 @@ namespace ClassicGames
             for (int i = 0; i < defs.Count; i++) if (who[i] == 2 || Autopilot) bots[i] = new BrawlBot(i, levels[i] > 0 ? levels[i] : 5);
             Names = names.ToArray();
             for (int i = 0; i < defs.Count && i < 4; i++) View.Tags[i] = who[i] == 2 ? "CPU" : "P" + (seats[i] + 1);
+            SetMatchColours(defs, seats, who);   // BrawlColourPick.cs (pictures only)
             View.Fx.Clear(); View.Follow(Sim, true);
             Step = Ladder ? Stage.LadderCard : Stage.Countdown;
             stageT = 0; acc = 0; resultsDone = false;
         }
 
         int HumanIndex(int seat) { int h = 0; for (int s = 0; s < seat; s++) if (Who[s] == 1) h++; return h; }
-        int Humans { get { if (Ladder) return 1; int h = 0; for (int s = 0; s < 4; s++) if (Who[s] == 1) h++; return h; } }
+        int Humans { get { if (Ladder || Practice) return 1; int h = 0; for (int s = 0; s < 4; s++) if (Who[s] == 1) h++; return h; } }
 
         // ---------------------------------------------------------------- the buttons
         /// <summary>Tests: the buttons a slot's person is pressing now.</summary>
@@ -503,6 +509,7 @@ namespace ClassicGames
             {
                 acc -= 1.0 / 60; steps++;
                 if (Online != null && Online.Match != null && Net != null) { if (!OnlineStep()) { acc = 0; break; } }   // online
+                else if (Practice) { PracticeInputs(inputs); Sim.Step(inputs); }   // BrawlPractice.cs
                 else
                 {
                     for (int s = 0; s < Sim.F.Length; s++) inputs[s] = bots[s] != null ? bots[s].Think(Sim) : (Autopilot ? new BrInput() : Read(s));
@@ -554,6 +561,7 @@ namespace ClassicGames
                 LadderRound++;
                 if (LadderRound >= LadderRounds)
                 {
+                    UnlockForLadder();   // BrawlColourPick.cs
                     EndGame(LadderScore, "climbed the ladder with " + me.D.Name + " on " + LevelNames[LadderDiff], "ladder-" + LadderDiff, "The ladder is climbed!", Tunes.Extra2);
                     return;
                 }
@@ -567,11 +575,7 @@ namespace ClassicGames
         protected override void OnKey(Key k)
         {
             if (Sim == null) return;
-            if (Step == Stage.Results && stageT > 0.8 && Online != null && Net != null)   // online: the host takes everyone back
-            {
-                if ((k == Key.Enter || k == Key.Space) && Online.IsHost) { Audio.Ui("select"); Online.ToLobby(); }
-                return;
-            }
+            if (Step == Stage.Results && stageT > 0.8 && Online != null && Net != null) { OnlineResultsKey(k); return; }   // online: rematch or the lobby (BrawlRematch.cs)
             if (Step == Stage.Results && stageT > 0.8)
             {
                 if (k == Key.Enter || k == Key.Space) { Audio.Ui("select"); BackToSelect(); }
@@ -585,7 +589,7 @@ namespace ClassicGames
             State = Phase.Setup; Menu = Screen.Select; Sel = SelectRows - 1; SetupMusic();
         }
 
-        protected override void OverConfirm() { if (Ladder) { State = Phase.Setup; Menu = Screen.Ladder; Sel = 2; SetupMusic(); } else NewGame(); }
+        protected override void OverConfirm() { UnlockNote = null; if (Ladder) { State = Phase.Setup; Menu = Screen.Ladder; Sel = 2; SetupMusic(); } else NewGame(); }
         protected override string OverConfirmText { get { return "Enter: back to the ladder"; } }
 
         public override string CrashDetail
@@ -625,6 +629,7 @@ namespace ClassicGames
             if (Sim.Decided && Step == Stage.Fight) Gfx.Shadowed(dc, "GAME!", Width / 2, Height * 0.3 - 50, 120, 0xFFFFFFFF, 0.5, Gfx.UiBold);
             if (Step == Stage.Results) DrawResults(dc);
             if (Step == Stage.LadderCard) DrawLadderCard(dc);
+            if (Practice && Step != Stage.Results) DrawPracticeHud(dc);   // BrawlPractice.cs
         }
 
         void DrawResults(DrawingContext dc)
@@ -633,7 +638,7 @@ namespace ClassicGames
             BFighter w = Sim.Winner >= 0 ? Sim.F[Sim.Winner] : null;
             string title = w == null ? "No contest!" : Names[w.Slot] + " wins!";
             Gfx.Shadowed(dc, title, Width / 2, 40, 54, w != null ? BrawlView.SlotColors[w.Slot % 4] : 0xFFFFFFFF, 0.5, Gfx.UiBold);
-            if (w != null) View.Portrait(dc, w.D, 260, 560, 300 * Math.Min(1.3, 90 / w.D.Height * 1.2), T, false, BS.Attack);
+            if (w != null) View.Portrait(dc, View.Painted(w), 260, 560, 300 * Math.Min(1.3, 90 / w.D.Height * 1.2), T, false, BS.Attack);
             double x = 470, y = 150;
             Gfx.Text(dc, "Place", x, y, 18, 0xFF93C5FD, 0, Gfx.UiBold);
             Gfx.Text(dc, "Fighter", x + 90, y, 18, 0xFF93C5FD, 0, Gfx.UiBold);
@@ -646,7 +651,7 @@ namespace ClassicGames
                 uint c = BrawlView.SlotColors[f.Slot % 4];
                 dc.DrawRoundedRectangle(Gfx.B(Gfx.Alpha(c, 0.18)), Gfx.P(Gfx.Alpha(c, 0.7), 2), new Rect(x - 14, y - 8, 760, 62), 12, 12);
                 Gfx.Text(dc, Ordinal(f.Place), x, y + 6, 30, 0xFFFFFFFF, 0, Gfx.UiBold);
-                View.Portrait(dc, f.D, x + 116, y + 23, 46, T, true, BS.Idle);
+                View.Portrait(dc, View.Painted(f), x + 116, y + 23, 46, T, true, BS.Idle);
                 Gfx.Text(dc, Names[f.Slot], x + 150, y + 2, 20, 0xFFFFFFFF, 0, Gfx.UiBold);
                 if (Names[f.Slot] != f.D.Name) Gfx.Text(dc, f.D.Name, x + 150, y + 26, 15, 0xFFB8BFCC, 0, Gfx.Ui);
                 Gfx.Text(dc, f.KOs.ToString(CultureInfo.InvariantCulture), x + 420, y + 8, 26, 0xFFFFFFFF, 0.5, Gfx.UiBold);
@@ -654,7 +659,7 @@ namespace ClassicGames
                 Gfx.Text(dc, ((int)f.Done) + "%", x + 660, y + 8, 26, 0xFFFFFFFF, 0.5, Gfx.UiBold);
                 y += 74;
             }
-            if (stageT > 0.8 && Online != null && Net != null) { if (Online.IsHost) MenuButtons(dc, Width / 2 + 160, Height - 60, 18, new[] { "Enter: back to the lobby" }, new[] { Key.Enter }); else Gfx.Text(dc, "Waiting for the host...", Width / 2 + 160, Height - 66, 18, 0xFF93C5FD, 0.5, Gfx.UiBold); }   // online
+            if (stageT > 0.8 && Online != null && Net != null) DrawOnlineResultsButtons(dc);   // online: rematch or the lobby (BrawlRematch.cs)
             else if (stageT > 0.8) MenuButtons(dc, Width / 2 + 160, Height - 60, 18, new[] { "Enter: choose again", "R: rematch" }, new[] { Key.Enter, Key.R });
         }
 
@@ -665,7 +670,7 @@ namespace ClassicGames
             dc.DrawRectangle(Gfx.B(0xB0050812), null, new Rect(0, 0, Width, Height));
             string round = LadderRound == LadderRounds - 1 ? "Last round: the giant!" : LadderRound == 2 ? "Round 3: two at once" : "Round " + (LadderRound + 1) + " of " + LadderRounds;
             Gfx.Shadowed(dc, round, Width / 2, 70, 46, 0xFFFDE047, 0.5, Gfx.UiBold);
-            View.Portrait(dc, Sim.F[0].D, 330, 470, 260, T, false, BS.Idle);
+            View.Portrait(dc, View.Painted(Sim.F[0]), 330, 470, 260, T, false, BS.Idle);
             Gfx.Shadowed(dc, "vs", Width / 2, 300, 70, 0xFFFFFFFF, 0.5, Gfx.UiBold);
             for (int i = 1; i < Sim.F.Length; i++)
             {
@@ -697,6 +702,7 @@ namespace ClassicGames
                 case Screen.Online: DrawOnline(dc); break;      // online
                 case Screen.OnlineJoin: DrawJoin(dc); break;
                 case Screen.OnlineLobby: DrawLobby(dc); break;
+                case Screen.Practice: DrawPracticeSetup(dc); break;   // BrawlPractice.cs
             }
         }
 
@@ -721,7 +727,7 @@ namespace ClassicGames
             }
             Logo(dc, 40, 84);
             Gfx.Text(dc, "Knock your friends off the stage. Nobody gets hurt: they just fly off with a twinkle.", Width / 2, 236, 18, 0xFFE5E7EB, 0.5, Gfx.Ui);
-            DrawMenu(dc, Width / 2, 280, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "How to play", "Controls (change the keys)", "Play online (with others)", "Quit" }, Sel, i => Sel = i);
+            DrawMenu(dc, Width / 2, 266, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "Practice (try your moves)", "How to play", "Controls (change the keys)", "Play online (with others)", "Quit" }, Sel, i => Sel = i);
         }
 
         void DrawHelp(DrawingContext dc)
@@ -754,6 +760,7 @@ namespace ClassicGames
         protected override void DrawPause(DrawingContext dc)
         {
             if (Sim == null || Net != null) { base.DrawPause(dc); return; }
+            if (Practice) { DrawPracticePause(dc); return; }   // BrawlPractice.cs
             double w = 1180, h = 620, x = (Width - w) / 2, y = (Height - h) / 2, menuW = 360;
             dc.DrawRectangle(Gfx.B(0xA0000000), null, new Rect(0, 0, Width, Height));
             Gfx.Panel(dc, new Rect(x, y, w, h), 0xF0101522, 0xFFFB923C);
@@ -912,8 +919,8 @@ namespace ClassicGames
             for (int i = 0; i < n; i++)
             {
                 double cx = 107 + (i % 6) * 213, base_ = i < 6 ? 330 : 680;
-                View.Portrait(dc, BrawlData.Fighters[i], cx - 10, base_, 270, T, false, BS.Idle);
-                Gfx.Text(dc, BrawlData.Fighters[i].Name, cx, base_ + 6, 16, 0xFFE5E7EB, 0.5, Gfx.UiBold);
+                View.Portrait(dc, BrawlColours.Def(BrawlData.Fighters[i], LineupColour), cx - 10, base_, 270, T, false, BS.Idle);
+                Gfx.Text(dc, BrawlData.Fighters[i].Name + (LineupColour > 0 ? " (" + BrawlColours.Name(BrawlData.Fighters[i], LineupColour) + ")" : ""), cx, base_ + 6, 16, 0xFFE5E7EB, 0.5, Gfx.UiBold);
             }
         }
 
@@ -998,7 +1005,8 @@ namespace ClassicGames
                 if (s != null) { Gfx.Text(dc, s.From, gx + 16, iy + 40, 15, 0xFF93C5FD, 0, Gfx.Ui); Wrap(dc, s.Blurb, gx + 16, iy + 64, cols * cw - 40, 15, 0xFFE5E7EB); }
                 else Wrap(dc, "A stage picked at random when the fight starts.", gx + 16, iy + 64, cols * cw - 40, 15, 0xFFE5E7EB);
             }
-            Gfx.Text(dc, "Up / Down choose a row, Left / Right change it, Enter starts. Click a fighter to give it to the player you're on.", 40, Height - 34, 15, 0xFF8B95A7, 0, Gfx.Ui);
+            DrawSelectColours(dc);   // BrawlColourPick.cs
+            Gfx.Text(dc, "Up / Down choose a row, Left / Right change it, C the colour, Enter starts. Click a fighter to give it to the player you're on.", 40, Height - 34, 15, 0xFF8B95A7, 0, Gfx.Ui);
         }
 
         string WhoText(int seat)
@@ -1069,6 +1077,7 @@ namespace ClassicGames
                 foreach (ScoreEntry e in top) { Gfx.Text(dc, (i + 1) + ".  " + e.Player + "   " + Gfx.N(e.Score), 40, by + 32 + i * 26, 16, 0xFFE5E7EB, 0, Gfx.Ui); i++; }
                 if (i == 0) Gfx.Text(dc, "None yet on " + LevelNames[LadderDiff] + ".", 40, by + 32, 16, 0xFF8B95A7, 0, Gfx.Ui);
             }
+            DrawLadderColours(dc);   // BrawlColourPick.cs
         }
 
         // ================================================================ an App Hub update
@@ -1076,7 +1085,7 @@ namespace ClassicGames
         /// lives and damage, the time left; the ladder's round and score) and starts again from there afterwards.</summary>
         public override IDictionary<string, string> SaveForUpdate()
         {
-            if (Autopilot || State != Phase.Play || Sim == null || Step == Stage.Results || Sim.Decided) return null;
+            if (Autopilot || State != Phase.Play || Sim == null || Step == Stage.Results || Sim.Decided || Practice) return null;   // practice isn't kept
             var d = new Dictionary<string, string>();
             Func<int, string> s = v => v.ToString(CultureInfo.InvariantCulture);
             d["brawl.stage"] = s(StageIndex);
@@ -1154,6 +1163,8 @@ namespace ClassicGames
         public string SnapshotScene(string show, double demo, int level)
         {
             Rng = new Random(5);
+            string modes = ModesScene(show, demo, level);   // practice and colours (BrawlModesScenes.cs)
+            if (modes != null) return modes;
             switch (show)
             {
                 case "Title": case "Select": case "Help": case "Ladder": case "Keys": case "Lineup": case "Moves": case "Swings":

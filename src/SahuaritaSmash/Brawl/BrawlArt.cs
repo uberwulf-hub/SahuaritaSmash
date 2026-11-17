@@ -152,7 +152,7 @@ namespace ClassicGames
             DrawPlatforms(dc, sim, t);
             foreach (BShot s in sim.Shots) if (s.On && s.D.Wall) DrawShot(dc, s, sim, t);
             // fighters: the one being thrown above the thrower; those flashing invulnerable a little see-through
-            foreach (BFighter f in sim.F) if (f.Playing) DrawFighter(dc, f, sim, t);
+            foreach (BFighter f in sim.F) if (f.Playing) DrawFighterIn(dc, f, sim, t);   // in their colours (BrawlColours.cs)
             foreach (BShot s in sim.Shots) if (s.On && !s.D.Wall) DrawShot(dc, s, sim, t);
             DrawHazardFront(dc, sim, t);
             DrawFx(dc, t);
@@ -1599,7 +1599,7 @@ namespace ClassicGames
                 dc.DrawRoundedRectangle(Gfx.B(gone ? 0xB0111111 : 0xD0101522), Gfx.P(Gfx.Alpha(c, gone ? 0.4 : 1), 3), new Rect(x, y, w, 88), 16, 16);
                 dc.DrawRoundedRectangle(Gfx.B(Gfx.Alpha(c, 0.25)), null, new Rect(x + 6, y + 6, 76, 76), 12, 12);
                 dc.PushOpacity(gone ? 0.4 : 1);
-                Portrait(dc, f.D, x + 44, y + 44, 64, t, true, BS.Idle);
+                Portrait(dc, Painted(f), x + 44, y + 44, 64, t, true, BS.Idle);
                 dc.Pop();
                 Gfx.Text(dc, names != null && i < names.Length ? names[i] : f.D.Name, x + 92, y + 8, 15, 0xFFE5E7EB, 0, Gfx.UiBold);
                 if (gone) { Gfx.Text(dc, "Smashed!", x + 90, y + 36, 28, 0xFFF87171, 0, Gfx.UiBold); continue; }
