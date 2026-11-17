@@ -84,7 +84,52 @@ public class MainActivity : AvaloniaMainActivity
             }
             return true;
         }
+        // a game controller's buttons and d-pad (only from a gamepad or joystick: the phone's own keys and Back are
+        // left alone) go to the shared controller reader, not to the game's screen as keys
+        if (FromPad(e.Source) && ClassicGames.KartPadInput.IsPadKey((int)code))
+        {
+            try
+            {
+                WatchPads();
+                if (e.Action == global::Android.Views.KeyEventActions.Down) ClassicGames.KartPads.Input.Key(e.DeviceId, (int)code, true);
+                else if (e.Action == global::Android.Views.KeyEventActions.Up) ClassicGames.KartPads.Input.Key(e.DeviceId, (int)code, false);
+            }
+            catch (System.Exception ex) { ClassicGames.CrashLog.Write("a game controller's button", ex, false); }
+            return true;
+        }
         return base.DispatchKeyEvent(e);
+    }
+
+    /// <summary>A game controller's sticks, triggers and d-pad hat (Bluetooth or USB gamepads): every axis the shared
+    /// reader knows, read on each joystick event (PadInput.cs turns them into controller 1-4).</summary>
+    public override bool DispatchGenericMotionEvent(global::Android.Views.MotionEvent e)
+    {
+        if (e != null && FromPad(e.Source) && e.Action == global::Android.Views.MotionEventActions.Move)
+        {
+            try
+            {
+                WatchPads();
+                foreach (int axis in ClassicGames.KartPadInput.Axes)
+                    ClassicGames.KartPads.Input.Axis(e.DeviceId, axis, e.GetAxisValue((global::Android.Views.Axis)axis));
+            }
+            catch (System.Exception ex) { ClassicGames.CrashLog.Write("a game controller's sticks", ex, false); }
+            return true;
+        }
+        return base.DispatchGenericMotionEvent(e);
+    }
+
+    static bool FromPad(global::Android.Views.InputSourceType source)
+    {
+        return (source & global::Android.Views.InputSourceType.Gamepad) == global::Android.Views.InputSourceType.Gamepad
+            || (source & global::Android.Views.InputSourceType.Joystick) == global::Android.Views.InputSourceType.Joystick;
+    }
+
+    /// <summary>A controller that is switched off or unpaired frees its slot: the reader asks about once a second
+    /// whether each controller it knows still exists.</summary>
+    static void WatchPads()
+    {
+        if (ClassicGames.KartPads.Input.Exists == null)
+            ClassicGames.KartPads.Input.Exists = id => global::Android.Views.InputDevice.GetDevice(id) != null;
     }
 
     protected override void OnPause()

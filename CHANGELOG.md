@@ -5,6 +5,11 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Added
+- Bluetooth game controllers work on Android phones and tablets: pair an Xbox, PlayStation or other gamepad with
+  the phone and play with it, up to four at once (the first one picked up is controller 1). The game says
+  "Controller 1 connected", and the touch controls keep working beside the first controller.
+
 ## [0.3.1] - 2026-11-16
 
 ### Fixed

@@ -1,6 +1,6 @@
 // Game controllers (App Hub's Classic Games, Engine\KartGame.cs: KartPads and KartPad, unchanged): Xbox-style pads
 // through XInput, which is part of Windows. Elsewhere (Android) the DLL is missing and Read finds no pads; Fake lets
-// tests (and later the touch controls) stand in for a pad.
+// tests (and the touch controls) stand in for a pad; Input takes controllers a platform reports as events (Android).
 using System;
 using System.Runtime.InteropServices;
 
@@ -17,9 +17,16 @@ namespace ClassicGames
         public static bool Enabled = true;
         public static readonly KartPad[] Fake = new KartPad[4];
 
+        /// <summary>Controllers a platform reports as events (Android's Bluetooth and USB gamepads; PadInput.cs).
+        /// Windows never feeds it, so there XInput below is all there is.</summary>
+        public static readonly KartPadInput Input = new KartPadInput();
+
         public static KartPad Read(int i)
         {
-            if (Fake[i] != null) return Fake[i];
+            KartPad ext = Input.Read(i);
+            // touch (Fake[0]) and a controller in the same slot are one person's controller: both work
+            if (Fake[i] != null) return ext != null ? KartPadInput.Merge(Fake[i], ext) : Fake[i];
+            if (ext != null) return ext;
             var p = new KartPad();
             if (!Enabled || broken) return p;
             try

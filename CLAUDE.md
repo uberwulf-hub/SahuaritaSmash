@@ -73,6 +73,19 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
   paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
   screen units (every button 44+ across: `TouchChecks`).
+- **Controllers on Android (2026-11-17)**: `Wpf\PadInput.cs` `KartPadInput` (`KartPads.Input`) turns controller
+  events into `KartPad`s with XInput's meaning (left stick X / Y up = +, dead zone 0.25 like XInput's 8000; right stick
+  = Android's Z / RZ; triggers LTRIGGER / BRAKE and RTRIGGER / GAS, or the L2 / R2 keys; d-pad keys or the HAT axes;
+  A B X Y, L1 R1, Start Select). It takes Android's own key codes and axis numbers as plain ints, so the checks drive it
+  with pretend events. A controller gets the lowest free number 0-3 the first time it's used (a button, or a stick /
+  trigger past 0.5), keeps it until it goes away (`Gone`, or `Exists` = `InputDevice.GetDevice(id) != null` asked
+  about once a second from `Read`), and "Controller N connected / disconnected" is shown through `GameView.SyncTouch`
+  -> `Game.Toast`. `MainActivity` passes only events whose source is a gamepad or joystick (`DispatchKeyEvent` for the
+  controller key codes, after the volume buttons; `DispatchGenericMotionEvent` for every axis in `KartPadInput.Axes`)
+  and returns true, so the phone's own keys and Back are untouched. `KartPads.Read(i)`: touch (`Fake[0]`) and a
+  controller in the same slot are merged (`KartPadInput.Merge`: either one's buttons, the stick pushed further), so
+  touch keeps working beside controller 1; with no controller it's touch exactly as before; Windows never feeds
+  `Input`, so XInput is unchanged. Checks: group `pads` (`PadChecks.cs`).
 - **Play online (2026-11-15, Andrew: "like Race Track Mayhem")**: lockstep. `Engine\Net\NetMatch.cs`: devices send only
   their people's buttons (`NetProtocol.Pack`: stick in 255 steps, used on the sending device too), a frame is stepped
   only when everyone's are in (input delay 4 frames at home, 7 online), checksums every 120 frames to the host (a
@@ -101,7 +114,7 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
-  brawl-snapshots,sound,touch,net,net-lobby,net-relay,online] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  brawl-snapshots,sound,touch,pads,net,net-lobby,net-relay,online] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
   `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
   App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the

@@ -14,7 +14,9 @@ computer) knock each other off the stage; nobody gets hurt: fighters get bonked 
 
 It started as a game in App Hub's Classic Games and is moving here step by step (see [docs/PLAN.md](docs/PLAN.md)).
 Right now the whole game is here, with its music and sounds, and plays on Windows with the keyboard, mouse and
-controllers, and on Android with on-screen touch controls.
+controllers, and on Android with on-screen touch controls or up to four Bluetooth (or USB) game controllers
+(Xbox, PlayStation and other gamepads: left stick or d-pad moves, A attacks, B special, X or Y jumps, RB or RT
+shields, LB grabs, LT or the right stick strong attacks, Start pauses).
 
 ## Building
 
