@@ -143,6 +143,7 @@ namespace ClassicGames
             g.Update(1.0 / 60);
             var dv = new DrawingVisual(64, 36);
             using (DrawingContext dc = dv.RenderOpen()) g.Render(dc);
+            dv.Dispose();
         }
     }
 }

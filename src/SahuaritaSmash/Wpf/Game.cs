@@ -390,6 +390,8 @@ namespace ClassicGames
         }
 
         public void Toast(string text) { toast = text; toastTime = 1.6; }
+        /// <summary>The note on screen now, or null (the checks).</summary>
+        public string ToastText { get { return toast; } }
 
         public void KeyDown(Key k, bool repeat)
         {

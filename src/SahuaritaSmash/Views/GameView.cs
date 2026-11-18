@@ -46,7 +46,11 @@ namespace SahuaritaSmash.Views
             if (!on && touchWas) Touch.Clear();
             KartPads.Fake[0] = on ? Touch.Pad : null;
             Game.TouchMode = TouchOn;
+            if (TouchOn) { var ts = SahuaritaSmash.Services.TouchSettings.Current; Touch.Scale = ts.Scale; Touch.LeftHanded = ts.LeftHanded; }
             touchWas = on;
+            // "Controller 1 connected" (Android's gamepads, PadInput.cs)
+            string news = KartPads.Input.TakeNews();
+            if (news != null && game != null) game.Toast(news);
         }
 
         public GameView()

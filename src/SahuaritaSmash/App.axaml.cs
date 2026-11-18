@@ -60,6 +60,11 @@ public partial class App : Application
     /// Android sets this (the activity finishes).</summary>
     public static System.Action QuitApp;
 
+    /// <summary>A short buzz of the phone for so many milliseconds (Android sets it; null on Windows and in the checks).
+    /// The game calls it through BrawlGame.Feel (Brawl\BrawlTouchGuide.cs) when the person's fighter lands a hit or is
+    /// hit, only with Vibration on in the Touch controls page.</summary>
+    public static System.Action<int> Haptic;
+
     /// <summary>Set by the checks: no saves brought across, no sound, the test folder.</summary>
     public static bool Testing;
 

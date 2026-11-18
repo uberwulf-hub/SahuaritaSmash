@@ -5,6 +5,38 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-18
+
+### Added
+- Bluetooth game controllers work on Android phones and tablets: pair an Xbox, PlayStation or other gamepad with
+  the phone and play with it, up to four at once (the first one picked up is controller 1). The game says
+  "Controller 1 connected", and the touch controls keep working beside the first controller.
+- On a phone, the pause menu now shows how to play by touch, in big letters: a picture of the buttons and your
+  fighter's moves and specials the touch way (instead of the keyboard table).
+- Touch controls settings (on the title screen while playing by touch): bigger or smaller buttons, a left-handed
+  layout (the stick on the right, the buttons on the left) and vibration on or off. Each phone remembers its own.
+- The phone gives a short buzz when your fighter lands a hit or gets hit (a longer one for a big hit or a bonk off
+  the stage). It can be turned off under Touch controls.
+- The first time you fight on a phone, a short guide shows how the touch controls work (four cards you can skip). It
+  can be shown again from Touch controls.
+- Practice (on the title screen): pick your fighter and a stage and try your moves on a dummy. Nobody loses: fall
+  off and you're straight back, with no timer and no scores. The dummy stands still, or walks, jumps, shields or
+  fights back (gently) if you ask; the menu also puts everyone's damage back to 0%, turns stage surprises on or off,
+  and shows all your moves with their names. Your specials and big attacks are listed on the screen while you play.
+- New colours to unlock: climb the ladder with a fighter to unlock its second colour, and climb it on Hard for a
+  third. Choose them with the colour buttons under your fighter (or C on the keyboard). Two players with the same
+  fighter get different colours when they can. Online games use the usual colours.
+- Playing online, after the results the host can tap Rematch (the same fighters on the same stage, straight into the
+  countdown for everyone) or Back to the lobby; the others see what the host is choosing and can leave.
+- A new fighter from the tall tales: Pecos Bill, the cowboy raised by coyotes. Long-legged and quick, with a lasso
+  that ropes you from across the stage (or pulls you in and throws you), a little twister he rides up into the sky,
+  and a coyote howl that pushes everyone near him away.
+- A new stage: Monsoon Wash, a dry sandy wash in Sahuarita with a storm flashing over the mountains. Fight on a fallen
+  log, the old footbridge and the culvert. When the thunder rolls and the sign says "Flash flood! Get up high", jump
+  or climb: a wave of muddy water runs along the ground and sweeps along anyone standing in it (a light bump, never
+  over the edge). It has its own tune for now.
+- Online games need everyone on this version (the cast, the stages and the rematch changed).
+
 ## [0.3.1] - 2026-11-16
 
 ### Fixed

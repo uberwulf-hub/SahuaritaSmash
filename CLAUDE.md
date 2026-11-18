@@ -73,6 +73,20 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   the game (`KartPads.Fake[0]`, set by `GameView.SyncTouch` each frame) only while `GameView.TouchActive` (play, not
   paused, nothing clickable drawn), on Android from the start and on Windows once the screen is touched; sizes in
   screen units (every button 44+ across: `TouchChecks`).
+- **Controllers on Android (2026-11-17)**: `Wpf\PadInput.cs` `KartPadInput` (`KartPads.Input`) turns controller
+  events into `KartPad`s with XInput's meaning (left stick X / Y up = +, dead zone 0.25 like XInput's 8000; right stick
+  = Android's Z / RZ; triggers LTRIGGER / BRAKE and RTRIGGER / GAS, or the L2 / R2 keys; d-pad keys or the HAT axes;
+  A B X Y, L1 R1, Start Select). It takes Android's own key codes and axis numbers as plain ints, so the checks drive it
+  with pretend events. A controller gets the lowest free number 0-3 the first time it's used (a button, or a stick /
+  trigger past 0.5), keeps it until it goes away (`Gone`, or `Exists` = `InputDevice.GetDevice(id) != null` asked
+  about once a second from `Read`), and "Controller N connected / disconnected" is shown through `GameView.SyncTouch`
+  -> `Game.Toast`. `MainActivity` passes only events whose source is a gamepad or joystick (`DispatchKeyEvent` for the
+  controller key codes, after the volume buttons; `DispatchGenericMotionEvent` for every axis in `KartPadInput.Axes`)
+  and returns true, so the phone's own keys and Back are untouched. `KartPads.Read(i)`: touch (`Fake[0]`) and a
+  controller in the same slot are merged (`KartPadInput.Merge`: either one's buttons, the stick pushed further), so
+  touch keeps working beside controller 1; with no controller it's touch exactly as before; Windows never feeds
+  `Input`, so XInput is unchanged. Checks: group `pads` (`PadChecks.cs`).
+- **Playing on a phone (2026-11-17, Andrew plays on an Android phone):** `Brawl\BrawlTouchGuide.cs` (partial BrawlGame) and `Services\TouchSettings.cs`. While `Game.TouchMode`, the pause panel's right side is `DrawTouchPauseGuide` (the touch layout drawn small by `DrawTouchLayout`, this person's specials and moves the touch way, text 24+ game units) instead of the key table; the title's Controls item is "Touch controls" (`OpenControls`, `Screen.Touch`): button size Small / Normal / Large (`TouchControls.Scale` 0.85 / 1 / 1.25, shrunk to fit a narrow screen, never under 44 across), Left-handed (`TouchControls.LeftHanded`: buttons mirrored, the stick takes the right half), Vibration, the guide again, Keyboard keys (not on Android). Saved per device in `touch.txt` (version 1, key=value lines, unknown lines kept, never written over when unreadable; fixture `Fixtures\touch.txt`); `GameView.SyncTouch` hands size and hand to the controls. The first-time guide (`GuideCheck` at the start of a fight by touch, four cards over the paused fight, `PausedKey`, `guide=done`) never shows in the checks unless `BrawlGame.GuideInTests`. Haptics: `App.Haptic(ms)` (Android: `MainActivity.Buzz`, VIBRATE permission; null elsewhere), called by `BrawlGame.Feel` after each step from the match's `hit` / `ko` events (victim `S`, attacker = the victim's `Last`) for the touch person's fighter only (`TouchSlot`), at most one every 120 ms; never from inside BrawlSim. Checks: group `touch-phone` (every size x hand x screen, the file, the page by taps, the guide, the buzz); pictures TouchPause-phone, TouchPage-phone, Guide-1..4-phone, TouchLefty-phone, TouchLarge-phone.
 - **Play online (2026-11-15, Andrew: "like Race Track Mayhem")**: lockstep. `Engine\Net\NetMatch.cs`: devices send only
   their people's buttons (`NetProtocol.Pack`: stick in 255 steps, used on the sending device too), a frame is stepped
   only when everyone's are in (input delay 4 frames at home, 7 online), checksums every 120 frames to the host (a
@@ -98,10 +112,46 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `Dress`/`HeadOf` art; a new stage its `BrawlScenery` cases (layers, sky, light, textures, platform looks under / over),
   a built-in `Music.BrawlSong` tune and a `BrawlMusic.Roles` entry (a recorded Suno song can be added later), and the
   menus fit up to 15 fighters (three rows of five). Checks and snapshots (`Fight-6`, `Moves-11`, `Pecans-1|2`) cover them.
+- **Practice, colours and the online rematch (2026-11-17):** `Brawl\BrawlPractice.cs` is the title's Practice (setup
+  screen `Screen.Practice`, rows 78 game units tall so they tap on a phone; a match of you and a dummy with
+  `BrawlSim.Practice`: no life is lost, a fall comes back after 30 frames, the match never ends; `BrawlSim.Practice` is
+  false everywhere else and leaves normal matches exactly as before: `PracticeChecks` compares three matches' checksums
+  with numbers taken from the code before it). The dummy's buttons (`DummyInput`: stands / walks / jumps / shields /
+  `BrawlBot` level 1) come from the match only. Its pause menu (`PausedKey`, `DrawPracticePause`) changes the dummy, puts
+  damage back to 0%, turns surprises on or off and shows the moves list (`DrawMovesList`, `BrawlSignatures.HowTo`); a
+  short list is drawn at the top right while playing. Practice never saves anything (no scores, not kept for an update).
+  Colours: `Engine\Brawl\BrawlUnlocks.cs` is `brawl-unlocks.txt` next to the scores (version line, then player, fighter
+  id, extra colours 1 or 2; unknown lines and fields kept; through `SafeFile`; an unreadable file is never written;
+  fixture `Fixtures\brawl-unlocks.txt`). Climbing the ladder unlocks colour 2, on Hard colour 3 too (`UnlockForLadder`,
+  shown over the ladder's end by `DrawOver`). `Brawl\BrawlColours.cs` has each fighter's two extra palettes by id (Main,
+  Second, Trim, Dark, and Skin only for fighters whose skin is a colour of their own; people's skin is never changed) and
+  turns an unlisted fighter's colours round the colour wheel, so **a new fighter should get a table entry**; the coloured
+  copy of a `BFighterDef` is swapped into `f.D` only while drawing (`BrawlView.DrawFighterIn`, `View.Colours` by slot),
+  so `BrawlSim` never sees it. `Brawl\BrawlColourPick.cs`: the chips (80 units square) under the fighter on the fight,
+  ladder and practice screens, C on the keyboard, `MatchColours` (the same fighter twice gets different unlocked
+  colours). Online uses the usual colours. Rematch: `Brawl\BrawlRematch.cs` (the host's Rematch / Back to the lobby,
+  the guest's Leave, 80 units tall) and `NetSession.Rematch`: a new Start with the same seats (people who left are left
+  out), a new seed and the next `NetMatchSetup.Round`; Inputs, Check and Drop carry the round first and `NetMatch` drops
+  another round's (`Stale`); `NetProtocol.Version` 3. Checks: groups `practice`, `colours`, `rematch` (`ModesChecks.cs`;
+  scenes `Practice`, `PracticeFight`, `PracticePause`, `SelectColours`, `LadderColours`, `LadderUnlock`, `Colours -Level
+  1-3`, wide and phone-sized).
+- **Pecos Bill and Monsoon Wash (NetProtocol.Version 3):** Pecos Bill (`pecos`, Legends; the public-domain folk tale
+  only, never a film's version: a lanky cowboy, wide hat, bandana, vest, chaps, cowboy boots `Foot = "cowboy"`, and
+  arms style `rodeo`, the free hand up and waving). Specials: Lasso (`lash`, extra `rope`), Lasso pull (cmdgrab, `rope`),
+  Ride the twister (rise with a multi-hit, `twister`), Coyote howl (anim `howl`, a push on both sides, `howl`); his
+  pictures are in `Brawl\BrawlPecos.cs` (`PecosTorso`, `PecosHead`, `PecosExtra`, `PecosSig` for `crack` / `gust`).
+  Monsoon Wash (`wash`, platforms `log`, `bridge`, `culvert`; textures `washsand`, `concrete`, `cottonwood`; its sky,
+  layers, lightning and platforms in `Brawl\BrawlWash.cs`) and its surprise `flood`: warned `HazWarn` frames (thunder,
+  the sign, a trickle), then `BrawlSim.StepFlood`: the front (`HazX`) runs `FloodSpeed` along the ground, gives anyone
+  standing in it one light bonk per wave, and the water `FloodLen` behind it carries anyone standing in it
+  `FloodCarry` a frame but never past 30 px from the edge; the air, platforms and the ledge are safe;
+  `BrawlBot.FloodComing` jumps it. The water's surface is drawn after the platforms and behind the fighters, its front
+  face in front of them. Checks: group `brawl-cast` (`BrawlCastChecks.cs`: his four specials, the flood warned, bonking,
+  carrying, missing the bridge and a jumper, bots jumping it); snapshots `Fight-7`, `Moves-12`, `Flood-1|2`.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
-  brawl-snapshots,sound,touch,net,net-lobby,net-relay,online] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
+  brawl-snapshots,sound,touch,touch-phone,pads,net,net-lobby,net-relay,online] [-Snapshot dir]`: App Hub's Brawl test files copied whole (`BrawlTests.cs`, `BrawlKeysTests.cs`,
   `BrawlMusicTests.cs`, only `using` lines changed), the saves (`BrawlSaveChecks.cs`, fixtures in `Fixtures\`) and
   App Hub's snapshot scenes (`SnapshotScene`, drawn by Avalonia's headless platform with Skia); the exit code is the number of failures.
 - Building in a cloud session: if dot.net's download host is blocked, `apt-get install dotnet-sdk-10.0` works; the

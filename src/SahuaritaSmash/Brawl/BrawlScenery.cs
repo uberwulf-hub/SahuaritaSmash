@@ -149,6 +149,33 @@ namespace ClassicGames
                                 if (Hash(x, y, 25) > 0.993) c = 0xFF3B2414;
                                 break;
                             }
+                        case "washsand":
+                            {
+                                // the wash's floor: pale packed sand in rippled bands left by the last flood, with pebbles
+                                double rip = Math.Sin((y + Noise(x, y, 4, 31) * 22) * 0.35);
+                                c = Shade(0xFFC9A877, 0.82 + n * 0.3 + rip * 0.06);
+                                if (rip > 0.92) c = Shade(0xFF9C7E55, 0.9 + n * 0.2);
+                                double peb = Noise(x, y, 32, 33);
+                                if (peb > 0.83) c = Shade(Hash(x / 5, y / 5, 34) > 0.5 ? 0xFF8A8178 : 0xFF6B5A48, 0.8 + n * 0.4);
+                                break;
+                            }
+                        case "concrete":
+                            {
+                                // poured concrete: grey with flecks of gravel, the lines of the forms, a water stain low down
+                                c = Shade(0xFFA8A29E, 0.82 + n * 0.25 + (d - 0.5) * 0.1);
+                                if (Hash(x, y, 35) > 0.97) c = Shade(0xFF78716C, 0.9);
+                                if (y % 48 < 2) c = Shade(0xFF78716C, 0.85);
+                                if (y % 128 > 100) c = Shade(c, 0.85);
+                                break;
+                            }
+                        case "cottonwood":
+                            {
+                                // an old cottonwood's bark: pale grey, cut deep with long criss-crossing furrows
+                                double fur = Math.Abs(Math.Sin(y * 0.16 + Noise(x, y, 4, 36) * 7 + Math.Sin(x * 0.05) * 2));
+                                c = Shade(0xFFA39A8E, 0.62 + fur * 0.38 + n * 0.18);
+                                if (fur < 0.16) c = Shade(0xFF4A4038, 0.85 + n * 0.3);
+                                break;
+                            }
                         case "crystal": { double g = Noise(x, y, 8, 15); c = Shade(g > 0.55 ? 0xFFA5B4FC : 0xFF6366F1, 0.75 + n * 0.45); break; }
                         default: c = Shade(0xFF808080, 0.8 + n * 0.3); break;
                     }
@@ -245,12 +272,12 @@ namespace ClassicGames
         /// <summary>The light on the fighters' edges (rim) and over the whole picture (grade), per stage.</summary>
         public static uint RimFor(string stage)
         {
-            switch (stage) { case "mesa": return 0xFFFFB25C; case "copper": return 0xFFFFE7A3; case "server": return 0xFF67E8F9; case "moon": return 0xFFC7D2FE; case "lab": return 0xFFFCA5A5; case "orchard": return 0xFFFFF1C2; }
+            switch (stage) { case "mesa": return 0xFFFFB25C; case "copper": return 0xFFFFE7A3; case "server": return 0xFF67E8F9; case "moon": return 0xFFC7D2FE; case "lab": return 0xFFFCA5A5; case "orchard": return 0xFFFFF1C2; case "wash": return 0xFFFFD9A8; }
             return 0xFFFFFFFF;
         }
         static uint GradeFor(string stage)
         {
-            switch (stage) { case "mesa": return 0x18FF7A1A; case "copper": return 0x10FFD27A; case "server": return 0x1A0EA5E9; case "moon": return 0x184338CA; case "lab": return 0x16DC2626; case "orchard": return 0x10FDE68A; }
+            switch (stage) { case "mesa": return 0x18FF7A1A; case "copper": return 0x10FFD27A; case "server": return 0x1A0EA5E9; case "moon": return 0x184338CA; case "lab": return 0x16DC2626; case "orchard": return 0x10FDE68A; case "wash": return 0x14475569; }
             return 0;
         }
 
@@ -270,7 +297,7 @@ namespace ClassicGames
         /// <summary>The ground continuing under a layer (the colour its bottom ends in).</summary>
         static Brush LayerFoot(BStageDef s, int layer)
         {
-            switch (s.Id) { case "mesa": return Gfx.B(layer == 1 ? 0xFF7C2D12 : 0xFF6B2A0E); case "copper": return Gfx.B(0xFF1C1209); case "server": return Gfx.B(0xFF0F172A); case "moon": return Gfx.B(0xFF27272A); case "orchard": return Gfx.B(0xFF3B2A1A); default: return Gfx.B(0xFF18181B); }
+            switch (s.Id) { case "mesa": return Gfx.B(layer == 1 ? 0xFF7C2D12 : 0xFF6B2A0E); case "copper": return Gfx.B(0xFF1C1209); case "server": return Gfx.B(0xFF0F172A); case "moon": return Gfx.B(0xFF27272A); case "orchard": return Gfx.B(0xFF3B2A1A); case "wash": return Gfx.B(0xFF5A4630); default: return Gfx.B(0xFF18181B); }
         }
 
         void EnsureLayers(BStageDef s)
@@ -384,6 +411,7 @@ namespace ClassicGames
                 case "lab":
                     dc.DrawRectangle(Linear(0x00000000, 0x40450A0A, 90), null, new Rect(0, 0, span, H));
                     break;
+                case "wash": WashSky(dc, ox, span); break;
                 case "orchard":
                     {
                         // a clear morning: a soft sun up on the left, a few fair-weather clouds
@@ -561,6 +589,7 @@ namespace ClassicGames
                         for (int i = 0; i < 6; i++) { double x = rng.NextDouble() * w; Crystal(dc, x, h - 40 - rng.Next(60), 0.8 + rng.NextDouble()); }
                     }
                     break;
+                case "wash": WashLayer(dc, layer, w, h, horizon, rng); break;
                 case "orchard":
                     if (layer == 0)
                     {
@@ -738,6 +767,7 @@ namespace ClassicGames
                         dc.DrawEllipse(Gfx.B(0x50FFF7ED), null, new Point(x, y), 1.5, 1.5);
                     }
                     break;
+                case "wash": WashLive(dc, t); break;
                 case "orchard":
                     for (int i = 0; i < 16; i++)
                     {
@@ -778,7 +808,7 @@ namespace ClassicGames
         }
 
         // ---------------------------------------------------------------- platforms as boxes in perspective
-        static string FrontTex(string stage) { switch (stage) { case "mesa": return "sandstone"; case "copper": return "copperrock"; case "server": return "metalpanel"; case "moon": return "regolith"; case "orchard": return "soil"; default: return "labwall"; } }
+        static string FrontTex(string stage) { switch (stage) { case "mesa": return "sandstone"; case "copper": return "copperrock"; case "server": return "metalpanel"; case "moon": return "regolith"; case "orchard": return "soil"; case "wash": return "washsand"; default: return "labwall"; } }
 
         void DrawPlatforms(DrawingContext dc, BrawlSim sim, double t)
         {
@@ -850,6 +880,9 @@ namespace ClassicGames
                 case "branch": return "bark";
                 case "bins": return "wood";
                 case "picker": return "metalpanel";
+                case "log": return "cottonwood";
+                case "bridge": return "wood";
+                case "culvert": return "concrete";
                 default: return stage == "moon" ? "crystal" : stage == "mesa" || stage == "copper" ? "wood" : "grate";
             }
         }
@@ -871,13 +904,16 @@ namespace ClassicGames
                 case "branch": return 0xFF8B7355;
                 case "bins": return 0xFFB7834A;
                 case "picker": return 0xFFEAB308;
+                case "log": return 0xFFB5ADA2;
+                case "bridge": return 0xFF9C6B3E;
+                case "culvert": return 0xFFBDB6AA;
                 default: switch (stage) { case "mesa": return 0xFFC08040; case "copper": return 0xFFB87333; case "server": return 0xFF94A3B8; case "moon": return 0xFFA5B4FC; default: return 0xFF71717A; }
             }
         }
 
         static double SoftThick(string look)
         {
-            switch (look) { case "ledge": case "arch": return 24; case "terrace": return 20; case "rock": return 18; case "rack": return 10; case "tank": return 12; case "branch": return 18; case "bins": return 22; default: return 16; }
+            switch (look) { case "ledge": case "arch": return 24; case "terrace": return 20; case "rock": return 18; case "rack": return 10; case "tank": return 12; case "branch": return 18; case "bins": return 22; case "log": return 26; case "bridge": return 12; case "culvert": return 20; default: return 16; }
         }
 
         /// <summary>What holds a platform up (or hangs it down), drawn behind it: hoodoo columns and a stone arch, a saguaro,
@@ -889,6 +925,7 @@ namespace ClassicGames
             Pen edge = Gfx.P(Gfx.Alpha(0xFF000000, 0.5), Math.Max(1, 1.5 * z));
             switch (p.Look)
             {
+                case "log": case "bridge": case "culvert": WashUnder(dc, p, x1, x2, y, yb, g, z, edge, t); break;
                 case "ledge":
                     {
                         // a hoodoo: a rock column, pinched in the middle, a little darker than the ledge on top
@@ -1128,6 +1165,7 @@ namespace ClassicGames
             double z = Zoom;
             switch (p.Look)
             {
+                case "log": case "bridge": case "culvert": WashOver(dc, p, fl, fr, bl, br, yb, z, t); break;
                 case "catwalk":
                     {
                         Pen post = Gfx.P(0xFFA1A1AA, 2 * z), rail = Gfx.P(0xFFD4D4D8, 2.5 * z);

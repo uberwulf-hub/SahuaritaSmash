@@ -192,6 +192,20 @@ namespace ClassicGames
                 new[] { "bair", "Back haul", "backkick", "", "" },
                 new[] { "uair", "Sky chop", "flip", "chips", "" },
                 new[] { "dair", "Boot quake", "stomp", "dust", "spike" } } },
+            { "pecos", new[] {
+                new[] { "jab", "Knuckle tap", "jab", "", "rapid" },
+                new[] { "ftilt", "Rope crack", "swing", "crack", "far" },
+                new[] { "utilt", "Hat flip", "upswing", "", "launch" },
+                new[] { "dtilt", "Spur sweep", "sweep", "dust", "trip,far" },
+                new[] { "dash", "Stampede", "shoulder", "dust", "heavy" },
+                new[] { "fstrong", "Tall-tale haymaker", "bigpunch", "stars", "" },
+                new[] { "ustrong", "Cyclone uppercut", "uppercut", "gust", "" },
+                new[] { "dstrong", "Rodeo loop", "splits", "lasso", "wide" },
+                new[] { "nair", "Bucking bronco", "spin", "", "spin" },
+                new[] { "fair", "Rope lash", "overhead", "crack", "far" },
+                new[] { "bair", "Mule kick", "backkick", "", "heavy" },
+                new[] { "uair", "Rope the moon", "flip", "lasso", "far" },
+                new[] { "dair", "Boot heel", "stomp", "dust", "spike" } } },
         };
 
         /// <summary>Called once from BrawlData (after the ordinary moves, before the hit groups are set).</summary>

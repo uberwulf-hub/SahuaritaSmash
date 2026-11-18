@@ -21,7 +21,7 @@ namespace ClassicGames
             Action<int> frames = n => { for (int i = 0; i < n; i++) { host.Update(1.0 / 60); guest.Update(1.0 / 60); Draw(host); Draw(guest); System.Threading.Thread.Sleep(1); } };
 
             // the title's "Play online", then host on the home network
-            host.Menu = BrawlGame.Screen.Title; host.Sel = 4; host.Tap(Key.Enter);
+            host.Menu = BrawlGame.Screen.Title; host.Sel = 5; host.Tap(Key.Enter);
             Check("online: the title's Play online opens its menu", host.Menu == BrawlGame.Screen.Online, host.Menu.ToString());
             Snap(host, "Online");
             host.Tap(Key.Enter);   // Host a game on this home network
@@ -29,7 +29,7 @@ namespace ClassicGames
             Check("online: hosting opens the lobby with the host in it", host.Menu == BrawlGame.Screen.OnlineLobby && host.Online != null && host.Online.Players.Count == 1, host.Menu + " " + (host.Online == null ? "" : host.Online.State.ToString()));
 
             // the guest: Join, finds the game, taps it
-            guest.Menu = BrawlGame.Screen.Title; guest.Sel = 4; guest.Tap(Key.Enter); guest.Sel = 2; guest.Tap(Key.Enter);
+            guest.Menu = BrawlGame.Screen.Title; guest.Sel = 5; guest.Tap(Key.Enter); guest.Sel = 2; guest.Tap(Key.Enter);
             Check("online: Join opens the join screen", guest.Menu == BrawlGame.Screen.OnlineJoin, guest.Menu.ToString());
             var sw = System.Diagnostics.Stopwatch.StartNew();
             Avalonia.Point? found = null;

@@ -26,6 +26,8 @@ namespace ClassicGames
         public bool Surprises = true;
         public int MyFighter;
         public NetMatch Match;
+        /// <summary>Matches started in this room so far (a rematch is the next one; NetMatchSetup.Round).</summary>
+        public int Rounds;
         /// <summary>Raised when a match starts (the game sets itself up from Match.Setup).</summary>
         public event Action MatchStarted;
         /// <summary>Raised when the host sends everyone back to the lobby.</summary>
@@ -174,7 +176,7 @@ namespace ClassicGames
         {
             if (!CanStart) return;
             SendLobby();
-            var setup = new NetMatchSetup { Stage = Stage, Lives = Lives, Minutes = Minutes, Surprises = Surprises, Delay = Delay, Seed = seed };
+            var setup = new NetMatchSetup { Stage = Stage, Lives = Lives, Minutes = Minutes, Surprises = Surprises, Delay = Delay, Seed = seed, Round = Rounds + 1 };
             foreach (Player p in Players) setup.Seats.Add(new NetMatchSetup.Seat { Owner = p.Peer, Fighter = p.Fighter, Name = p.Name });
             var rng = new Random((int)seed);
             for (int i = 0; i < Cpus && setup.Seats.Count < MaxPlayers; i++)
@@ -186,8 +188,38 @@ namespace ClassicGames
             Begin(setup);
         }
 
+        /// <summary>Host, on the results: the same fighters on the same stage again, with a new seed, straight into the
+        /// countdown on every device (someone who left meanwhile is left out; computer players stay). False when there
+        /// aren't two fighters left (then it's back to the lobby).</summary>
+        public bool CanRematch
+        {
+            get { return IsHost && State == Phase.Playing && Match != null && RematchSeats().Count >= 2; }
+        }
+
+        List<NetMatchSetup.Seat> RematchSeats()
+        {
+            var seats = new List<NetMatchSetup.Seat>();
+            if (Match == null) return seats;
+            foreach (NetMatchSetup.Seat s in Match.Setup.Seats)
+                if (s.Owner == 0 || Players.Any(p => p.Peer == s.Owner))
+                    seats.Add(new NetMatchSetup.Seat { Owner = s.Owner, Fighter = s.Fighter, BotLevel = s.BotLevel, Name = s.Name });
+            return seats;
+        }
+
+        public bool Rematch(uint seed)
+        {
+            if (!CanRematch) return false;
+            NetMatchSetup old = Match.Setup;
+            var setup = new NetMatchSetup { Stage = old.Stage, Lives = old.Lives, Minutes = old.Minutes, Surprises = old.Surprises, Delay = old.Delay, Seed = seed, Round = Rounds + 1 };
+            setup.Seats.AddRange(RematchSeats());
+            Net.Send(0, setup.ToPacket());
+            Begin(setup);
+            return true;
+        }
+
         void Begin(NetMatchSetup setup)
         {
+            Rounds = Math.Max(Rounds, setup.Round);
             Match = new NetMatch(setup, Net.MyId) { SendAll = d => Net.Send(0, d) };
             State = Phase.Playing;
             Reason = null;
