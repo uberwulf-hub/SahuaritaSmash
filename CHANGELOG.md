@@ -5,6 +5,8 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-18
+
 ### Added
 - Bluetooth game controllers work on Android phones and tablets: pair an Xbox, PlayStation or other gamepad with
   the phone and play with it, up to four at once (the first one picked up is controller 1). The game says
@@ -26,7 +28,6 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
   fighter get different colours when they can. Online games use the usual colours.
 - Playing online, after the results the host can tap Rematch (the same fighters on the same stage, straight into the
   countdown for everyone) or Back to the lobby; the others see what the host is choosing and can leave.
-- Online games need everyone on this version (for the rematch).
 - A new fighter from the tall tales: Pecos Bill, the cowboy raised by coyotes. Long-legged and quick, with a lasso
   that ropes you from across the stage (or pulls you in and throws you), a little twister he rides up into the sky,
   and a coyote howl that pushes everyone near him away.
@@ -34,7 +35,7 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
   log, the old footbridge and the culvert. When the thunder rolls and the sign says "Flash flood! Get up high", jump
   or climb: a wave of muddy water runs along the ground and sweeps along anyone standing in it (a light bump, never
   over the edge). It has its own tune for now.
-- Online games need everyone on this version (the cast and the stages changed).
+- Online games need everyone on this version (the cast, the stages and the rematch changed).
 
 ## [0.3.1] - 2026-11-16
 
