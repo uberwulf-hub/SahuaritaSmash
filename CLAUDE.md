@@ -148,6 +148,13 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `BrawlBot.FloodComing` jumps it. The water's surface is drawn after the platforms and behind the fighters, its front
   face in front of them. Checks: group `brawl-cast` (`BrawlCastChecks.cs`: his four specials, the flood warned, bonking,
   carrying, missing the bridge and a jumper, bots jumping it); snapshots `Fight-7`, `Moves-12`, `Flood-1|2`.
+- **Monsoon Wash's Sonoran look (0.4.2, Creative Collaboration Test 001: art direction ChatGPT, approved by Andrew
+  2026-11-20):** `Brawl\BrawlWash.cs` `PaloVerde` / `Mesquite` / `Shrub` (x, y, height in layer pixels, haze 0-1, ink
+  edge width, the layer's seeded `Random`) on `Branch` / `Crown` / `Haze` / `InkFor`; far layer hazed 0.45 toward
+  `HazeTone` (80-115 tall, saguaros), middle 0.14 (120-165), foreground none (155-205); the spec's colours are constants
+  in each helper. `RoadSign` is drawn in the stage at world x `SignX` (-392, left of the log) from the log's
+  `WashUnder`, so it sits in front of the background and behind the log, ground and fighters, and the footbridge never
+  covers it. Pictures only; the scenery is the same every time (byte-identical renders). Not tried on a real phone.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

@@ -4,6 +4,7 @@
 // sign and a trickle while it is warned, then a wave of muddy water running along the ground). Pictures only: the
 // match never reads any of this (the flood itself is BrawlSim.StepFlood).
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Media;
 
@@ -50,6 +51,15 @@ namespace ClassicGames
                 g.Freeze();
                 dc.DrawGeometry(Linear(0xFF55607A, 0xFF7B8197, 90), null, g);
                 dc.DrawRectangle(Linear(0xFFB49A78, 0xFF9C8462, 90), null, new Rect(0, horizon + 8, w, h));
+                // far: the desert floor below the mountains, a few saguaros and small trees, hazy and blue-green
+                double fy = horizon + 12;
+                for (double x = 40; x < w; x += 300 + rng.Next(160))
+                {
+                    if (rng.Next(3) == 0) SaguaroShaded(dc, x, fy, (90 + rng.Next(55)) / 110.0 * 0.8, Haze(0xFF4F7A45, FarHaze));
+                    else if (rng.Next(2) == 0) PaloVerde(dc, x, fy, 80 + rng.Next(35), FarHaze, 0, rng);
+                    else Mesquite(dc, x, fy, 80 + rng.Next(35), FarHaze, 0, rng);
+                    Shrub(dc, x + 70 + rng.Next(60), fy, 12 + rng.Next(8), FarHaze, 0, rng);
+                }
             }
             else if (layer == 1)
             {
@@ -65,62 +75,251 @@ namespace ClassicGames
                 g.Freeze();
                 dc.DrawGeometry(Linear(0xFFA88A62, 0xFF7E6446, 90), null, g);
                 for (int i = 0; i < 10; i++) { double y = horizon + 40 + i * 6; dc.DrawLine(Gfx.P(0x18000000, 2), new Point(0, y), new Point(w, y + 4)); }
-                for (double x = 30; x < w; x += 120 + rng.Next(80))
+                // middle: the plants that say "Sonoran desert": palo verde and mesquite along the bank, shrubs between
+                double my = horizon + 28;
+                for (double x = 60; x < w; x += 230 + rng.Next(140))
                 {
-                    if (rng.Next(3) == 0) PaloVerde(dc, x, horizon + 26, 0.5 + rng.NextDouble() * 0.1);
-                    else Mesquite(dc, x, horizon + 26, 0.5 + rng.NextDouble() * 0.12);
+                    if (rng.Next(2) == 0) PaloVerde(dc, x, my, 120 + rng.Next(45), MidHaze, 1.4, rng);
+                    else Mesquite(dc, x, my, 120 + rng.Next(45), MidHaze, 1.4, rng);
+                    if (rng.Next(3) > 0) Shrub(dc, x + 95 + rng.Next(50), my + 2, 25 + rng.Next(20), MidHaze, 1.4, rng);
                 }
-                for (int i = 0; i < 30; i++) dc.DrawEllipse(Gfx.B(0xFF6B7A45), null, new Point(rng.NextDouble() * w, horizon + 24 + rng.Next(6)), 8 + rng.Next(8), 5);
             }
             else
             {
-                // the near bank: big mesquite and palo verde, rocks, and the yellow flood sign by the crossing
-                for (double x = -60; x < w + 100; x += 300 + rng.Next(120))
+                // foreground: the near bank: big mesquite and palo verde with stronger colour, shrubs and rocks (the flood
+                // sign now stands in the stage itself, by the log, where the footbridge can't cover it: RoadSign)
+                for (double x = -40; x < w + 100; x += 430 + rng.Next(140))
                 {
-                    if (rng.Next(2) == 0) Mesquite(dc, x, h - 30, 1.15 + rng.NextDouble() * 0.25);
-                    else PaloVerde(dc, x, h - 30, 1.1 + rng.NextDouble() * 0.2);
+                    if (rng.Next(2) == 0) Mesquite(dc, x, h - 30, 155 + rng.Next(50), 0, 2.2, rng);
+                    else PaloVerde(dc, x, h - 30, 155 + rng.Next(50), 0, 2.2, rng);
+                    Shrub(dc, x + 150 + rng.Next(80), h - 26, 38 + rng.Next(17), 0, 2.2, rng);
                 }
                 for (int i = 0; i < 26; i++) { double x = rng.NextDouble() * w, y = h - 10 - rng.Next(70); dc.DrawEllipse(Sphere(i % 3 == 0 ? 0xFF8A7F74 : 0xFF6E5E4E), null, new Point(x, y), 10 + rng.Next(14), 7 + rng.Next(8)); }
-                for (double x = 400; x < w; x += 1100) FloodSign(dc, x, h - 230);
             }
         }
 
-        /// <summary>A velvet mesquite: a dark twisting trunk in two or three leaning stems, a wide flat crown of fine
-        /// grey-green leaves.</summary>
-        static void Mesquite(DrawingContext dc, double x, double y, double k)
-        {
-            Pen trunk = RoundPen(0xFF3B2A1E, 10 * k), limb = RoundPen(0xFF3B2A1E, 6 * k);
-            dc.DrawLine(trunk, new Point(x, y), new Point(x - 14 * k, y - 60 * k));
-            dc.DrawLine(trunk, new Point(x, y), new Point(x + 18 * k, y - 54 * k));
-            dc.DrawLine(limb, new Point(x - 14 * k, y - 60 * k), new Point(x - 60 * k, y - 96 * k));
-            dc.DrawLine(limb, new Point(x + 18 * k, y - 54 * k), new Point(x + 64 * k, y - 92 * k));
-            dc.DrawLine(limb, new Point(x - 10 * k, y - 62 * k), new Point(x + 6 * k, y - 110 * k));
-            double[] cx = { -80, -40, 0, 42, 82, -58, -12, 30, 62 }, cy = { -96, -112, -118, -110, -94, -128, -138, -132, -116 }, cr = { 30, 36, 38, 36, 28, 26, 30, 28, 22 };
-            for (int i = 0; i < cx.Length; i++) dc.DrawEllipse(Gfx.B(0xFF4E5A34), null, new Point(x + cx[i] * k, y + cy[i] * k), cr[i] * k, cr[i] * 0.55 * k);
-            for (int i = 0; i < cx.Length; i++) dc.DrawEllipse(Gfx.B(0xFF6F7D47), null, new Point(x + cx[i] * k - 4 * k, y + cy[i] * k - 5 * k), cr[i] * 0.72 * k, cr[i] * 0.36 * k);
-        }
+        // ---------------------------------------------------------------- Sonoran plants (Creative Collaboration Test 001)
+        // Art direction: ChatGPT (creative director), approved by Andrew, 2026-11-20. Colours are the spec's; the far
+        // layer is hazed toward a cool blue-grey, the middle layer a little, the foreground not at all. Heights are in
+        // layer pixels (the layers are drawn at screen scale): far 80-115, middle 120-165, foreground 155-205.
+        const double FarHaze = 0.45, MidHaze = 0.14;
+        const uint HazeTone = 0xFF8C98A8, Ink = 0xFF161616;
 
-        /// <summary>A palo verde: smooth green trunk and branches fanning up, and a thin airy crown of yellow-green.</summary>
-        static void PaloVerde(DrawingContext dc, double x, double y, double k)
+        /// <summary>A colour pushed back into the distance (0 = as specified, 1 = the haze itself).</summary>
+        static uint Haze(uint c, double k) { return k <= 0 ? c : Gfx.Mix(c, HazeTone, k); }
+
+        /// <summary>The soft dark edge every plant gets (the game's #161616 ink), lighter and thinner further back.</summary>
+        static uint InkFor(double haze) { return Gfx.Alpha(Ink, 0.55 * (1 - haze)); }
+
+        /// <summary>A branch drawn as a tapering line: an ink edge (ow wide) under the wood, and a thin lit stroke on its
+        /// upper-left side.</summary>
+        static void Branch(DrawingContext dc, Point a, Point b, double wa, double wb, uint wood, uint lit, double haze, double ow)
         {
-            Pen trunk = RoundPen(0xFF6E8B3D, 9 * k), limb = RoundPen(0xFF7FA048, 5 * k);
-            dc.DrawLine(trunk, new Point(x, y), new Point(x, y - 40 * k));
-            foreach (double a in new[] { -140.0, -115, -90, -65, -40 })
+            int n = 3;
+            for (int i = 0; i < n; i++)
             {
-                Point s = new Point(x, y - 40 * k), e = Off(s, a, 70 * k);
-                dc.DrawLine(limb, s, e);
-                for (int i = 0; i < 3; i++) dc.DrawEllipse(Gfx.B(i == 1 ? 0xB0C2CF5A : 0xB09CB54A), null, Off(e, a + (i - 1) * 40, 12 * k), 22 * k, 13 * k);
+                double k0 = i / (double)n, k1 = (i + 1) / (double)n, wd = wa + (wb - wa) * (k0 + k1) / 2;
+                Point p0 = new Point(a.X + (b.X - a.X) * k0, a.Y + (b.Y - a.Y) * k0), p1 = new Point(a.X + (b.X - a.X) * k1, a.Y + (b.Y - a.Y) * k1);
+                if (ow > 0) dc.DrawLine(RoundPen(InkFor(haze), wd + ow * 2), p0, p1);
+            }
+            for (int i = 0; i < n; i++)
+            {
+                double k0 = i / (double)n, k1 = (i + 1) / (double)n, wd = wa + (wb - wa) * (k0 + k1) / 2;
+                Point p0 = new Point(a.X + (b.X - a.X) * k0, a.Y + (b.Y - a.Y) * k0), p1 = new Point(a.X + (b.X - a.X) * k1, a.Y + (b.Y - a.Y) * k1);
+                dc.DrawLine(RoundPen(Haze(wood, haze), wd), p0, p1);
+            }
+            double wm = (wa + wb) / 2;
+            if (wm > 3)
+            {
+                // one continuous lit stroke along the upper-left side, stopping short of both ends
+                Point s0 = new Point(a.X + (b.X - a.X) * 0.08 - wm * 0.22, a.Y + (b.Y - a.Y) * 0.08 - wm * 0.1), s1 = new Point(a.X + (b.X - a.X) * 0.9 - wm * 0.2, a.Y + (b.Y - a.Y) * 0.9 - wm * 0.1);
+                dc.DrawLine(RoundPen(Haze(lit, haze), Math.Max(1, wm * 0.26)), s0, s1);
             }
         }
 
-        /// <summary>The yellow road sign by the crossing: "Do not enter when flooded".</summary>
-        static void FloodSign(DrawingContext dc, double x, double y)
+        /// <summary>A crown of leaf clumps: an ink outline under all of them (so the crown reads as one shape), the
+        /// darker clumps behind, the leaf colour over them and a highlight on the upper left of the front ones.</summary>
+        static void Crown(DrawingContext dc, List<Rect> blobs, uint leaf, uint lit, double haze, double ow, bool backOnly, bool frontOnly)
         {
-            dc.DrawLine(RoundPen(0xFF6B7280, 5), new Point(x, y), new Point(x, y - 110));
-            dc.DrawRoundedRectangle(Gfx.B(0xFFFACC15), Gfx.P(0xFF1C1917, 3), new Rect(x - 52, y - 160, 104, 56), 6, 6);
-            Gfx.Text(dc, "DO NOT ENTER", x, y - 156, 14, 0xFF1C1917, 0.5, Gfx.UiBold);
-            Gfx.Text(dc, "WHEN FLOODED", x, y - 136, 14, 0xFF1C1917, 0.5, Gfx.UiBold);
+            if (!frontOnly)
+            {
+                if (ow > 0) foreach (Rect b in blobs) dc.DrawEllipse(Gfx.B(InkFor(haze)), null, b.Center, b.Width / 2 + ow, b.Height / 2 + ow);
+                foreach (Rect b in blobs) dc.DrawEllipse(Gfx.B(Haze(Gfx.Mix(leaf, 0xFF000000, 0.22), haze)), null, b.Center, b.Width / 2, b.Height / 2);
+            }
+            if (backOnly) return;
+            for (int i = 0; i < blobs.Count; i++)
+            {
+                Rect b = blobs[i];
+                if (i % 3 == 2) continue;   // gaps: the airy crown lets the dark back clumps (and branches) show through
+                dc.DrawEllipse(Gfx.B(Haze(leaf, haze)), null, new Point(b.Center.X - b.Width * 0.06, b.Center.Y - b.Height * 0.1), b.Width * 0.42, b.Height * 0.4);
+                if (i % 2 == 0) dc.DrawEllipse(Gfx.B(Haze(lit, haze)), null, new Point(b.Center.X - b.Width * 0.18, b.Center.Y - b.Height * 0.24), b.Width * 0.2, b.Height * 0.17);
+            }
         }
+
+        static Rect Blob(Point c, double rx, double ry) { return new Rect(c.X - rx, c.Y - ry, rx * 2, ry * 2); }
+
+        /// <summary>A blue palo verde, about h tall standing at (x, y): a short green trunk splitting low into three or
+        /// four green limbs that fork again, and an airy, irregular rounded crown of small clumps with the branches
+        /// showing through. ow = the ink edge's width (0 for the far layer).</summary>
+        static void PaloVerde(DrawingContext dc, double x, double y, double h, double haze, double ow, Random r)
+        {
+            const uint trunk = 0xFF657F43, trunkLit = 0xFF9DAF62, leaf = 0xFF789C45, leafLit = 0xFFB6C86A;
+            double tw = h * 0.075, split = y - h * 0.24;
+            Point top = new Point(x + (r.NextDouble() - 0.5) * h * 0.05, split);
+            var limbs = new List<Point[]>();
+            int n = 3 + r.Next(2);
+            for (int i = 0; i < n; i++)
+            {
+                double ang = -132 + 84 * (i + 0.5) / n + (r.NextDouble() - 0.5) * 12;   // an upright vase, not a flat fan
+                double len = h * (0.5 + r.NextDouble() * 0.14);
+                Point mid = Off(top, ang + (r.NextDouble() - 0.5) * 20, len * 0.55), tip = Off(mid, ang + (r.NextDouble() - 0.5) * 30, len * 0.5);
+                limbs.Add(new[] { top, mid, tip, Off(mid, ang - 28, len * 0.38), Off(mid, ang + 26, len * 0.34) });
+            }
+            // the crown: clumps round each limb's outer half and tips, more on top, never a perfect dome
+            var blobs = new List<Rect>();
+            foreach (Point[] l in limbs)
+                for (int k = 1; k < 5; k++)
+                    for (int j = 0; j < (k == 1 ? 1 : 3); j++)
+                    {
+                        double rr = h * (0.045 + r.NextDouble() * 0.035);
+                        blobs.Add(Blob(new Point(l[k].X + (r.NextDouble() - 0.5) * h * 0.14, l[k].Y + (r.NextDouble() - 0.5) * h * 0.12), rr, rr * 0.8));
+                    }
+            // fill the top of the crown so its outline is rounded (but lumpy), never flat
+            for (int j = 0; j < 5; j++)
+            {
+                double rr = h * (0.05 + r.NextDouble() * 0.03);
+                blobs.Add(Blob(new Point(x + (r.NextDouble() - 0.5) * h * 0.4, y - h * (0.8 + r.NextDouble() * 0.12)), rr, rr * 0.8));
+            }
+            Crown(dc, blobs, leaf, leafLit, haze, ow, true, false);
+            Branch(dc, new Point(x, y), top, tw, tw * 0.8, trunk, trunkLit, haze, ow);
+            foreach (Point[] l in limbs)
+            {
+                Branch(dc, l[0], l[1], tw * 0.7, tw * 0.45, trunk, trunkLit, haze, ow);
+                Branch(dc, l[1], l[2], tw * 0.45, tw * 0.22, trunk, trunkLit, haze, ow * 0.7);
+                Branch(dc, l[1], l[3], tw * 0.32, tw * 0.15, trunk, trunkLit, haze, ow * 0.6);
+                Branch(dc, l[1], l[4], tw * 0.3, tw * 0.14, trunk, trunkLit, haze, ow * 0.6);
+            }
+            Crown(dc, blobs, leaf, leafLit, haze, ow, false, true);
+        }
+
+        /// <summary>A velvet mesquite, about h tall standing at (x, y): two or three dark, twisting stems leaning apart,
+        /// branches spreading wide and lopsided, and a fine, feathery crown in uneven tiers with a ragged lower edge.</summary>
+        static void Mesquite(DrawingContext dc, double x, double y, double h, double haze, double ow, Random r)
+        {
+            const uint trunk = 0xFF59402D, trunkLit = 0xFF896344, leaf = 0xFF657D3D, leafLit = 0xFF9BAE5C;
+            double tw = h * 0.07;
+            int lean = r.Next(2) == 0 ? -1 : 1;   // which way the whole tree leans (never symmetrical)
+            int stems = 2 + r.Next(2);
+            var tips = new List<Point>();
+            var wood = new List<Point[]>();
+            for (int sI = 0; sI < stems; sI++)
+            {
+                double side = (sI - (stems - 1) / 2.0) * 0.7 + lean * 0.35;
+                Point p = new Point(x + side * tw * 0.6, y);
+                double ang = -90 + side * 18;
+                double segLen = h * 0.19;
+                // a twisting stem: a few segments, each bending a little the other way
+                for (int k = 0; k < 3; k++)
+                {
+                    ang += (k % 2 == 0 ? 1 : -1) * (10 + r.NextDouble() * 12) + side * 4;
+                    Point q = Off(p, ang, segLen * (1 - k * 0.12));
+                    wood.Add(new[] { p, q, new Point(tw * (1 - k * 0.25), tw * (1 - (k + 1) * 0.25)) });
+                    p = q;
+                }
+                // spreading branches from the stem's top, wide and drooping at the ends
+                for (int bI = 0; bI < 2; bI++)
+                {
+                    double ba = ang + (bI == 0 ? -1 : 1) * (30 + r.NextDouble() * 18) + lean * 8;
+                    Point m = Off(p, ba, h * (0.2 + r.NextDouble() * 0.1));
+                    Point e = Off(m, ba + (ba < -90 ? -1 : 1) * 30, h * (0.16 + r.NextDouble() * 0.08));
+                    e = new Point(e.X, e.Y + h * 0.04);   // the ends droop
+                    wood.Add(new[] { p, m, new Point(tw * 0.38, tw * 0.22) });
+                    wood.Add(new[] { m, e, new Point(tw * 0.22, tw * 0.1) });
+                    tips.Add(m); tips.Add(e);
+                }
+                tips.Add(p);
+            }
+            // the crown: wide, flattened clumps in tiers over the tips, a fringe of small ones under each tier
+            var blobs = new List<Rect>();
+            // an irregular dome, not an umbrella: clumps over every tip, a second tier stacked above the inner ones, and a
+            // fringe of small drooping clumps under each (the "feathery" lower edge)
+            foreach (Point t in tips)
+            {
+                double rx = h * (0.075 + r.NextDouble() * 0.045);
+                blobs.Add(Blob(new Point(t.X + lean * h * 0.03, t.Y - h * 0.05), rx, rx * 0.6));
+                blobs.Add(Blob(new Point(t.X - lean * rx * 0.8, t.Y - h * 0.02), rx * 0.7, rx * 0.42));
+                if (Math.Abs(t.X - x) < h * 0.3) blobs.Add(Blob(new Point(t.X + (r.NextDouble() - 0.5) * h * 0.08, t.Y - h * 0.15 - r.NextDouble() * h * 0.06), rx * 0.85, rx * 0.55));
+                for (int f = 0; f < 3; f++) blobs.Add(Blob(new Point(t.X + (f - 1) * rx * 0.75, t.Y + rx * 0.3 + r.NextDouble() * h * 0.03), rx * 0.3, rx * 0.22));
+            }
+            Crown(dc, blobs, leaf, leafLit, haze, ow, true, false);
+            foreach (Point[] wd in wood) Branch(dc, wd[0], wd[1], wd[2].X, wd[2].Y, trunk, trunkLit, haze, ow);
+            Crown(dc, blobs, leaf, leafLit, haze, ow, false, true);
+        }
+
+        /// <summary>A desert shrub (creosote, desert broom), about h tall at (x, y): a low, lumpy mound of a few uneven
+        /// clumps, darker underneath, lit on top. Never a circle.</summary>
+        static void Shrub(DrawingContext dc, double x, double y, double h, double haze, double ow, Random r)
+        {
+            const uint baseC = 0xFF89934C, lit = 0xFFB5A65D;
+            int n = 4 + r.Next(3);
+            var blobs = new List<Rect>();
+            for (int i = 0; i < n; i++)
+            {
+                double fx = (i - (n - 1) / 2.0) / n;
+                double rx = h * (0.45 + r.NextDouble() * 0.35), ry = h * (0.35 + r.NextDouble() * 0.3) * (1 - Math.Abs(fx) * 0.6);
+                blobs.Add(Blob(new Point(x + fx * h * 1.9, y - ry * 0.9), rx, ry));
+            }
+            if (ow > 0) foreach (Rect b in blobs) dc.DrawEllipse(Gfx.B(InkFor(haze)), null, b.Center, b.Width / 2 + ow, b.Height / 2 + ow);
+            foreach (Rect b in blobs) dc.DrawEllipse(Gfx.B(Haze(Gfx.Mix(baseC, 0xFF000000, 0.25), haze)), null, b.Center, b.Width / 2, b.Height / 2);
+            foreach (Rect b in blobs) dc.DrawEllipse(Gfx.B(Haze(baseC, haze)), null, new Point(b.Center.X - b.Width * 0.05, b.Center.Y - b.Height * 0.12), b.Width * 0.42, b.Height * 0.36);
+            for (int i = 0; i < blobs.Count; i += 2) { Rect b = blobs[i]; dc.DrawEllipse(Gfx.B(Haze(lit, haze)), null, new Point(b.Center.X - b.Width * 0.14, b.Center.Y - b.Height * 0.26), b.Width * 0.18, b.Height * 0.12); }
+        }
+
+        /// <summary>The flood warning sign in the stage itself, by the wash's entrance (left of the log), in front of the
+        /// background and clear of the footbridge at every camera: a yellow diamond with a dark border on a sturdy
+        /// post, "DO NOT ENTER WHEN FLOODED", and a depth gauge (1-4 ft) on the post. World units x z (the camera);
+        /// g = the ground's top on screen.</summary>
+        void RoadSign(DrawingContext dc, double g, double z)
+        {
+            const uint yellow = 0xFFF4C542, border = 0xFF29251E, post = 0xFF514438;
+            double x = SX(SignX), half = 60 * z, cy = g - 246 * z;
+            // the post, planted in the sand, with the depth gauge on its lower part
+            double pw = 9 * z;
+            dc.DrawRectangle(Gfx.B(Ink), null, new Rect(x - pw / 2 - 2 * z, cy, pw + 4 * z, g - cy + 2 * z));
+            dc.DrawRectangle(Linear(Gfx.Mix(post, 0xFFFFFFFF, 0.18), post, 0), null, new Rect(x - pw / 2, cy, pw, g - cy));
+            double gw = 16 * z, gTop = g - 128 * z;
+            dc.DrawRectangle(Gfx.B(0xFFF5F5F4), Gfx.P(Ink, 1.5 * z), new Rect(x - gw / 2, gTop, gw, g - gTop - 4 * z));
+            for (int ft = 1; ft <= 4; ft++)
+            {
+                double ty = g - 4 * z - ft * 30 * z;
+                dc.DrawLine(Gfx.P(border, 2 * z), new Point(x - gw / 2, ty), new Point(x + gw / 2 - 5 * z, ty));
+                Gfx.Text(dc, ft.ToString(), x + gw / 2 - 4 * z, ty - 1 * z, 9 * z, border, 1, Gfx.UiBold);
+            }
+            // the diamond: a dark border, the yellow face, a thin dark inner line, the words in three lines
+            var outer = new StreamGeometry();
+            using (var c = outer.Open())
+            {
+                c.BeginFigure(new Point(x, cy - half), true, true);
+                c.LineTo(new Point(x + half, cy), true, true); c.LineTo(new Point(x, cy + half), true, true); c.LineTo(new Point(x - half, cy), true, true);
+            }
+            outer.Freeze();
+            dc.DrawGeometry(Gfx.B(border), Gfx.P(Ink, 2.5 * z), outer);
+            double inner = half - 7 * z;
+            var face = new StreamGeometry();
+            using (var c = face.Open())
+            {
+                c.BeginFigure(new Point(x, cy - inner), true, true);
+                c.LineTo(new Point(x + inner, cy), true, true); c.LineTo(new Point(x, cy + inner), true, true); c.LineTo(new Point(x - inner, cy), true, true);
+            }
+            face.Freeze();
+            dc.DrawGeometry(Linear(Gfx.Mix(yellow, 0xFFFFFFFF, 0.2), yellow, 90), Gfx.P(border, 1.5 * z), face);
+            double fs = 14 * z;
+            Gfx.Text(dc, "DO NOT", x, cy - fs * 1.62, fs, border, 0.5, Gfx.UiBold);
+            Gfx.Text(dc, "ENTER WHEN", x, cy - fs * 0.56, fs * 0.94, border, 0.5, Gfx.UiBold);
+            Gfx.Text(dc, "FLOODED", x, cy + fs * 0.5, fs, border, 0.5, Gfx.UiBold);
+        }
+        /// <summary>Where the sign stands (world units): just left of the log, at the wash's entrance.</summary>
+        const double SignX = -392;
 
         /// <summary>What moves behind the wash: lightning flashing far off now and then, and the odd big raindrop.</summary>
         void WashLive(DrawingContext dc, double t)
@@ -155,6 +354,7 @@ namespace ClassicGames
             switch (p.Look)
             {
                 case "log":
+                    RoadSign(dc, g, z);   // the flood sign by the entrance, before the log so its post sits behind it
                     // the fallen cottonwood rests on two piles of rocks
                     foreach (double fx in new[] { 0.2, 0.8 })
                     {

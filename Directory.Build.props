@@ -1,7 +1,7 @@
 <Project>
   <!-- One version for the whole app (set it before running the Release workflow) -->
   <PropertyGroup>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Product>Sahuarita Smash! (Sauce Edition)</Product>
     <Company>Andrew Saulls</Company>
   </PropertyGroup>
