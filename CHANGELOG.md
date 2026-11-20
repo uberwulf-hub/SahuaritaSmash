@@ -5,6 +5,13 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+### Changed
+- Easy and Normal computer players are much gentler: they walk up instead of running, take fewer chances, rest
+  between attacks, rarely go for big finishing hits, and Easy sometimes just stands and watches. Easy now does about a
+  third of the damage it used to, and the Easy ladder stays Easy the whole way up (Normal's climbs only a little).
+  Hard and Champion are just as before.
+- Online games need everyone on this version (the computer players changed).
+
 ## [0.4.0] - 2026-11-18
 
 ### Added

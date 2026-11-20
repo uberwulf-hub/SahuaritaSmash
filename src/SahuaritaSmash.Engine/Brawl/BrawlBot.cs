@@ -21,6 +21,18 @@ namespace ClassicGames
         public BrawlBot(int slot, int level) { Slot = slot; Level = Math.Max(1, Math.Min(9, level)); }
 
         int React { get { return Math.Max(2, 26 - Level * 3); } }
+        // How gentle the low levels are (0.4.1, Andrew: "I still had a hard time with easy"; measured: Easy dealt about as
+        // much damage a minute as Champion, because every level took nearly every opening). Easy (1) and Normal (3) now:
+        /// <summary>How often (in 100) it takes an opening it sees: Easy 12, Normal 34, Hard 72, Champion 93 (Hard and up as before).</summary>
+        public int Aggression { get { return Level <= 1 ? 12 : Level <= 3 ? 34 : 30 + Level * 7; } }
+        /// <summary>Extra frames it waits after each attack: Easy 40, Normal 16, then none.</summary>
+        int Breather { get { return Level <= 1 ? 40 : Level <= 3 ? 16 : Level <= 4 ? 6 : 0; } }
+        /// <summary>How fast it walks up to someone (1 = runs): Easy walks, Normal jogs.</summary>
+        double Pace { get { return Level <= 1 ? 0.45 : Level <= 3 ? 0.75 : 1; } }
+        /// <summary>How often (in 100) it reaches for a strong finishing hit once someone is hurt: Easy 10, Normal 25, Hard and Champion 55 (as before).</summary>
+        int Finisher { get { return Level <= 1 ? 10 : Level <= 3 ? 25 : 55; } }
+        /// <summary>Easy and Normal sometimes just stand and watch for a moment (in 100, per decision).</summary>
+        int Daydream { get { return Level <= 1 ? 6 : Level <= 3 ? 2 : 0; } }
         /// <summary>How often (in 100) it shields an attack it sees coming: Easy (2) 6, Normal (4) 16, Hard (7) 38, Champion (9) 52.</summary>
         public int ShieldChance { get { return Level * Level / 2 + Level * 2 - (Level >= 9 ? 6 : 0); } }
         int seenSlot = -1; BMove seenMove; long seenStart; bool seenShield;
@@ -81,6 +93,7 @@ namespace ClassicGames
             // a shielding target gets grabbed
             if (me.Ground && t.St == BS.Shield && adx < 70 * me.D.Scale && sim.Rand(100) < 20 + Level * 6) { i.Grab = true; Hold(i, 6, "grab"); return i; }
 
+            if (me.Ground && Daydream > 0 && sim.Rand(100) < Daydream) { wait = 30 + sim.Rand(40); return i; }
             string move = Choose(sim, me, t, dx, dy);
             if (move != null) return Safe(sim, me, Press(sim, me, move, face));
             return Safe(sim, me, Approach(sim, me, t, dx, dy));
@@ -139,7 +152,7 @@ namespace ClassicGames
             bool tAir = !t.Ground;
             bool canAct = me.St == BS.Idle || me.St == BS.Walk || me.St == BS.Run || me.St == BS.Crouch || me.St == BS.Air;
             if (!canAct) return null;
-            if (sim.Rand(100) > 30 + Level * 7) return null;   // not every chance is taken
+            if (sim.Rand(100) > Aggression) return null;   // not every chance is taken
             if (me.Ground)
             {
                 // a shot from afar
@@ -150,13 +163,13 @@ namespace ClassicGames
                 {
                     int r = sim.Rand(100);
                     bool kill = t.Dmg > 85 + me.D.Weight * 0.2;
-                    if (kill && r < 55) return sim.Rand(3) == 0 ? "dstrong" : "fstrong";
+                    if (kill && r < Finisher) return sim.Rand(3) == 0 ? "dstrong" : "fstrong";
                     if (r < 25) return "jab";
                     if (r < 50) return "ftilt";
                     if (r < 62) return "dtilt";
                     if (r < 72) return "grab";
                     if (r < 82) return "dspec";
-                    return "fstrong";
+                    return Level <= 3 ? "jab" : "fstrong";   // the low levels don't throw strong hits at random
                 }
                 if (me.St == BS.Run && adx < 110 * k && Math.Abs(dy) < 40 && sim.Rand(4) == 0) return "dash";
                 if (tAir && adx < 90 && dy > 60 && dy < 260 && sim.Rand(3) == 0) return "jump";
@@ -193,7 +206,7 @@ namespace ClassicGames
                 case "uair": i.Attack = true; i.Y = 1; break;
                 case "dair": i.Attack = true; i.Y = -1; break;
             }
-            wait = Math.Max(2, React / 2 + sim.Rand(React));
+            wait = Math.Max(2, React / 2 + sim.Rand(React)) + Breather;
             if (move.EndsWith("strong")) { Hold(i, 4 + (Level >= 5 ? sim.Rand(30) : 0), move); }
             return i;
         }
@@ -202,7 +215,7 @@ namespace ClassicGames
         {
             var i = new BrInput();
             double adx = Math.Abs(dx);
-            if (adx > 40) i.X = dx > 0 ? 1 : -1;
+            if (adx > 40) i.X = (dx > 0 ? 1 : -1) * (me.Ground ? Pace : 1);
             if (me.Ground)
             {
                 // the target is up on a platform: jump to it; below on a thin one: drop down to it

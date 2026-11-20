@@ -378,8 +378,9 @@ namespace ClassicGames
                 int r = LadderRound;
                 defs.Add(BrawlData.Fighters[LadderPick]); who.Add(1); levels.Add(0); seats.Add(0); names.Add(Player);
                 int foes = r == 2 ? 2 : 1;
-                // Easy 1-3, Normal 3-5, Hard 5-9 by the last round (Normal used to climb to 8: too much, Andrew 2026-10-29)
-                int lv = Math.Min(9, new[] { 1, 3, 5 }[LadderDiff] + (LadderDiff == 2 ? r : r / 2));
+                // Easy stays Easy (1) all the way, Normal 2-3, Hard 5-9 by the last round (Normal used to climb to 8: too
+                // much, Andrew 2026-10-29; Easy climbed to 3 and Normal to 5: still too hard, Andrew 2026-11-20)
+                int lv = LadderDiff == 0 ? 1 : LadderDiff == 1 ? 2 + r / 3 : Math.Min(9, 5 + r);
                 for (int i = 0; i < foes; i++) { defs.Add(BrawlData.Fighters[ladderFoes[r + i]]); who.Add(2); levels.Add(lv); seats.Add(1 + i); names.Add(BrawlData.Fighters[ladderFoes[r + i]].Name); }
                 lives = r == LadderRounds - 1 ? 3 : 2; minutes = 0;
                 giant = r == LadderRounds - 1;

@@ -285,7 +285,18 @@ namespace ClassicGames
                 if (!m.Over || m.Winner < 0) ok = false;
             }
             Check("brawl: a four-way match between computer players ends with a winner on every stage", ok, string.Join("; ", notes));
-            Check("brawl: computer players hardly ever fall off by themselves (at most 1 in 5 matches)", sds <= 1, sds.ToString());
+            // falling off by themselves is rare but random (about 1 match in 6 at every level, measured over 42): 7 matches
+            // alone let one unlucky extra fall fail this, so 7 more with other seeds join the count (0.4.1)
+            int matches = BrawlData.Stages.Count;
+            for (int st = 0; st < BrawlData.Stages.Count; st++)
+            {
+                int[] who = { (st + 1) % 10, (st + 4) % 10, (st + 7) % 10, (st + 9) % 10 };
+                BrawlSim m = BrawlMatch(st, (uint)(200 + st), who);
+                var bots = Enumerable.Range(0, 4).Select(i => new BrawlBot(i, 3 + 2 * i)).ToArray();
+                BrawlRun(m, bots, 60 * 60 * 8);
+                sds += m.F.Sum(f => f.SDs); matches++;
+            }
+            Check("brawl: computer players hardly ever fall off by themselves (at most 1 in 5 matches)", sds * 5 <= matches, sds + " in " + matches + " matches");
             double us = sw.Elapsed.TotalMilliseconds * 1000 / Math.Max(1, frames);
             Check("brawl: a step with four fighters and the computer players takes well under a millisecond", us < 300, us.ToString("0") + " us");
             // time: the most bonks wins; a tie goes to sudden death at 300%
