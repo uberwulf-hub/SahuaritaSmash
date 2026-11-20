@@ -104,6 +104,27 @@ namespace ClassicGames
             var easy = new BrawlBot(0, BrawlGame.BotLevels[0]); var normal = new BrawlBot(0, BrawlGame.BotLevels[1]); var champ = new BrawlBot(0, BrawlGame.BotLevels[3]);
             Check("brawl bots: shield chances rise with the level and Normal shields under one attack in five", easy.ShieldChance < normal.ShieldChance && normal.ShieldChance < champ.ShieldChance && normal.ShieldChance <= 20 && champ.ShieldChance <= 60,
                 easy.ShieldChance + " " + normal.ShieldChance + " " + champ.ShieldChance);
+            // the levels really differ (0.4.1, Andrew: "I still had a hard time with easy"; Easy dealt about as much damage
+            // a minute as Champion): against the same opponent, Easy deals well under half of Champion's damage and Normal
+            // less than Hard, and Easy hardly ever wins
+            Func<int, double[]> pressure = lv =>
+            {
+                double dealt = 0, minutes = 0; int wins = 0;
+                for (uint seed = 1; seed <= 12; seed++)
+                {
+                    var ps = new BrawlSim(BrawlData.Stages[(int)(seed % 6)], new List<BFighterDef> { BrawlData.Fighters[(int)(seed % 11)], BrawlData.Fighters[(int)((seed * 7) % 11)] }, 3, 0, seed);
+                    var you = new BrawlBot(0, 3); var cpu = new BrawlBot(1, lv);
+                    var pin = new BrInput[2]; double last = 0; int fr;
+                    for (fr = 0; fr < 60 * 60 * 3 && !ps.Over; fr++) { pin[0] = you.Think(ps); pin[1] = cpu.Think(ps); ps.Step(pin); if (ps.F[0].Dmg > last) dealt += ps.F[0].Dmg - last; last = ps.F[0].Dmg; }
+                    minutes += fr / 3600.0; if (ps.Over && ps.Winner == 1) wins++;
+                }
+                return new[] { dealt / minutes, wins };
+            };
+            double[] pe = pressure(BrawlGame.BotLevels[0]), pn = pressure(BrawlGame.BotLevels[1]), ph = pressure(BrawlGame.BotLevels[2]), pc = pressure(BrawlGame.BotLevels[3]);
+            Check("brawl bots: Easy is gentle (well under half of Champion's damage a minute, hardly ever wins) and each level is harder than the last",
+                pe[0] * 2 < pc[0] && pe[0] < pn[0] && pn[0] < ph[0] && pe[1] <= 2,
+                "damage a minute: Easy " + pe[0].ToString("0") + ", Normal " + pn[0].ToString("0") + ", Hard " + ph[0].ToString("0") + ", Champion " + pc[0].ToString("0") + "; Easy won " + pe[1] + " of 12");
+
             // a person poking a Normal bot with jabs: it seldom shields them
             int shielded = 0, thrown = 0;
             for (uint seed = 1; seed <= 6; seed++)

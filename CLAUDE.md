@@ -184,6 +184,14 @@ next to the scores (version 1, unknown fields kept, fixture `Tests\saves\brawl-k
 person's own keys and specials (`-Show Pause|Pause2|Keys`). **Feel (2026-10-29, "slow to react", Normal "pretty
 tough")**: `BrawlSim.Buffer` keeps a press for `BufferFrames` (9) steps while busy; bots decide once per attack
 whether to shield (`BrawlBot.ShieldChance`); `BotLevels` 1 / 3 / 6 / 9; the ladder climbs half as fast below Hard.
+**Gentler Easy and Normal (0.4.1, 2026-11-20, Andrew: "I still had a hard time with easy"; measured: Easy dealt about as much
+damage a minute as Champion)**: `BrawlBot.Aggression` (openings taken: Easy 12, Normal 34, then 30 + 7 x level as before),
+`Breather` (frames rested after an attack: 40 / 16 / 6 at level 4), `Pace` (Easy walks 0.45, Normal 0.75), `Finisher`
+(strong finishing hits 10 / 25 / 55), `Daydream` (Easy and Normal sometimes stand still), and no random strong hits at
+level 3 and below. Levels 5 and up play exactly as before (`PracticeChecks` replays levels 5-9 against checksums taken
+before the change). The ladder: Easy stays level 1 all the way, Normal 2-3, Hard 5-9. Check: "Easy is gentle" in
+`BrawlKeysTests` (damage a minute against the same level-3 opponent: Easy well under half of Champion's, each level
+above the last, Easy wins at most 2 of 12).
 **Combos (2026-10-31, "smash through combos")**: once an attack has `Connected` and passed `BMove.LastActive`, a
 buffered button cancels it into the next move (`BrawlSim.Chains`: ordinary, dash and lunge attacks; at most
 `MaxChain` 4 cancels, reset when hit; event `combo` draws "N hits!"). **Bodies (2026-10-31, "they all look too much

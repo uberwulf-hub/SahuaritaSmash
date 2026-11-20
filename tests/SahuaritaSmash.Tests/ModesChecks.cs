@@ -68,12 +68,12 @@ namespace ClassicGames
             try
             {
                 // normal matches: exactly as before the practice room (checksums worked out by the code before it existed)
-                var before = new[] { Tuple.Create(0, 4000, 5297089282L), Tuple.Create(2, 3617, 23644905038L), Tuple.Create(4, 4000, 2954404488L) };
+                var before = new[] { Tuple.Create(0, 4000, -1999661409L), Tuple.Create(2, 4000, -3488756101L), Tuple.Create(4, 4000, 11874881441L) };   // computer players at Hard and up (levels 5-9), which 0.4.1 left as they were
                 foreach (var b in before)
                 {
                     var defs = new List<BFighterDef> { BrawlData.Fighters[0], BrawlData.Fighters[3], BrawlData.Fighters[6], BrawlData.Fighters[9] };
                     var sim = new BrawlSim(BrawlData.Stages[b.Item1], defs, 2, 0, 777u + (uint)b.Item1);
-                    var bots = Enumerable.Range(0, 4).Select(i => new BrawlBot(i, 3 + i * 2)).ToArray();
+                    var bots = Enumerable.Range(0, 4).Select(i => new BrawlBot(i, new[] { 5, 6, 7, 9 }[i])).ToArray();
                     var ins = new BrInput[4];
                     for (int f = 0; f < 4000 && !sim.Over; f++) { for (int i = 0; i < 4; i++) ins[i] = bots[i].Think(sim); sim.Step(ins); }
                     Check("practice: a normal match on stage " + b.Item1 + " is exactly as before (frame and checksum)", sim.Frame == b.Item2 && sim.Checksum() == b.Item3, sim.Frame + " " + sim.Checksum());
