@@ -5,6 +5,13 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-11-20
+
+### Changed
+- Monsoon Wash's flash flood looks like real rushing water now: teal-grey water with a rolling, foamy front, splashes
+  and droplets, and streaks and swirls that race along with it, instead of a brown slope that looked like dirt. The
+  trickle before it arrives and the water pouring off the edge match. It moves and bonks exactly as before.
+
 ## [0.4.2] - 2026-11-20
 
 ### Changed
