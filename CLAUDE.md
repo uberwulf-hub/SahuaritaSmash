@@ -155,6 +155,13 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   in each helper. `RoadSign` is drawn in the stage at world x `SignX` (-392, left of the log) from the log's
   `WashUnder`, so it sits in front of the background and behind the log, ground and fighters, and the footbridge never
   covers it. Pictures only; the scenery is the same every time (byte-identical renders). Not tried on a real phone.
+- **Monsoon Wash's flood water (0.4.3, Creative Collaboration Test 002: art direction ChatGPT, approved by Andrew
+  2026-11-20):** `Brawl\BrawlWash.cs` `DrawFlood` uses the spec's teal (`WaterTop` #638F89 / `WaterTopShade` #466E69 on
+  the surface, `WaterFace` #365C59 / `WaterDeep` #294744 on the face, `Foam` #F5EBDD, `FoamLit` #D5E9D9, edge `Ink`),
+  also for the warning trickle and the pour-off. `FloodSurfaceDetail` (streaks 25-70, ripples 10-25, foam patches 8-20),
+  `FloodFaceDetail` (streaks, eddies 12-24), `FloodCrest` (foam lobes 12-22 wide with gaps, splash bumps 10-14, the
+  tumbling front, droplets); `FlowU` moves them along at `FlowAhead` from the clock `t` only. Pictures only: the flood's
+  timing, speed, depth, length and effects are BrawlSim's. Not tried on a real phone or in motion by eye.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

@@ -8,8 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationId>com.uberwulf.sahuaritasmashse</ApplicationId>
     <ApplicationTitle>Sahuarita Smash! SE</ApplicationTitle>
-    <ApplicationVersion>402</ApplicationVersion>
-    <ApplicationDisplayVersion>0.4.2</ApplicationDisplayVersion>
+    <ApplicationVersion>403</ApplicationVersion>
+    <ApplicationDisplayVersion>0.4.3</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <AndroidSdkDirectory>$(USERPROFILE)\DevTools\android-sdk</AndroidSdkDirectory>
