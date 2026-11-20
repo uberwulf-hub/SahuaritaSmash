@@ -257,6 +257,7 @@ namespace ClassicGames
                 case Screen.Title:
                     {
                         if (IsUp(k) || IsDown(k)) { Sel = MenuMove(k, Sel, 7); Audio.Ui("move"); return; }
+                        if (IsLeft(k) || IsRight(k)) { Sel = TitleColumnMove(Sel); Audio.Ui("move"); return; }   // two columns (BrawlTitle.cs)
                         if (k != Key.Enter && k != Key.Space) return;
                         Audio.Ui("select");
                         if (Sel == 0) { Menu = Screen.Select; Sel = 0; }
@@ -712,29 +713,7 @@ namespace ClassicGames
             }
         }
 
-        void Logo(DrawingContext dc, double y, double size)
-        {
-            // the town's name on top, a big SMASH! under it
-            Gfx.Text(dc, "SAHUARITA", Width / 2 + 4, y + 4, size * 0.62, 0xFF7C2D12, 0.5, Gfx.UiBold);
-            Gfx.Text(dc, "SAHUARITA", Width / 2, y, size * 0.62, 0xFFFB923C, 0.5, Gfx.UiBold);
-            Gfx.Text(dc, "SMASH!", Width / 2 + 5, y + size * 0.62 + 5, size * 1.2, 0xFF4C1D95, 0.5, Gfx.UiBold);
-            Gfx.Text(dc, "SMASH!", Width / 2, y + size * 0.62, size * 1.2, 0xFFFDE047, 0.5, Gfx.UiBold);
-        }
-
-        void DrawTitle(DrawingContext dc)
-        {
-            // the cast in a row along the bottom
-            int n = BrawlData.Fighters.Count;
-            for (int i = 0; i < n; i++)
-            {
-                BFighterDef d = BrawlData.Fighters[i];
-                double x = 80 + i * (Width - 160) / (n - 1);
-                View.Portrait(dc, d, x, Height - 40, d.Height * 1.5, T + i * 0.37, false, BS.Idle);
-            }
-            Logo(dc, 40, 84);
-            Gfx.Text(dc, "Knock your friends off the stage. Nobody gets hurt: they just fly off with a twinkle.", Width / 2, 236, 18, 0xFFE5E7EB, 0.5, Gfx.Ui);
-            DrawMenu(dc, Width / 2, 266, new[] { "Fight (2 to 4 players)", "The ladder (on your own)", "Practice (try your moves)", "How to play", ControlsItem, "Play online (with others)", "Quit" }, Sel, i => Sel = i);
-        }
+        // DrawTitle: BrawlTitle.cs (Test 003)
 
         void DrawHelp(DrawingContext dc)
         {
@@ -919,10 +898,20 @@ namespace ClassicGames
             }
         }
 
+        int soloOf = -1;   // snapshots only: -Show Portrait
+
         /// <summary>Snapshots only (-Show Lineup): every fighter large, six to a row, to compare their shapes.</summary>
         void DrawLineup(DrawingContext dc)
         {
             dc.DrawRectangle(Gfx.B(0xF0101522), null, new Rect(0, 0, Width, Height));
+            if (soloOf >= 0)
+            {
+                // -Show Portrait -Level n: one fighter alone, large, for art reviews
+                BFighterDef sd = BrawlData.Fighters[soloOf];
+                View.Portrait(dc, BrawlColours.Def(sd, LineupColour), Width / 2 - 20, Height - 60, 600, T, false, BS.Idle);
+                Gfx.Text(dc, sd.Name, Width / 2, Height - 50, 26, 0xFFE5E7EB, 0.5, Gfx.UiBold);
+                return;
+            }
             int n = BrawlData.Fighters.Count;
             for (int i = 0; i < n; i++)
             {
@@ -1175,8 +1164,10 @@ namespace ClassicGames
             if (modes != null) return modes;
             switch (show)
             {
-                case "Title": case "Select": case "Help": case "Ladder": case "Keys": case "Lineup": case "Moves": case "Swings":
+                case "Title": case "Select": case "Help": case "Ladder": case "Keys": case "Lineup": case "Moves": case "Swings": case "Portrait":
                     Begin();
+                    soloOf = show == "Portrait" ? Math.Max(0, Math.Min(BrawlData.Fighters.Count - 1, level - 1)) : -1;
+                    if (show == "Portrait") show = "Lineup";
                     Menu = show == "Title" ? Screen.Title : show == "Select" ? Screen.Select : show == "Help" ? Screen.Help : show == "Keys" ? Screen.Keys : show == "Lineup" ? Screen.Lineup : show == "Moves" ? Screen.Moves : show == "Swings" ? Screen.Swings : Screen.Ladder;
                     if (show == "Moves") movesOf = Math.Max(0, Math.Min(BrawlData.Fighters.Count - 1, level - 1));
                     if (show == "Swings") movesOf = Math.Max(0, Math.Min(BrawlSignatures.AttackIds.Length - 1, level - 1));
