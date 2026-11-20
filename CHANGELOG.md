@@ -5,6 +5,8 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-20
+
 ### Changed
 - Easy and Normal computer players are much gentler: they walk up instead of running, take fewer chances, rest
   between attacks, rarely go for big finishing hits, and Easy sometimes just stands and watches. Easy now does about a
