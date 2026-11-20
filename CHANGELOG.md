@@ -5,6 +5,14 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-20
+
+### Changed
+- Monsoon Wash looks like the Sonoran Desert now: blue palo verde with green trunks and airy crowns, twisting
+  velvet mesquite, desert shrubs and a few saguaros far off, instead of trees that looked like they came from Africa.
+- The "Do not enter when flooded" sign is a yellow diamond on a post with a depth gauge, standing by the log at the
+  wash's entrance, where the footbridge can't hide it any more.
+
 ## [0.4.1] - 2026-11-20
 
 ### Changed
