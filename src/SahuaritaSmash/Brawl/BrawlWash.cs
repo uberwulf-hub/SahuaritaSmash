@@ -460,7 +460,7 @@ namespace ClassicGames
                 {
                     double a = edge, b = edge + dir * len * (1 - i * 0.2);
                     double yy = gy - 1 - i * 2;
-                    dc.DrawLine(RoundPen(Gfx.Alpha(i == 0 ? 0xFF6B4A2A : 0xFF9C774E, 0.95), (6 + 8 * k - i * 2) * Zoom), new Point(a, yy), new Point(b, yy + Math.Sin(t * 8 + i) * Zoom));
+                    dc.DrawLine(RoundPen(Gfx.Alpha(i == 0 ? WaterFace : WaterTop, 0.95), (6 + 8 * k - i * 2) * Zoom), new Point(a, yy), new Point(b, yy + Math.Sin(t * 8 + i) * Zoom));
                 }
                 for (int i = 0; i < 4; i++) { double gx = edge + dir * len * ((t * 0.8 + i * 0.25) % 1.0); dc.DrawEllipse(Gfx.B(0xB0FFFFFF), null, new Point(gx, gy - 3), 2.5, 1.2); }
                 double blink = Math.Sin(t * 18) > 0 ? 1 : 0.4;
@@ -500,7 +500,12 @@ namespace ClassicGames
             }
             surf.Freeze();
             // the surface goes behind the fighters (they stand in it), the front of the water in front of their feet
-            if (behind) { dc.DrawGeometry(Linear(0xE0A07A4E, 0xF0866039, 90), null, surf); return; }
+            if (behind)
+            {
+                dc.DrawGeometry(Linear(WaterTop, WaterTopShade, 90), null, surf);
+                FloodSurfaceDetail(dc, front, dir, a0, a1, gy, vp, depth, t);
+                return;
+            }
             var face = new StreamGeometry();
             using (var c = face.Open())
             {
@@ -509,27 +514,9 @@ namespace ClassicGames
                 c.LineTo(new Point(a1, gy + 4 * Zoom), true, true);
             }
             face.Freeze();
-            dc.DrawGeometry(Linear(0xF08A6236, 0xF05A3E22, 90), null, face);
-            // ripples and glints moving with the water
-            for (int i = 0; i < steps; i += 2)
-            {
-                double ph = (i * 0.37 + t * 1.6) % 1.0;
-                Point q = top[i];
-                dc.DrawLine(Gfx.P(Gfx.Alpha(0xFFE7D2B0, 0.55 * (1 - ph)), 2 * Zoom), new Point(q.X - 8 * Zoom, q.Y + 4 * Zoom), new Point(q.X + 8 * Zoom, q.Y + 3 * Zoom));
-            }
-            dc.DrawGeometry(null, Gfx.P(0xA0E7D2B0, 2 * Zoom), StripLine(top));
-            // the foamy front: white bubbles tumbling over the top of the wave
-            if (front > lx - 30 && front < rx + 30)
-            {
-                double fy = gy - depth(front - dir * 2);
-                for (int i = 0; i < 9; i++)
-                {
-                    double a = t * 12 + i * 0.8;
-                    Point c = new Point(front - dir * (i * 6 + 4) * Zoom + Math.Cos(a) * 4 * Zoom, fy + 2 * Zoom + (i % 3) * 7 * Zoom + Math.Sin(a) * 3 * Zoom);
-                    dc.DrawEllipse(Gfx.B(0xE8F5EBDD), null, c, (8 - i * 0.5) * Zoom, (6 - i * 0.4) * Zoom);
-                }
-                for (int i = 0; i < 5; i++) dc.DrawEllipse(Gfx.B(0xA0F5EBDD), null, new Point(front + dir * (6 + i * 7) * Zoom * ((t * 3 + i * 0.3) % 1.0), gy - (10 + i * 6) * Zoom * Math.Sin(((t * 3 + i * 0.3) % 1.0) * Math.PI)), 2.5 * Zoom, 2.5 * Zoom);
-            }
+            dc.DrawGeometry(Linear(WaterFace, WaterDeep, 90), Gfx.P(Gfx.Alpha(Ink, 0.7), 2 * Zoom), face);
+            FloodFaceDetail(dc, front, dir, a0, a1, gy, depth, t);
+            FloodCrest(dc, front, dir, a0, a1, lx, rx, gy, depth, t);
             // sticks and a tumbleweed riding along
             for (int i = 0; i < 4; i++)
             {
@@ -553,7 +540,149 @@ namespace ClassicGames
             // water pouring off the end of the ground once it gets there
             double lip = dir > 0 ? rx : lx;
             if (dir > 0 ? front > rx && tail < rx : front < lx && tail > lx)
-                dc.DrawRectangle(Linear(0xD08A6236, 0x008A6236, 90), null, new Rect(lip - (dir > 0 ? 0 : 18 * Zoom), gy - 4 * Zoom, 18 * Zoom, 140 * Zoom));
+                dc.DrawRectangle(Linear(Gfx.Alpha(WaterFace, 0.82), Gfx.Alpha(WaterFace, 0), 90), null, new Rect(lip - (dir > 0 ? 0 : 18 * Zoom), gy - 4 * Zoom, 18 * Zoom, 140 * Zoom));
+        }
+
+        // ---------------------------------------------------------------- the water's look (Creative Collaboration Test 002)
+        // Art direction: ChatGPT (creative director), approved by Andrew, 2026-11-20: a muted desert teal that reads as fast,
+        // muddy water at phone size (0.57x), a rolling foamy crest, and motion in the body. Pictures only: the flood's
+        // timing, speed, depth, length and what it does to fighters are BrawlSim's and unchanged. Every movement here
+        // comes from the animation clock t (no randomness), and flows the way the flood runs (dir).
+        const uint WaterTop = 0xFF638F89, WaterTopShade = 0xFF466E69, WaterFace = 0xFF365C59, WaterDeep = 0xFF294744;
+        const uint Foam = 0xFFF5EBDD, FoamLit = 0xFFD5E9D9;
+        /// <summary>How fast the streaks and ripples run inside the water, ahead of the water itself (world units a second).</summary>
+        const double FlowAhead = 110;
+
+        /// <summary>A repeating spot along the water: u = world units behind the front, moving toward the front over time.</summary>
+        static double FlowU(int k, double spacing, double t, double len)
+        {
+            double u = (k * spacing - t * FlowAhead) % len;
+            return u < 0 ? u + len : u;
+        }
+
+        /// <summary>On the surface strip (behind the fighters): long light flow streaks, short ripples and foam patches.</summary>
+        void FloodSurfaceDetail(DrawingContext dc, double front, int dir, double a0, double a1, double gy, Point vp, Func<double, double> depth, double t)
+        {
+            double z = Zoom, len = BrawlSim.FloodLen;
+            // long flow streaks: 25-70 units, the main motion cue, big enough to read on a phone
+            for (int k = 0; k < 9; k++)
+            {
+                double u = FlowU(k, 61, t, len), L = 25 + (k * 37) % 46;
+                double xa = front - dir * u * z, xb = xa - dir * L * z;
+                if (Math.Max(xa, xb) < a0 || Math.Min(xa, xb) > a1) continue;
+                xa = Math.Max(a0, Math.Min(a1, xa)); xb = Math.Max(a0, Math.Min(a1, xb));
+                double f = 0.25 + (k % 3) * 0.22;   // how far back across the strip
+                double d = depth((xa + xb) / 2);
+                double yy = gy - d + ((vp.Y - gy) * 0.1 + d * 0.5) * f;
+                dc.DrawLine(RoundPen(Gfx.Alpha(FoamLit, 0.5 - (k % 3) * 0.08), (4.5 - (k % 3)) * z), new Point(xa, yy), new Point(xb, yy));
+            }
+            // short ripples: little arcs 10-25 units, slipping along a little slower
+            for (int k = 0; k < 7; k++)
+            {
+                double u = FlowU(k, 83, t * 0.7, len), L = 10 + (k * 29) % 16;
+                double xc = front - dir * u * z;
+                if (xc < a0 + 6 || xc > a1 - 6) continue;
+                double d = depth(xc), yy = gy - d + ((vp.Y - gy) * 0.1 + d * 0.5) * (0.35 + (k % 2) * 0.3);
+                dc.DrawGeometry(null, RoundPen(Gfx.Alpha(Ink, 0.35), 2.5 * z), Cap(new Point(xc, yy + 3 * z), L * 0.5 * z, 200, 340));
+                dc.DrawGeometry(null, RoundPen(Gfx.Alpha(FoamLit, 0.6), 2 * z), Cap(new Point(xc, yy + 2 * z), L * 0.5 * z, 205, 335));
+            }
+            // foam patches riding on top: 8-20 units, a few clumped circles each
+            for (int k = 0; k < 5; k++)
+            {
+                double u = FlowU(k, 113, t, len), r = (8 + (k * 7) % 13) * 0.5 * z;
+                double xc = front - dir * u * z;
+                if (xc < a0 + r || xc > a1 - r) continue;
+                double d = depth(xc), yy = gy - d + ((vp.Y - gy) * 0.1 + d * 0.5) * 0.5;
+                dc.DrawEllipse(Gfx.B(Gfx.Alpha(Foam, 0.85)), null, new Point(xc, yy), r, r * 0.45);
+                dc.DrawEllipse(Gfx.B(Gfx.Alpha(Foam, 0.75)), null, new Point(xc + r * 0.7, yy + r * 0.12), r * 0.55, r * 0.3);
+                dc.DrawEllipse(Gfx.B(Gfx.Alpha(FoamLit, 0.9)), null, new Point(xc - r * 0.25, yy - r * 0.1), r * 0.4, r * 0.18);
+            }
+        }
+
+        /// <summary>On the front face (in front of the fighters' feet): flow streaks and rolling eddies, translucent light
+        /// on the dark teal, all moving with the flood.</summary>
+        void FloodFaceDetail(DrawingContext dc, double front, int dir, double a0, double a1, double gy, Func<double, double> depth, double t)
+        {
+            double z = Zoom, len = BrawlSim.FloodLen;
+            for (int k = 0; k < 8; k++)
+            {
+                double u = FlowU(k, 71, t * 1.2, len), L = 30 + (k * 41) % 41;
+                double xa = front - dir * (u + 20) * z, xb = xa - dir * L * z;
+                if (Math.Max(xa, xb) < a0 || Math.Min(xa, xb) > a1) continue;
+                xa = Math.Max(a0, Math.Min(a1, xa)); xb = Math.Max(a0, Math.Min(a1, xb));
+                double d = depth((xa + xb) / 2);
+                if (d < 9 * z) continue;
+                double yy = gy - d * (0.3 + (k % 3) * 0.2);
+                dc.DrawLine(RoundPen(Gfx.Alpha(FoamLit, 0.32), 3.5 * z), new Point(xa, yy), new Point(xb, yy));
+            }
+            // eddies: 12-24 units, a turning curl of light water
+            for (int k = 0; k < 4; k++)
+            {
+                double u = FlowU(k, 149, t, len) + 40;
+                double xc = front - dir * u * z, r = (12 + (k * 5) % 13) * 0.5 * z;
+                if (xc < a0 + r || xc > a1 - r) continue;
+                double d = depth(xc);
+                if (d < 2.4 * r) continue;
+                Point c = new Point(xc, gy - d * 0.5);
+                double spin = -dir * t * 220 + k * 70;   // rolls the way the water runs
+                dc.DrawGeometry(null, RoundPen(Gfx.Alpha(FoamLit, 0.3), 3 * z), Cap(c, r, spin, spin + 150));
+            }
+        }
+
+        /// <summary>The rolling crest: an irregular band of foam 5-8 units thick along the top of the water near the front,
+        /// rounded lobes 12-22 units wide with the odd gap, a big rounded curl at the leading edge, splash bumps (10-14) that
+        /// rise and settle, and a few droplets flying ahead. Soft ink edges, no spikes.</summary>
+        void FloodCrest(DrawingContext dc, double front, int dir, double a0, double a1, double lx, double rx, double gy, Func<double, double> depth, double t)
+        {
+            double z = Zoom;
+            if (front < a0 - 30 * z || front > a1 + 30 * z) return;
+            Func<double, double> topAt = x => gy - depth(Math.Max(a0, Math.Min(a1, x)));
+            var blobs = new List<Point>(); var radii = new List<double>();
+            // the foam band riding the top: rounded lobes 12-22 units wide, overlapping, 5-8 thick, with the odd gap,
+            // thinning out about 220 units behind the front
+            for (int k = 0; k < 24; k++)
+            {
+                if (k % 7 == 5 || k % 11 == 9) continue;   // gaps
+                double back = 6 + k * 9 + Math.Sin(t * 4 + k * 1.7) * 2;
+                double xc = front - dir * back * z;
+                if (xc < a0 - 4 * z || xc > a1 + 4 * z) continue;
+                double r = (6 + (k * 5) % 6) * z * (1 - Math.Min(0.4, k * 0.02));   // radius 6-11: lobes 12-22 wide
+                double bob = Math.Sin(t * 6 - k * 0.9) * 1.2 * z;
+                blobs.Add(new Point(xc, topAt(xc) + r * 0.25 + bob)); radii.Add(r);
+            }
+            // splash bumps that pop up out of the crest and settle (10-14 units), each on its own beat
+            for (int k = 0; k < 3; k++)
+            {
+                double ph = (t * 1.3 + k * 0.37) % 1.0, rise = Math.Sin(ph * Math.PI);
+                double xc = front - dir * (16 + k * 38) * z;
+                if (xc < a0 || xc > a1 || rise < 0.2) continue;
+                double r = (5 + k) * z;   // 10-14 across
+                blobs.Add(new Point(xc, topAt(xc) - (10 + 2 * k) * z * rise + r)); radii.Add(r);
+            }
+            // the rolling leading edge: rounded foam tumbling down the front of the water, biggest at the top
+            double fx = Math.Max(a0, Math.Min(a1, front)), fd = depth(fx - dir * 2 * z);
+            int tumble = 4;
+            for (int i = 0; i < tumble; i++)
+            {
+                double f = i / (double)(tumble - 1);
+                double r = (11 - 4 * f) * z, roll = Math.Sin(t * 8 + i * 1.9) * 1.5 * z;
+                blobs.Add(new Point(fx - dir * (r * 0.3 - 3 * z * f) + roll, gy - fd + r * 0.6 + f * (fd - r * 0.6 - 4 * z))); radii.Add(r);
+            }
+            // ink first (one soft outline round the whole crest), then foam, then the lit tops
+            for (int i = 0; i < blobs.Count; i++) dc.DrawEllipse(Gfx.B(Gfx.Alpha(Ink, 0.6)), null, blobs[i], radii[i] + 1.8 * z, radii[i] * 0.82 + 1.8 * z);
+            for (int i = 0; i < blobs.Count; i++) dc.DrawEllipse(Gfx.B(Foam), null, blobs[i], radii[i], radii[i] * 0.82);
+            for (int i = 0; i < blobs.Count; i++) dc.DrawEllipse(Gfx.B(FoamLit), null, new Point(blobs[i].X - radii[i] * 0.2, blobs[i].Y - radii[i] * 0.3), radii[i] * 0.45, radii[i] * 0.25);
+            // droplets flung ahead of the crest, now and then
+            for (int i = 0; i < 5; i++)
+            {
+                double ph = (t * 2.2 + i * 0.21) % 1.0;
+                if (i % 2 == 1 && ph > 0.7) continue;
+                double dx = dir * (10 + i * 9) * z * ph, dy = (14 + i * 5) * z * Math.Sin(ph * Math.PI);
+                double rr = (3.5 - i * 0.3) * z;
+                Point p = new Point(fx + dx, gy - fd - dy);
+                dc.DrawEllipse(Gfx.B(Gfx.Alpha(Ink, 0.45)), null, p, rr + 1.2 * z, rr + 1.2 * z);
+                dc.DrawEllipse(Gfx.B(Foam), null, p, rr, rr);
+            }
         }
 
         static Geometry StripLine(Point[] pts)
