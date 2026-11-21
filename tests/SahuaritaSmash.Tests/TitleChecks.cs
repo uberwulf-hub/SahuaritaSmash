@@ -34,6 +34,8 @@ namespace ClassicGames
             bool apart = true;
             for (int i = 0; i < items.Count; i++) for (int j = i + 1; j < items.Count; j++) if (items[i].Area.Intersects(items[j].Area)) apart = false;
             Check("title: two columns, nothing overlapping, all on the screen", twoColumns && apart && items.All(h => h.Area.Right <= g.Width && h.Area.Bottom <= g.Height), "");
+            var back = g.MouseHits.FirstOrDefault(h => h.Label == "Back");
+            Check("title: the Back button is at least 78 units tall and wide", back != null && back.Area.Height >= 78 && back.Area.Width >= 78, back == null ? "none" : back.Area.ToString());
             // keys: Up / Down as before (through all seven, wrapping); Left / Right between the columns
             g.Sel = 0; g.Press(Key.Down); g.KeyUp(Key.Down); int down = g.Sel;
             g.Sel = 0; g.Press(Key.Up); g.KeyUp(Key.Up); int up = g.Sel;

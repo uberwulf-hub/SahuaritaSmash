@@ -945,7 +945,7 @@ namespace ClassicGames
                 AddHit(r, d.Name, false, null, () => { int seat = focusSeat >= 0 ? focusSeat : 0; Pick[seat] = fi; if (Who[seat] == 0) Who[seat] = 2; Audio.Ui("select"); });
             }
             // the rows: each seat's fighter and who plays it, then the stage and rules
-            double rx = 40, ry = 78, rh = 30, rw = 560;
+            double rx = 40, ry = 100, rh = 30, rw = 560;   // ry: below the 78-tall Back button
             for (int row = 0; row < SelectRows; row++)
             {
                 string label, value; uint col = 0xFFFFFFFF;
@@ -1037,7 +1037,7 @@ namespace ClassicGames
         void DrawLadder(DrawingContext dc)
         {
             Gfx.Text(dc, "The ladder", 150, 18, 34, 0xFFFDE047, 0, Gfx.UiBold);
-            Gfx.Text(dc, "Six matches against the computer, each a little harder: two at once in round 3, and a giant at the top.", 40, 66, 17, 0xFFE5E7EB, 0, Gfx.Ui);
+            Gfx.Text(dc, "Six matches against the computer, each a little harder: two at once in round 3, and a giant at the top.", 150, 66, 17, 0xFFE5E7EB, 0, Gfx.Ui);
             BFighterDef d = BrawlData.Fighters[LadderPick];
             View.Portrait(dc, d, 900, 560, 300 * Math.Min(1.25, 90 / d.Height * 1.1), T, false, BS.Idle);
             Wrap(dc, d.Blurb, 700, 590, 520, 16, 0xFFE5E7EB);
