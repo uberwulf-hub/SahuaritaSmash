@@ -62,6 +62,7 @@ namespace ClassicGames
             Run("pads", only, PadChecks);
             Run("touch-phone", only, TouchPhoneChecks);
             Run("title", only, TitleChecks);
+            Run("select", only, SelectChecks);
             Run("net", only, NetChecks);
             Run("net-lobby", only, NetSessionChecks);
             Run("net-relay", only, NetRelayChecks);

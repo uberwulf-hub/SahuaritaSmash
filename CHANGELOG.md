@@ -5,6 +5,19 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-21
+
+### Changed
+- A new fighter select screen: a big card for each player showing their fighter and who plays them, a strip for the
+  stage, rules and surprises, a big FIGHT! button, and larger fighter tiles. Everything is big enough to tap on a phone,
+  and the keys and controllers work just as before.
+- Tapping a fighter now gives it to the player with the gold outline.
+- Colour choices show a gold ring and a tick on the one you picked.
+- Ben Franklin has a new look: a teal coat over a cream waistcoat, white hair, square glasses, a friendly smile, and his
+  cane standing beside him with a big gold key on top.
+- Paul Bunyan has a new look: a bigger friendly face, a big round beard and grin, a red-and-white bobble hat, a red check
+  shirt, and his axe handle resting behind his shoulder until he swings it.
+
 ## [0.5.0] - 2026-11-21
 
 ### Added

@@ -297,7 +297,7 @@ namespace ClassicGames
 
             f = New("ben", "Ben Franklin", Groups[2], "Benjamin Franklin, 1706-1790", "Printer, inventor and kite flyer. Calls down lightning, throws his almanac and floats home on his kite.");
             f.Weight = 98; f.Height = 88; f.Width = 48; f.Walk = 3.0; f.Run = 6.6; f.Air = 5.4; f.Grav = 0.55; f.Fall = 9.5; f.Jump = 14; f.DJump = 13;
-            f.Main = 0xFF7C4A2D; f.Second = 0xFFD8C7A0; f.Skin = 0xFFF0C8A0; f.Trim = 0xFFE5E7EB; f.Dark = 0xFF3E2414;
+            f.Main = 0xFF285E69; f.Second = 0xFFD8C7A0; f.Skin = 0xFFE8B98F; f.Trim = 0xFFE8E3D8; f.Dark = 0xFF49352D;   // teal coat, cream waistcoat (Test 003 round 2)
             Normals(f, 1.05, 1.0, "stick");
             m = Special(f, "nspec", "Kite lightning", "cast", 40); m.Shot = new BShotDef { Vx = 0, Life = 26, Delay = 16, R = 40, Dmg = 12, Ang = 70, Base = 40, Grow = 75, Look = "bolt", SX = 150, SY = 40, Electric = true }; m.ShotAt = 10; m.Extra = "kite"; m.Sound = "brawl-zap"; m.SoundAt = 26;
             m = Special(f, "sspec", "Almanac", "throw", 30); m.Shot = new BShotDef { Vx = 10, Vy = 2, Grav = 0.15, Life = 50, R = 13, Dmg = 8, Base = 30, Grow = 60, Look = "book" }; m.ShotAt = 12; m.Sound = "brawl-throw"; m.SoundAt = 11;
@@ -319,7 +319,7 @@ namespace ClassicGames
             // ---- legends (folk tales, free for everyone)
             f = New("paul", "Paul Bunyan", Groups[4], "the giant lumberjack of the tall tales", "Big as a barn and twice as strong. Throws flapjacks that come back, rolls logs, and Babe the blue ox gives him a boost.");
             f.Weight = 132; f.Height = 132; f.Width = 62; f.Walk = 2.8; f.Run = 6; f.Air = 4.2; f.Grav = 0.78; f.Fall = 12.5; f.Jump = 15; f.DJump = 12.5;
-            f.Main = 0xFFB91C1C; f.Second = 0xFF1E3A8A; f.Skin = 0xFFF0C8A0; f.Trim = 0xFF7C4A1E; f.Dark = 0xFF450A0A;
+            f.Main = 0xFFB91C1C; f.Second = 0xFF1E3A8A; f.Skin = 0xFFE8B98F; f.Trim = 0xFF93613B; f.Dark = 0xFF70462F;   // Test 003 round 2
             Normals(f, 1.15, 1.15, "stick");
             m = Special(f, "nspec", "Flapjack", "throw", 34); m.Shot = new BShotDef { Vx = 11, Life = 80, R = 16, Dmg = 7, Base = 25, Grow = 50, Look = "pancake", Boomerang = true, SY = 70 }; m.ShotAt = 12; m.Sound = "brawl-throw"; m.SoundAt = 11;
             m = Special(f, "sspec", "Log roll", "throw", 36); m.Shot = new BShotDef { Vx = 8, Vy = 0, Grav = 0.6, Life = 90, R = 20, Dmg = 11, Ang = 50, Base = 45, Grow = 70, Look = "log", Rolls = true, SY = 20 }; m.ShotAt = 14; m.Sound = "brawl-throw"; m.SoundAt = 13;

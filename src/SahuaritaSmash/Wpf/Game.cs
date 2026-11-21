@@ -290,10 +290,11 @@ namespace ClassicGames
         /// <summary>Setup screens get a "Back" button in the top-left corner (Esc).</summary>
         protected virtual bool SetupBackButton { get { return true; } }
         public const double BackButtonW = 128, BackButtonH = 78;
+        protected virtual double BackButtonX { get { return 12; } }
         void DrawBackButton(DrawingContext dc)
         {
             // 78 units tall like every other button, so it is at least 44 pixels on a phone (Test 003 review)
-            var r = new Rect(12, 12, BackButtonW, BackButtonH);
+            var r = new Rect(BackButtonX, 12, BackButtonW, BackButtonH);
             bool lit = Hovered(r);
             dc.DrawRoundedRectangle(Gfx.B(lit ? 0xFF1E3A8A : 0xC0131A2A), Gfx.P(lit ? 0xFF60A5FA : 0xFF2C3A55, lit ? 2.5 : 1.8), r, 22, 22);
             Gfx.Text(dc, "\u25C0  Back", r.X + r.Width / 2, r.Y + r.Height / 2 - 13, 20, lit ? 0xFFFFFFFF : 0xFF93C5FD, 0.5, Gfx.UiBold);
