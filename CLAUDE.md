@@ -176,6 +176,22 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   Back button (`Game.DrawBackButton`) is `BackButtonW` x `BackButtonH` 128 x 78; still under 78 and left for the
   rounds that redo them: the select rows and arrows, the keys page, the ladder rows, How to play's and the results'
   buttons. Checks: group `title`; snapshot `Portrait -Level n` (one fighter alone). Pictures and layout only.
+- **Fighter select, Ben and Paul (0.6.0, Creative Collaboration Test 003 round 2: art direction ChatGPT, approved by
+  Andrew 2026-11-21):** `Brawl\BrawlSelect.cs` draws the select screen over the same 12 logical rows (`SelectRows`,
+  `Change` and `SetupKey` unchanged): four seat cards 286 x 170 (`DrawSeatCard`: the spec's `SeatColour` edge with
+  P1-P4, a fighter control whose 78-wide ends are the old arrows and whose middle makes the seat active, a played-by
+  control whose halves are the arrows, `PlayedBy` = "Person / left keys", "Computer / Hard", "Nobody / off"), the
+  strip (`StripControl` Stage 250 and Rules 160, `SurprisesToggle` 150), the chips (`DrawColourChips(..., labels:
+  false, gap: 20)` with "COLOUR - P1: NAME" under them), `FightButton` 260 x 80, `DrawFighterGrid` (112 x 116 tiles,
+  room for 15, long names on two lines never under `TileNameMin` 18), `DrawFighterInfo`. States: selected gold
+  `SelGold`, focused a cyan ring `FocusCyan`, pressed orange for 0.15 s (`Pressed` / `IsPressed`). A tapped fighter
+  goes to `ActiveSeat` (the row's seat, else the last one, `colourSeat`). Back is at x 24 here (`BackButtonX`). Every
+  hit area is 78 x 78+ (check group `select`). The kit's chip (gold ring + tick) also shows on ladder and practice.
+  Ben and Paul are on `FighterInk` (`Brawl\BrawlBenPaul.cs`: `BenCoat`, `BenHairBack`, `BenFace`, `BenCane` /
+  `BenCaneIdle` / `BenKeyAt`, `PaulShirt` (checks clipped to the body), `PaulSleeveChecks`, `PaulFace`, `PaulHandle` /
+  `PaulHandleIdle`); head radius Ben 0.18, Paul 0.17 (`BodyStyle`, overall heights unchanged), `BodyStyle.NoseW`,
+  the spec's shadow / highlight per colour in `FighterInk.Tones` (`ShadowOf` / `LightOf`), skin #E8B98F, Ben's coat
+  #285E69. Snapshots `Portrait -Level 8|10`, `Cast -Level 6|7`, `SelectSeats`. Pecos Bill is the next person to move.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,
