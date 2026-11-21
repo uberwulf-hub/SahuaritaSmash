@@ -162,6 +162,20 @@ Classic Games (only if Andrew agrees; App Hub's CLAUDE.md, "Retired apps").
   `FloodFaceDetail` (streaks, eddies 12-24), `FloodCrest` (foam lobes 12-22 wide with gaps, splash bumps 10-14, the
   tumbling front, droplets); `FlowU` moves them along at `FlowAhead` from the clock `t` only. Pictures only: the flood's
   timing, speed, depth, length and effects are BrawlSim's. Not tried on a real phone or in motion by eye.
+- **Shared fighter style, Teddy and the title (0.5.0, Creative Collaboration Test 003 round 1: art direction ChatGPT,
+  approved by Andrew 2026-11-21):** `Brawl\BrawlBodies.cs` `FighterInk` (one ink #161616; outlines `Limb` 4.2 body and
+  limbs, `Head` 2.8, `Part` 2.6 hands / feet / hat / props, `Detail` 1.8; `Eyes` with whites, iris, pupil and a
+  catch-light sized from the head radius R; `Nose`; `Sculpt` = shadow side, lit side and shine on each limb part) is
+  switched on per fighter by `BodyStyle.Toon` (only Teddy so far; later rounds move the others onto it, one at a time).
+  `BodyStyle.Head` is the head's radius as a share of `Height` (Teddy 0.165, the hat not included); keep legs + torso +
+  head about 1.0 of `Height` when it changes. Teddy: `Brawl\BrawlTeddy.cs` (`TeddyJacket`, `TeddyFace`, `TeddyStick`;
+  his stick rests over his back shoulder in `DressPerson` unless he's attacking), colours in `BrawlData` (green
+  #4F7F35 jacket, khaki trousers); his old tan look is colour 3 "Khaki" in `BrawlColours`. Title: `Brawl\BrawlTitle.cs`
+  (`InkedLogo`, the menu kit `KitButton` with its `Kit*` constants, 292 x 78 buttons in two columns, `TitleLeftColumn`
+  4, Left / Right = `TitleColumnMove`, Up / Down unchanged; the cast in two staggered rows of six on the right). The
+  Back button (`Game.DrawBackButton`) is `BackButtonW` x `BackButtonH` 128 x 78; still under 78 and left for the
+  rounds that redo them: the select rows and arrows, the keys page, the ladder rows, How to play's and the results'
+  buttons. Checks: group `title`; snapshot `Portrait -Level n` (one fighter alone). Pictures and layout only.
 - `src\SahuaritaSmash.Desktop` (Windows, `SahuaritaSmashSE.exe`), `src\SahuaritaSmash.Android`
   (`com.uberwulf.sahuaritasmashse`, landscape).
 - `tests\SahuaritaSmash.Tests`: `dotnet run --project tests/SahuaritaSmash.Tests -c Release [-Only brawl,brawl-saves,

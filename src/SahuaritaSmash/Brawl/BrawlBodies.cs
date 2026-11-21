@@ -33,6 +33,10 @@ namespace ClassicGames
         /// <summary>Drawn more like a real person (life-like proportions, thinner outlines, eyes with whites and brows)
         /// rather than as a cartoon (Andrew, 2026-10-31: "some ... more cartoony while others look more realistic").</summary>
         public bool Real;
+        /// <summary>The shared fighter style (Creative Collaboration Test 003, round 1: art direction ChatGPT, Andrew, 2026-11-20):
+        /// one look for the whole cast instead of the two modes above. Fighters move onto it one at a time (round 1: Teddy);
+        /// it takes over from Real for the outline, the shading and the face. Its rules are in FighterInk.</summary>
+        public bool Toon;
 
         static readonly Dictionary<string, BodyStyle> all = new Dictionary<string, BodyStyle>();
         static readonly BodyStyle plain = new BodyStyle();
@@ -50,8 +54,8 @@ namespace ClassicGames
             all["juniper"] = new BodyStyle { Head = 0.19, Leg = 0.32, Arm = 0.28, Torso = 0.29, ArmW = 0.27, LegW = 0.31, BodyW = 0.76, ArmTaper = 0.9, LegTaper = 0.95, Bulge = 0.2,
                 Shoulders = 1.04, Hips = 1.06, Belly = 0.06, HeadW = 0.92, HeadH = 1.05, Jaw = 0.7, Chin = 0.05, Rings = 2, Hand = "glove", Foot = "bigboot" };
             // Teddy Roosevelt: stocky, a barrel chest, a square jaw, riding boots
-            all["teddy"] = new BodyStyle { Real = true, Head = 0.14, Leg = 0.37, Arm = 0.32, Torso = 0.34, ArmW = 0.22, LegW = 0.27, BodyW = 0.8, ArmTaper = 0.74, LegTaper = 0.8, Bulge = 0.14,
-                Shoulders = 1.08, Hips = 0.92, Belly = 0.16, HeadW = 1.06, HeadH = 0.94, Jaw = 1.02, Chin = 0.02, Hand = "fist", Foot = "tallboot" };
+            all["teddy"] = new BodyStyle { Toon = true, Real = true, Head = 0.165, Leg = 0.355, Arm = 0.32, Torso = 0.315, ArmW = 0.25, LegW = 0.29, BodyW = 0.84, ArmTaper = 0.72, LegTaper = 0.8, Bulge = 0.22,
+                Shoulders = 1.12, Hips = 0.92, Belly = 0.18, HeadW = 1.04, HeadH = 0.96, Jaw = 1.0, Chin = 0.03, Hand = "fist", Foot = "tallboot" };
             // Ben Franklin: older and round in the middle, narrow shoulders, a soft double chin, buckled shoes
             all["ben"] = new BodyStyle { Real = true, Head = 0.145, Leg = 0.35, Arm = 0.3, Torso = 0.35, ArmW = 0.16, LegW = 0.2, BodyW = 0.72, ArmTaper = 0.82, LegTaper = 0.72, Bulge = 0.05,
                 Shoulders = 0.76, Hips = 1.12, Belly = 0.22, HeadW = 1.08, HeadH = 1.0, Jaw = 0.95, Chin = 0.12, Hand = "ball", Foot = "buckle" };
@@ -69,6 +73,83 @@ namespace ClassicGames
             all["dusty"] = new BodyStyle { Head = 0.12, Leg = 0.44, Arm = 0.24, Torso = 0.22, ArmTaper = 0.55, LegTaper = 0.55, Bulge = 0.02 };
             all["gila"] = new BodyStyle { Head = 0.2, Leg = 0.24, Arm = 0.22, Torso = 0.36, ArmW = 0.2, LegW = 0.24, BodyW = 0.8, ArmTaper = 0.7, LegTaper = 0.7, Bulge = 0.16 };
             all["sam"] = new BodyStyle { Head = 0.16, Leg = 0.22, Arm = 0.3, Torso = 0.46, ArmTaper = 0.75, LegTaper = 0.85, Bulge = 0.16 };
+        }
+    }
+
+    /// <summary>The shared fighter style's rules (Test 003, round 1). Sizes are in fighter units (a fighter is about 90 tall),
+    /// face sizes are shares of the head's radius R, so everything scales with the fighter.
+    /// - Ink: one near-black #161616 for every outline. Body and limbs 4.2, the head 2.8, hands / feet / hat / props 2.6,
+    ///   details inside a shape (buttons, seams, glasses) 1.8. (Before: cartoon 5 / 2.5, "real" 3.4 / 1.7.)
+    /// - Faces: eyes with whites, 0.17 R wide and 0.2 R tall (the far eye 80%), an iris 0.11 R, a pupil 0.06 R and a
+    ///   catch-light; brows 0.09 R thick; a nose 0.2 R; mouths drawn with ink, at least 0.4 R wide. Big enough to read at
+    ///   phone size (a head is about 25 phone pixels across in a match).
+    /// - Volume: each limb part gets a shadow along its lower side (30% darker, half its width), a highlight along its
+    ///   upper side (35% lighter) and a soft shine at the swell, so limbs read as rounded rather than as flat tubes.
+    /// - Colour: one signature colour covers most of a fighter's area; trims and props are darker or contrasting.
+    /// Pictures only: nothing here changes a fighter's size, moves or hit areas.</summary>
+    public static class FighterInk
+    {
+        public const uint Ink = 0xFF161616;
+        public const double Limb = 4.2, Head = 2.8, Part = 2.6, Detail = 1.8;
+
+        public static Pen Pen(double w) { return Gfx.P(Ink, w); }
+
+        /// <summary>Rounded shading for one limb part from a (width wa) to b (width wb).</summary>
+        public static void Sculpt(DrawingContext dc, Point a, Point b, double wa, double wb, uint c)
+        {
+            double dx = b.X - a.X, dy = b.Y - a.Y, len = Math.Sqrt(dx * dx + dy * dy);
+            if (len < 0.5 || Math.Max(wa, wb) < 3) return;
+            double nx = -dy / len, ny = dx / len;
+            if (ny < 0) { nx = -nx; ny = -ny; }   // n points up (local y is up)
+            // the shadow side: a band along the lower half
+            dc.DrawGeometry(Gfx.B(Gfx.Mix(c, 0xFF000000, 0.3)), null, SegOf(new Point(a.X - nx * wa * 0.22, a.Y - ny * wa * 0.22), new Point(b.X - nx * wb * 0.22, b.Y - ny * wb * 0.22), wa * 0.5, wb * 0.5));
+            // the lit side and a soft shine where the limb swells
+            dc.DrawLine(RoundPen(Gfx.Mix(c, 0xFFFFFFFF, 0.35), (wa + wb) * 0.11), new Point(a.X + nx * wa * 0.24, a.Y + ny * wa * 0.24), new Point(b.X + nx * wb * 0.24, b.Y + ny * wb * 0.24));
+            var m = new Point((a.X + b.X) / 2 + nx * (wa + wb) * 0.14, (a.Y + b.Y) / 2 + ny * (wa + wb) * 0.14);
+            dc.DrawEllipse(Gfx.B(Gfx.Alpha(Gfx.Mix(c, 0xFFFFFFFF, 0.6), 0.55)), null, m, (wa + wb) * 0.07, (wa + wb) * 0.07);
+        }
+
+        static Pen RoundPen(uint c, double w) { var p = new Pen(Gfx.B(c), w, null, PenLineCap.Round, PenLineJoin.Round); p.Freeze(); return p; }
+
+        static StreamGeometry SegOf(Point a, Point b, double wa, double wb)
+        {
+            double dx = b.X - a.X, dy = b.Y - a.Y, len = Math.Sqrt(dx * dx + dy * dy);
+            double ux = dx / len, uy = dy / len, nx = -uy, ny = ux, ha = wa / 2, hb = wb / 2;
+            var g = new StreamGeometry();
+            using (var s = g.Open())
+            {
+                s.BeginFigure(new Point(a.X + nx * ha, a.Y + ny * ha), true, true);
+                s.LineTo(new Point(b.X + nx * hb, b.Y + ny * hb), true, true);
+                s.QuadraticBezierTo(new Point(b.X + ux * hb, b.Y + uy * hb), new Point(b.X - nx * hb, b.Y - ny * hb), true, true);
+                s.LineTo(new Point(a.X - nx * ha, a.Y - ny * ha), true, true);
+                s.QuadraticBezierTo(new Point(a.X - ux * ha, a.Y - uy * ha), new Point(a.X + nx * ha, a.Y + ny * ha), true, true);
+            }
+            g.Freeze();
+            return g;
+        }
+
+        /// <summary>Eyes looking forward (+x): whites, iris, pupil, a catch-light and a brow. Local y is up.</summary>
+        public static void Eyes(DrawingContext dc, Point h, double R)
+        {
+            foreach (double ex in new[] { 0.16, 0.58 })
+            {
+                double k = ex < 0.5 ? 0.8 : 1;   // the far eye a little smaller: the head is turned
+                var e = new Point(h.X + R * ex, h.Y + R * 0.14);
+                double w = R * 0.17 * k, hh = R * 0.2 * k;
+                dc.DrawEllipse(Gfx.B(0xFFFAFAF7), Pen(Detail), e, w, hh);
+                var ir = new Point(e.X + w * 0.32, e.Y - hh * 0.08);
+                dc.DrawEllipse(Gfx.B(0xFF4A3220), null, ir, R * 0.11 * k, R * 0.12 * k);
+                dc.DrawEllipse(Gfx.B(0xFF0C0A09), null, ir, R * 0.06 * k, R * 0.065 * k);
+                dc.DrawEllipse(Gfx.B(0xFFFFFFFF), null, new Point(ir.X + R * 0.04, ir.Y + R * 0.05), R * 0.028, R * 0.028);
+            }
+        }
+
+        /// <summary>A rounded nose at the front of the face, with a little shine.</summary>
+        public static void Nose(DrawingContext dc, Point h, double R, double W, double Hh, uint skin)
+        {
+            var c = new Point(h.X + W * 0.62, h.Y - Hh * 0.12);
+            dc.DrawEllipse(Gfx.B(Gfx.Mix(skin, 0xFF9A3412, 0.2)), Pen(Detail), c, R * 0.2, R * 0.16);
+            dc.DrawEllipse(Gfx.B(Gfx.Alpha(0xFFFFFFFF, 0.45)), null, new Point(c.X + R * 0.05, c.Y + R * 0.06), R * 0.06, R * 0.04);
         }
     }
 
@@ -102,10 +183,12 @@ namespace ClassicGames
         {
             double wb = w * (1 + taper) / 2 * 0.98, wc = w * taper;
             StreamGeometry g1 = Seg(a, b, w, wb, bulge), g2 = Seg(b, c, wb, wc, bulge * 0.8);
-            Pen o = Outline(st != null && st.Real ? 3.4 : 5);
+            bool toon = st != null && st.Toon;
+            Pen o = Outline(toon ? FighterInk.Limb : st != null && st.Real ? 3.4 : 5);
             dc.DrawGeometry(null, o, g1); dc.DrawGeometry(null, o, g2);
             dc.DrawGeometry(Gfx.B(upper), null, g1); dc.DrawGeometry(Gfx.B(lower), null, g2);
-            Shade(dc, a, b, w, wb, upper); Shade(dc, b, c, wb, wc, lower);
+            if (toon) { FighterInk.Sculpt(dc, a, b, w, wb, upper); FighterInk.Sculpt(dc, b, c, wb, wc, lower); }
+            else { Shade(dc, a, b, w, wb, upper); Shade(dc, b, c, wb, wc, lower); }
             if (st != null && st.Plates)
             {
                 // armour: bands near each joint and a round plate over the elbow / knee
@@ -287,9 +370,10 @@ namespace ClassicGames
                 s.QuadraticBezierTo(new Point(h.X - W * 1.03, h.Y - Hh * 0.36), l, true, true);
             }
             g.Freeze();
-            dc.DrawGeometry(BrawlView.Sphere(skin), Outline(st.Real ? 1.7 : 2.5), g);
+            dc.DrawGeometry(BrawlView.Sphere(skin), Outline(st.Toon ? FighterInk.Head : st.Real ? 1.7 : 2.5), g);
             if (R > 6) dc.DrawGeometry(null, Gfx.P(Gfx.Alpha(Rim, 0.55), Math.Max(1.2, R * 0.12)), Cap(h, R * 0.86, 20, 80));
-            if (st.Nose) dc.DrawEllipse(Gfx.B(Gfx.Mix(skin, 0xFF7C2D12, 0.22)), Gfx.P(Gfx.Mix(skin, 0xFF000000, 0.45), 1.2), new Point(h.X + W * 0.55, h.Y - Hh * 0.2), R * 0.15, R * 0.12);
+            if (st.Nose && st.Toon) FighterInk.Nose(dc, h, R, W, Hh, skin);
+            else if (st.Nose) dc.DrawEllipse(Gfx.B(Gfx.Mix(skin, 0xFF7C2D12, 0.22)), Gfx.P(Gfx.Mix(skin, 0xFF000000, 0.45), 1.2), new Point(h.X + W * 0.55, h.Y - Hh * 0.2), R * 0.15, R * 0.12);
             if (chin > 0.08)
             {
                 // a soft double chin
@@ -304,6 +388,7 @@ namespace ClassicGames
         /// brow. Hurt is the same X for everyone.</summary>
         static void FaceEyes(DrawingContext dc, Point h, double R, bool hurt, BodyStyle st)
         {
+            if (st.Toon && !hurt) { FighterInk.Eyes(dc, h, R); return; }
             if (!st.Real || hurt) { Eyes(dc, h, R, hurt, 0xFF1F2937); return; }
             foreach (double ex in new[] { 0.3, 0.72 })
             {

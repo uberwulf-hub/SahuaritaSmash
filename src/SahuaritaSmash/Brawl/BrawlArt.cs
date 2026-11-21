@@ -1014,13 +1014,22 @@ namespace ClassicGames
                 case "trooper": hand = 0xFF3A3A30; pants = d.Main; shoe = 0xFF1C1917; break;
                 case "juniper": hand = 0xFFE2E8F0; pants = d.Main; shoe = 0xFF475569; break;
                 case "knight": sleeve = d.Skin; hand = d.Main; pants = d.Main; shoe = d.Second; break;
-                case "teddy": pants = d.Main; shoe = 0xFF3F2A14; break;
+                case "teddy": pants = d.Second; shoe = d.Dark; break;
                 case "ben": pants = 0xFF1F2937; shoe = 0xFF111111; break;
                 case "paul": pants = 0xFF1E40AF; shoe = 0xFF451A03; break;
                 case "pecos": pants = d.Second; shoe = d.Dark; hand = 0xFF9A6B3F; break;
                 case "bloom": pants = 0xFF0F766E; shoe = 0xFFF472B6; break;
             }
             BodyStyle st = BodyStyle.For(d.Id);
+            // Teddy's big stick rests over his back shoulder when he isn't swinging it, so it doesn't hide his jacket (Test 003)
+            if (d.Id == "teddy" && !(f.St == BS.Attack && f.Mv != null))
+            {
+                // from the back hand to just behind the hat, so its top shows above the back shoulder
+                Point aim = new Point(r.Head.X - r.HeadR * 1.5, r.Head.Y + r.HeadR * 0.9);
+                double sa = Math.Atan2(aim.Y - r.BHand.Y, aim.X - r.BHand.X) * 180 / Math.PI;
+                double sl = Math.Sqrt((aim.X - r.BHand.X) * (aim.X - r.BHand.X) + (aim.Y - r.BHand.Y) * (aim.Y - r.BHand.Y));
+                TeddyStick(dc, r.BHand, sa, sl);
+            }
             // back arm and leg
             if (d.Id == "juniper") { dc.DrawRoundedRectangle(Gfx.B(0xFF94A3B8), Outline(2.5), new Rect(r.Neck.X - r.BodyW * 1.15, r.Hip.Y + r.TorsoLen * 0.15, r.BodyW * 0.6, r.TorsoLen * 0.8), 6, 6); }
             Limb(dc, Shoulder(r), r.BElbow, r.BHand, Gfx.Mix(sleeve, 0xFF000000, 0.25), Gfx.Mix(sleeve, 0xFF000000, 0.25), r.ArmW, st.ArmTaper, st.Bulge, st);
@@ -1065,7 +1074,7 @@ namespace ClassicGames
             uint body = d.Main;
             // the fighter's own shape (BrawlBodies.cs), rounded like a body: darker at both sides, lighter just off the
             // middle, a shadow under the head
-            dc.DrawGeometry(BrawlView.Cylinder(body), Outline(2.5), BodyShape(a.X, a.Y - w * 0.15, a.Y + len + w * 0.05, w, BodyStyle.For(d.Id)));
+            dc.DrawGeometry(BrawlView.Cylinder(body), Outline(BodyStyle.For(d.Id).Toon ? FighterInk.Limb : 2.5), BodyShape(a.X, a.Y - w * 0.15, a.Y + len + w * 0.05, w, BodyStyle.For(d.Id)));
             dc.DrawEllipse(Gfx.B(0x30000000), null, new Point(a.X, a.Y + len - w * 0.02), w * 0.36, w * 0.14);
             double cx = a.X, top = a.Y + len;
             switch (d.Id)
@@ -1084,9 +1093,7 @@ namespace ClassicGames
                     dc.DrawRectangle(Gfx.B(0xFFE2E8F0), null, new Rect(cx - w / 2 + 2, a.Y + len * 0.08, w - 4, len * 0.1));
                     break;
                 case "teddy":
-                    for (int i = 0; i < 3; i++) dc.DrawEllipse(Gfx.B(0xFF6B4F2A), null, new Point(cx + w * 0.22, a.Y + len * (0.3 + i * 0.22)), 2.2, 2.2);
-                    dc.DrawRectangle(Gfx.B(0xFF6B4F2A), null, new Rect(cx - w / 2 + 2, a.Y + len * 0.08, w - 4, len * 0.1));
-                    dc.DrawLine(Gfx.P(0xFFDC2626, 3), new Point(cx + w * 0.2, top), new Point(cx + w * 0.05, top - len * 0.25));
+                    TeddyJacket(dc, d, cx, a.Y, len, w);
                     break;
                 case "ben":
                     dc.DrawRoundedRectangle(Gfx.B(d.Second), null, new Rect(cx - w * 0.05, a.Y + len * 0.15, w * 0.42, len * 0.75), 4, 4);
@@ -1153,13 +1160,7 @@ namespace ClassicGames
                 case "teddy":
                     Skull(dc, h, R, d.Skin, st);
                     FaceEyes(dc, h, R, hurt, st);
-                    dc.DrawEllipse(null, Gfx.P(0xFF1F2937, 1.6), new Point(h.X + R * 0.28, h.Y + R * 0.12), R * 0.2, R * 0.2);
-                    dc.DrawEllipse(null, Gfx.P(0xFF1F2937, 1.6), new Point(h.X + R * 0.72, h.Y + R * 0.12), R * 0.2, R * 0.2);
-                    // the famous moustache, and a grin
-                    Poly(dc, Gfx.B(0xFF5B3A1A), Outline(1.2), new Point(h.X + R * 0.1, h.Y - R * 0.3), new Point(h.X + R * 0.55, h.Y - R * 0.12), new Point(h.X + R * 1.0, h.Y - R * 0.32), new Point(h.X + R * 0.55, h.Y - R * 0.38));
-                    if (!hurt) dc.DrawRectangle(Gfx.B(0xFFFFFFFF), Outline(1), new Rect(h.X + R * 0.3, h.Y - R * 0.6, R * 0.5, R * 0.16));
-                    dc.DrawRectangle(Gfx.B(0xFF8B5A2B), Outline(2), new Rect(h.X - R * 1.35, h.Y + R * 0.55, R * 2.7, R * 0.22));
-                    dc.DrawGeometry(Gfx.B(0xFFA0703A), Outline(2), Cap(new Point(h.X, h.Y + R * 0.66), R * 0.8, 0, 180));
+                    TeddyFace(dc, h, R, d, hurt);
                     break;
                 case "ben":
                     dc.DrawEllipse(Gfx.B(0xFFE5E7EB), Outline(2), new Point(h.X - R * 0.45, h.Y - R * 0.1), R * 0.62, R * 0.95);
@@ -1298,7 +1299,8 @@ namespace ClassicGames
             switch (d.Id)
             {
                 case "teddy":
-                    if (!behind) { Point e = Off(hnd, ang, H * 0.42); dc.DrawLine(Outline(10), Off(hnd, ang, -6), e); dc.DrawLine(Gfx.P(0xFF7C4A1E, 6.5), Off(hnd, ang, -6), e); dc.DrawEllipse(Gfx.B(0xFF5B3414), null, e, 4.5, 4.5); }
+                    // swinging: in his front hand; otherwise it rests over his back shoulder (DressPerson)
+                    if (!behind && attacking) TeddyStick(dc, Off(hnd, ang, -6), ang, H * 0.42 + 6);
                     break;
                 case "ben":
                     if (!behind) { Point e = Off(hnd, ang, H * 0.36); dc.DrawLine(Outline(6.5), Off(hnd, ang, -4), e); dc.DrawLine(Gfx.P(0xFF3F2A14, 3.5), Off(hnd, ang, -4), e); dc.DrawEllipse(Gfx.B(0xFFD4AF37), null, e, 3.5, 3.5); }

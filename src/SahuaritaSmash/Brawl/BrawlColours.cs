@@ -28,7 +28,7 @@ namespace ClassicGames
             { "juniper",  new[] { P("Meadow",  0xFF10B981, 0xFFFEF3C7, 0xFFF472B6, 0xFF065F46), P("Berry", 0xFFDB2777, 0xFFE0E7FF, 0xFF22D3EE, 0xFF831843) } },
             { "dusty",    new[] { P("Storm",   0xFF64748B, 0xFFE2E8F0, 0xFFF97316, 0xFF1E293B), P("Canyon", 0xFFB45309, 0xFFFDE68A, 0xFF16A34A, 0xFF5A2A04) } },
             { "sam",      new[] { P("Dusk",    0xFF2F8F83, 0xFF1F6B61, 0xFFF9A8D4, 0xFF103D37, 0xFF5CC2B3), P("Golden", 0xFF9A9A3A, 0xFF6E6E22, 0xFFFFFFFF, 0xFF3F3F12, 0xFFC9C960) } },
-            { "teddy",    new[] { P("Evening", 0xFF374151, 0xFF9CA3AF, 0xFFB91C1C, 0xFF111827), P("Ranger", 0xFF166534, 0xFFD6C7A1, 0xFFFBBF24, 0xFF0A3A1C) } },
+            { "teddy",    new[] { P("Evening", 0xFF374151, 0xFF9CA3AF, 0xFFB91C1C, 0xFF111827), P("Khaki", 0xFFB59C6B, 0xFF8F7A4E, 0xFF8B5A2B, 0xFF4A3A20) } },
             { "ben",      new[] { P("Liberty", 0xFF1E3A8A, 0xFFF5F5DC, 0xFFFDE047, 0xFF0F1D4A), P("Printer", 0xFF7F1D1D, 0xFFE5E7EB, 0xFFD4AF37, 0xFF3F0B0B) } },
             { "knight",   new[] { P("Gold",    0xFFCA8A04, 0xFF713F12, 0xFF38BDF8, 0xFF422006, 0xFFFDE68A), P("Shadow", 0xFF1F2937, 0xFF111827, 0xFF4ADE80, 0xFF030712, 0xFF4B5563) } },
             { "paul",     new[] { P("Mustard", 0xFFD97706, 0xFF3F3F46, 0xFF7C4A1E, 0xFF78350F), P("Pine", 0xFF15803D, 0xFF78350F, 0xFFFBBF24, 0xFF052E16) } },

@@ -287,7 +287,7 @@ namespace ClassicGames
             // ---- History (long-gone figures, drawn as friendly caricatures)
             f = New("teddy", "Teddy", Groups[2], "Theodore Roosevelt, 1858-1919", "The 26th president: \"speak softly and carry a big stick\". Rides a moose, and shouts \"Bully!\" to hit back.");
             f.Weight = 106; f.Height = 92; f.Width = 48; f.Walk = 3.4; f.Run = 7.2; f.Air = 5.2; f.Grav = 0.68; f.Fall = 11; f.Jump = 14.8; f.DJump = 13.5;
-            f.Main = 0xFFB59C6B; f.Second = 0xFF6B4F2A; f.Skin = 0xFFF0C8A0; f.Trim = 0xFF8B5A2B; f.Dark = 0xFF4A3A20;
+            f.Main = 0xFF4F7F35; f.Second = 0xFFC9B27C; f.Skin = 0xFFF0C8A0; f.Trim = 0xFF8B5A2B; f.Dark = 0xFF3F2A14;   // green safari jacket, khaki trousers (Test 003)
             Normals(f, 1.15, 1.05, "stick");
             m = Special(f, "nspec", "Big stick", "bigswing", 50); m.H(16, 19, 72, 50, 26, 14, 361, 40, 85); m.Sound = "brawl-strong"; m.SoundAt = 15;
             m = Special(f, "sspec", "Moose charge", "ride", 56); m.Kind = "lunge"; m.V(10, 42, 11, 0).H(10, 42, 60, 30, 34, 13, 40, 55, 80); m.Extra = "moose"; m.Sound = "brawl-moose"; m.SoundAt = 9;

@@ -221,7 +221,7 @@ namespace ClassicGames
         void DrawPracticeSetup(DrawingContext dc)
         {
             Gfx.Text(dc, "Practice", 150, 18, 34, 0xFF6EE7B7, 0, Gfx.UiBold);
-            Gfx.Text(dc, "Try your moves on a dummy. Nobody loses: fall off and you're straight back. No timer, no scores.", 40, 62, 17, 0xFFE5E7EB, 0, Gfx.Ui);
+            Gfx.Text(dc, "Try your moves on a dummy. Nobody loses: fall off and you're straight back. No timer, no scores.", 150, 62, 17, 0xFFE5E7EB, 0, Gfx.Ui);
             BFighterDef me = BrawlData.Fighters[PracticePick], foe = BrawlData.Fighters[PracticeFoe];
             int col = UsableColour(PracticePick, PracticeColour);
             View.Portrait(dc, BrawlColours.Def(me, col), 830, 470, 230 * Math.Min(1.25, 90 / me.Height * 1.1), T, false, BS.Idle);
