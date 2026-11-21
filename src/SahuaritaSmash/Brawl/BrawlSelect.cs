@@ -198,8 +198,12 @@ namespace ClassicGames
                 var rr = press ? new Rect(x, y + 3, tw, th) : r;
                 dc.DrawRoundedRectangle(Gfx.B(press ? Gfx.Mix(PressOrange, CardFill, 0.4) : lit ? 0xFF2A3550 : CardFill), Gfx.P(chosen ? SelGold : FighterInk.Ink, chosen ? 4 : 3), rr, 14, 14);
                 if (focus) dc.DrawRoundedRectangle(null, Gfx.P(FocusCyan, 3.5), new Rect(rr.X - 5, rr.Y - 5, rr.Width + 10, rr.Height + 10), 18, 18);
-                View.Portrait(dc, d, rr.X + tw / 2, rr.Y + 80, Math.Min(76, d.Height * 0.8), T + i * 0.3, false, BS.Idle);
-                FitText(dc, d.Name, rr.X + tw / 2, rr.Y + 82, tw - 8, 32, 20, 14, 0xFFFFFFFF, Gfx.UiBold, 0.5);
+                // a name that doesn't fit on one line at 20 goes on two lines, never under TileNameMin (ChatGPT's review:
+                // "Ben Franklin" shrank too far to read on a phone)
+                bool twoLines = Gfx.Width(d.Name, 20, Gfx.UiBold) > tw - 8;
+                View.Portrait(dc, d, rr.X + tw / 2, rr.Y + (twoLines ? 68 : 80), Math.Min(twoLines ? 64 : 76, d.Height * 0.8), T + i * 0.3, false, BS.Idle);
+                if (!twoLines) FitText(dc, d.Name, rr.X + tw / 2, rr.Y + 82, tw - 8, 32, 20, TileNameMin, 0xFFFFFFFF, Gfx.UiBold, 0.5);
+                else TileTwoLines(dc, d.Name, rr.X + tw / 2, rr.Y + 70, tw - 6);
                 if (chosen)
                 {
                     dc.DrawEllipse(Gfx.B(SelGold), Gfx.P(FighterInk.Ink, 2), new Point(rr.Right - 15, rr.Y + 15), 11, 11);
@@ -251,6 +255,28 @@ namespace ClassicGames
                 if (s != null) { FitText(dc, s.From, x, y + 42, r.Width - 36, 24, 20, 15, InfoCream, Gfx.Ui, 0); Wrap(dc, s.Blurb, x, y + 72, r.Width - 36, 19, 0xFFE5E7EB); }
                 else Wrap(dc, "A stage picked at random when the fight starts.", x, y + 48, r.Width - 36, 20, 0xFFE5E7EB);
             }
+        }
+
+        /// <summary>The smallest size a fighter's name is drawn at on a tile (about 10 phone pixels).</summary>
+        public const double TileNameMin = 18;
+
+        /// <summary>A long name on two lines (split at the space nearest the middle), as big as fits from 20 down to
+        /// TileNameMin.</summary>
+        static void TileTwoLines(DrawingContext dc, string name, double cx, double y, double width)
+        {
+            string[] words = name.Split(' ');
+            string a = name, b = "";
+            double best = double.MaxValue;
+            for (int k = 1; k < words.Length; k++)
+            {
+                string l1 = string.Join(" ", words, 0, k), l2 = string.Join(" ", words, k, words.Length - k);
+                double w = Math.Max(Gfx.Width(l1, 20, Gfx.UiBold), Gfx.Width(l2, 20, Gfx.UiBold));
+                if (w < best) { best = w; a = l1; b = l2; }
+            }
+            double s = 20;
+            while (s > TileNameMin && Math.Max(Gfx.Width(a, s, Gfx.UiBold), Gfx.Width(b, s, Gfx.UiBold)) > width) s -= 1;
+            Gfx.Text(dc, a, cx, y, s, 0xFFFFFFFF, 0.5, Gfx.UiBold);
+            Gfx.Text(dc, b, cx, y + s * 1.12, s, 0xFFFFFFFF, 0.5, Gfx.UiBold);
         }
 
         // ---------------------------------------------------------------- the kit's pieces

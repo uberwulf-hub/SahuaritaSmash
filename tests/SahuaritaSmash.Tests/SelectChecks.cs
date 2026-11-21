@@ -46,6 +46,16 @@ namespace ClassicGames
                 && hits.Count(h => h.Label == "played by <") == 4;
             Check("select: four seats, the stage strip, colours, Fight! and every fighter", all, string.Join(", ", hits.Select(h => h.Label)));
             Check("select: everything is on the screen", hits.All(h => h.Area.X >= 0 && h.Area.Y >= 0 && h.Area.Right <= g.Width && h.Area.Bottom <= g.Height), "");
+            // every name on its tile at 18 or more: on one line at 20, or split into two lines that fit at 18
+            var tooSmall = BrawlData.Fighters.Where(d =>
+            {
+                if (Gfx.Width(d.Name, 20, Gfx.UiBold) <= 104) return false;
+                string[] w = d.Name.Split(' ');
+                for (int k = 1; k < w.Length; k++)
+                    if (Math.Max(Gfx.Width(string.Join(" ", w, 0, k), BrawlGame.TileNameMin, Gfx.UiBold), Gfx.Width(string.Join(" ", w, k, w.Length - k), BrawlGame.TileNameMin, Gfx.UiBold)) <= 106) return false;
+                return true;
+            }).Select(d => d.Name).ToList();
+            Check("select: every fighter's tile name is 18 units or more (two lines when long)", BrawlGame.TileNameMin >= 18 && tooSmall.Count == 0, string.Join(", ", tooSmall));
             // keys, as before
             g.Sel = 0; int p0 = g.Pick[0], n = BrawlData.Fighters.Count;
             g.Press(Key.Right); g.KeyUp(Key.Right);

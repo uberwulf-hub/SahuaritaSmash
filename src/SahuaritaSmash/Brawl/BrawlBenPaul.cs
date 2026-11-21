@@ -174,6 +174,39 @@ namespace ClassicGames
             dc.DrawRoundedRectangle(Gfx.B(0xFFB8A27A), FighterInk.Pen(1.4), new Rect(cx + w * 0.14, ay + len * 0.015, w * 0.18, len * 0.14), 2, 2);
         }
 
+        /// <summary>The same checks on his sleeves, a little quieter than the shirt (ChatGPT's review): each part of the arm
+        /// clipped to its own shape (as Limb builds it), the blocks running along the arm; light 1 for the near arm, less
+        /// for the far one. The arm's ink edge (drawn under the fill by Limb) stays as it was.</summary>
+        static void PaulSleeveChecks(DrawingContext dc, Point a, Point b, Point c, double w, BodyStyle st, double light)
+        {
+            double wb = w * (1 + st.ArmTaper) / 2 * 0.98, wc = w * st.ArmTaper;
+            SleeveChecks(dc, a, b, w, wb, st.Bulge, light);
+            SleeveChecks(dc, b, c, wb, wc, st.Bulge * 0.8, light);
+        }
+
+        static void SleeveChecks(DrawingContext dc, Point a, Point b, double wa, double wb, double bulge, double light)
+        {
+            double dx = b.X - a.X, dy = b.Y - a.Y, len = Math.Sqrt(dx * dx + dy * dy);
+            if (len < 2) return;
+            double cell = 9, half = Math.Max(wa, wb);
+            dc.PushClip(Seg(a, b, wa, wb, bulge));
+            dc.PushTransform(new RotateTransform(Math.Atan2(dy, dx) * 180 / Math.PI, a.X, a.Y));
+            uint stripe = Gfx.Mix(PaulRed, PaulCream, 0.28);
+            int i = 0;
+            for (double x = a.X - half; x < a.X + len + half; x += cell, i++)
+            {
+                int j = 0;
+                for (double y = a.Y - half; y < a.Y + half; y += cell, j++)
+                {
+                    bool ci = i % 2 == 0, cj = j % 2 == 0;
+                    if (ci && cj) dc.DrawRectangle(Gfx.B(Gfx.Alpha(PaulCream, 0.7 * light)), null, new Rect(x, y, cell, cell));
+                    else if (ci || cj) dc.DrawRectangle(Gfx.B(Gfx.Alpha(stripe, 0.45 * light)), null, new Rect(x, y, cell, cell));
+                }
+            }
+            dc.Pop();
+            dc.Pop();
+        }
+
         /// <summary>His face over the shared eyes: thick brows, the beard in big round masses, a wide grin above it, and
         /// the red-and-white bobble hat (its brim above the brows, so the eyes stay clear).</summary>
         static void PaulFace(DrawingContext dc, Point h, double R, BFighterDef d, bool hurt)

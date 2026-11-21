@@ -1035,6 +1035,7 @@ namespace ClassicGames
             // back arm and leg
             if (d.Id == "juniper") { dc.DrawRoundedRectangle(Gfx.B(0xFF94A3B8), Outline(2.5), new Rect(r.Neck.X - r.BodyW * 1.15, r.Hip.Y + r.TorsoLen * 0.15, r.BodyW * 0.6, r.TorsoLen * 0.8), 6, 6); }
             Limb(dc, Shoulder(r), r.BElbow, r.BHand, Gfx.Mix(sleeve, 0xFF000000, 0.25), Gfx.Mix(sleeve, 0xFF000000, 0.25), r.ArmW, st.ArmTaper, st.Bulge, st);
+            if (d.Id == "paul") PaulSleeveChecks(dc, Shoulder(r), r.BElbow, r.BHand, r.ArmW, st, 0.6);
             Hand(dc, r.BHand, r.BArmAng, r.ArmW * st.ArmTaper, Gfx.Mix(hand, 0xFF000000, 0.2), st.Hand);
             if (d.Id == "knight") Shield(dc, r.BHand, r.ArmW * 2.6, t);
             Limb(dc, r.Hip, r.BKnee, r.BFoot, Gfx.Mix(pants, 0xFF000000, 0.25), Gfx.Mix(pants, 0xFF000000, 0.25), r.LegW, st.LegTaper, st.Bulge * 0.7, st);
@@ -1048,6 +1049,7 @@ namespace ClassicGames
             // front arm and anything held
             Held(dc, f, r, p, t, true);
             Limb(dc, Shoulder(r), r.FElbow, r.FHand, sleeve, sleeve, r.ArmW, st.ArmTaper, st.Bulge, st);
+            if (d.Id == "paul") PaulSleeveChecks(dc, Shoulder(r), r.FElbow, r.FHand, r.ArmW, st, 1);
             Hand(dc, r.FHand, r.FArmAng, r.ArmW * st.ArmTaper, hand, st.Hand);
             Held(dc, f, r, p, t, false);
         }
