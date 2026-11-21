@@ -37,6 +37,8 @@ namespace ClassicGames
         /// one look for the whole cast instead of the two modes above. Fighters move onto it one at a time (round 1: Teddy);
         /// it takes over from Real for the outline, the shading and the face. Its rules are in FighterInk.</summary>
         public bool Toon;
+        /// <summary>The shared style's nose: its half-width as a share of the head radius R.</summary>
+        public double NoseW = 0.2;
 
         static readonly Dictionary<string, BodyStyle> all = new Dictionary<string, BodyStyle>();
         static readonly BodyStyle plain = new BodyStyle();
@@ -57,14 +59,17 @@ namespace ClassicGames
             all["teddy"] = new BodyStyle { Toon = true, Real = true, Head = 0.165, Leg = 0.355, Arm = 0.32, Torso = 0.315, ArmW = 0.25, LegW = 0.29, BodyW = 0.84, ArmTaper = 0.72, LegTaper = 0.8, Bulge = 0.22,
                 Shoulders = 1.12, Hips = 0.92, Belly = 0.18, HeadW = 1.04, HeadH = 0.96, Jaw = 1.0, Chin = 0.03, Hand = "fist", Foot = "tallboot" };
             // Ben Franklin: older and round in the middle, narrow shoulders, a soft double chin, buckled shoes
-            all["ben"] = new BodyStyle { Real = true, Head = 0.145, Leg = 0.35, Arm = 0.3, Torso = 0.35, ArmW = 0.16, LegW = 0.2, BodyW = 0.72, ArmTaper = 0.82, LegTaper = 0.72, Bulge = 0.05,
-                Shoulders = 0.76, Hips = 1.12, Belly = 0.22, HeadW = 1.08, HeadH = 1.0, Jaw = 0.95, Chin = 0.12, Hand = "ball", Foot = "buckle" };
+            // (Test 003 round 2: on the shared style; head radius 0.18 of his height, the same overall height)
+            all["ben"] = new BodyStyle { Toon = true, Real = true, NoseW = 0.22, Head = 0.18, Leg = 0.32, Arm = 0.3, Torso = 0.31, ArmW = 0.21, LegW = 0.25, BodyW = 0.76, ArmTaper = 0.86, LegTaper = 0.8, Bulge = 0.14,
+                Shoulders = 0.76, Hips = 1.12, Belly = 0.3, HeadW = 1.08, HeadH = 1.0, Jaw = 0.95, Chin = 0.12, Hand = "ball", Foot = "buckle" };
             // the Firewall Knight: armour plates, broad pauldrons, gauntlets and pointed sabatons
             all["knight"] = new BodyStyle { Real = true, Head = 0.15, Leg = 0.37, Arm = 0.32, Torso = 0.32, ArmW = 0.24, LegW = 0.28, BodyW = 0.74, ArmTaper = 0.92, LegTaper = 0.88, Bulge = 0,
                 Shoulders = 1.3, Hips = 0.9, Plates = true, Hand = "gauntlet", Foot = "sabaton", Nose = false, Ear = false };
             // Paul Bunyan: a giant V, huge arms tapering to big fists, a beard, big boots
-            all["paul"] = new BodyStyle { Real = true, Head = 0.125, Leg = 0.4, Arm = 0.37, Torso = 0.34, ArmW = 0.27, LegW = 0.29, BodyW = 0.8, ArmTaper = 0.66, LegTaper = 0.78, Bulge = 0.2,
-                Shoulders = 1.36, Hips = 0.88, HeadW = 1.0, HeadH = 1.08, Jaw = 1.0, Chin = 0.06, Hand = "fist", Foot = "bigboot" };
+            // (Test 003 round 2: on the shared style; head radius 0.17 of his height, shoulders about 56% of his height,
+            // hips about 40%, the same overall height)
+            all["paul"] = new BodyStyle { Toon = true, Real = true, NoseW = 0.23, Head = 0.17, Leg = 0.35, Arm = 0.37, Torso = 0.3, ArmW = 0.31, LegW = 0.33, BodyW = 0.86, ArmTaper = 0.72, LegTaper = 0.82, Bulge = 0.24,
+                Shoulders = 1.4, Hips = 1.0, HeadW = 1.0, HeadH = 1.08, Jaw = 1.0, Chin = 0.06, Hand = "fist", Foot = "bigboot" };
             // Pecos Bill: tall and lanky, long legs a little bowed, narrow hips, a long face, cowboy boots
             all["pecos"] = new BodyStyle { Real = true, Head = 0.13, Leg = 0.43, Arm = 0.35, Torso = 0.3, ArmW = 0.17, LegW = 0.2, BodyW = 0.6, ArmTaper = 0.78, LegTaper = 0.8, Bulge = 0.06,
                 Shoulders = 1.08, Hips = 0.82, HeadW = 0.92, HeadH = 1.08, Jaw = 0.9, Chin = 0.06, Hand = "glove", Foot = "cowboy" };
@@ -94,6 +99,22 @@ namespace ClassicGames
 
         public static Pen Pen(double w) { return Gfx.P(Ink, w); }
 
+        /// <summary>A part's own shadow and highlight from an art spec (base -> { shadow, highlight }); colours not listed
+        /// are shaded 30% darker / 35% lighter. Round 2 (Ben, Paul) lists theirs here.</summary>
+        public static readonly Dictionary<uint, uint[]> Tones = new Dictionary<uint, uint[]>
+        {
+            { 0xFFE8B98F, new uint[] { 0xFFB77C5C, 0xFFF8D7B5 } },   // skin (Ben, Paul)
+            { 0xFF285E69, new uint[] { 0xFF193E49, 0xFF43818C } },   // Ben's coat
+            { 0xFFD8C7A0, new uint[] { 0xFFA99570, 0xFFF3E6C6 } },   // Ben's waistcoat
+            { 0xFF38404A, new uint[] { 0xFF252B34, 0xFF59616B } },   // Ben's trousers
+            { 0xFF49352D, new uint[] { 0xFF2A211E, 0xFF70513F } },   // Ben's shoes, Paul's belt
+            { 0xFFB91C1C, new uint[] { 0xFF751B20, 0xFFE34C42 } },   // Paul's shirt and hat
+            { 0xFF1E3A8A, new uint[] { 0xFF142655, 0xFF4269B7 } },   // Paul's jeans
+            { 0xFF70462F, new uint[] { 0xFF422B23, 0xFF9A6948 } },   // Paul's boots and beard
+        };
+        public static uint ShadowOf(uint c) { uint[] t; return Tones.TryGetValue(c, out t) ? t[0] : Gfx.Mix(c, 0xFF000000, 0.3); }
+        public static uint LightOf(uint c) { uint[] t; return Tones.TryGetValue(c, out t) ? t[1] : Gfx.Mix(c, 0xFFFFFFFF, 0.35); }
+
         /// <summary>Rounded shading for one limb part from a (width wa) to b (width wb).</summary>
         public static void Sculpt(DrawingContext dc, Point a, Point b, double wa, double wb, uint c)
         {
@@ -102,9 +123,9 @@ namespace ClassicGames
             double nx = -dy / len, ny = dx / len;
             if (ny < 0) { nx = -nx; ny = -ny; }   // n points up (local y is up)
             // the shadow side: a band along the lower half
-            dc.DrawGeometry(Gfx.B(Gfx.Mix(c, 0xFF000000, 0.3)), null, SegOf(new Point(a.X - nx * wa * 0.22, a.Y - ny * wa * 0.22), new Point(b.X - nx * wb * 0.22, b.Y - ny * wb * 0.22), wa * 0.5, wb * 0.5));
+            dc.DrawGeometry(Gfx.B(ShadowOf(c)), null, SegOf(new Point(a.X - nx * wa * 0.22, a.Y - ny * wa * 0.22), new Point(b.X - nx * wb * 0.22, b.Y - ny * wb * 0.22), wa * 0.5, wb * 0.5));
             // the lit side and a soft shine where the limb swells
-            dc.DrawLine(RoundPen(Gfx.Mix(c, 0xFFFFFFFF, 0.35), (wa + wb) * 0.11), new Point(a.X + nx * wa * 0.24, a.Y + ny * wa * 0.24), new Point(b.X + nx * wb * 0.24, b.Y + ny * wb * 0.24));
+            dc.DrawLine(RoundPen(LightOf(c), (wa + wb) * 0.11), new Point(a.X + nx * wa * 0.24, a.Y + ny * wa * 0.24), new Point(b.X + nx * wb * 0.24, b.Y + ny * wb * 0.24));
             var m = new Point((a.X + b.X) / 2 + nx * (wa + wb) * 0.14, (a.Y + b.Y) / 2 + ny * (wa + wb) * 0.14);
             dc.DrawEllipse(Gfx.B(Gfx.Alpha(Gfx.Mix(c, 0xFFFFFFFF, 0.6), 0.55)), null, m, (wa + wb) * 0.07, (wa + wb) * 0.07);
         }
@@ -145,10 +166,12 @@ namespace ClassicGames
         }
 
         /// <summary>A rounded nose at the front of the face, with a little shine.</summary>
-        public static void Nose(DrawingContext dc, Point h, double R, double W, double Hh, uint skin)
+        public static void Nose(DrawingContext dc, Point h, double R, double W, double Hh, uint skin, double size)
         {
             var c = new Point(h.X + W * 0.62, h.Y - Hh * 0.12);
-            dc.DrawEllipse(Gfx.B(Gfx.Mix(skin, 0xFF9A3412, 0.2)), Pen(Detail), c, R * 0.2, R * 0.16);
+            uint[] tone;
+            uint fill = Tones.TryGetValue(skin, out tone) ? Gfx.Mix(skin, tone[0], 0.35) : Gfx.Mix(skin, 0xFF9A3412, 0.2);
+            dc.DrawEllipse(Gfx.B(fill), Pen(Detail), c, R * size, R * size * 0.8);
             dc.DrawEllipse(Gfx.B(Gfx.Alpha(0xFFFFFFFF, 0.45)), null, new Point(c.X + R * 0.05, c.Y + R * 0.06), R * 0.06, R * 0.04);
         }
     }
@@ -372,7 +395,7 @@ namespace ClassicGames
             g.Freeze();
             dc.DrawGeometry(BrawlView.Sphere(skin), Outline(st.Toon ? FighterInk.Head : st.Real ? 1.7 : 2.5), g);
             if (R > 6) dc.DrawGeometry(null, Gfx.P(Gfx.Alpha(Rim, 0.55), Math.Max(1.2, R * 0.12)), Cap(h, R * 0.86, 20, 80));
-            if (st.Nose && st.Toon) FighterInk.Nose(dc, h, R, W, Hh, skin);
+            if (st.Nose && st.Toon) FighterInk.Nose(dc, h, R, W, Hh, skin, st.NoseW);
             else if (st.Nose) dc.DrawEllipse(Gfx.B(Gfx.Mix(skin, 0xFF7C2D12, 0.22)), Gfx.P(Gfx.Mix(skin, 0xFF000000, 0.45), 1.2), new Point(h.X + W * 0.55, h.Y - Hh * 0.2), R * 0.15, R * 0.12);
             if (chin > 0.08)
             {

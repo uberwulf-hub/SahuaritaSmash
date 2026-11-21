@@ -1015,8 +1015,8 @@ namespace ClassicGames
                 case "juniper": hand = 0xFFE2E8F0; pants = d.Main; shoe = 0xFF475569; break;
                 case "knight": sleeve = d.Skin; hand = d.Main; pants = d.Main; shoe = d.Second; break;
                 case "teddy": pants = d.Second; shoe = d.Dark; break;
-                case "ben": pants = 0xFF1F2937; shoe = 0xFF111111; break;
-                case "paul": pants = 0xFF1E40AF; shoe = 0xFF451A03; break;
+                case "ben": pants = BenTrousers; shoe = d.Dark; break;
+                case "paul": pants = d.Second; shoe = d.Dark; break;
                 case "pecos": pants = d.Second; shoe = d.Dark; hand = 0xFF9A6B3F; break;
                 case "bloom": pants = 0xFF0F766E; shoe = 0xFFF472B6; break;
             }
@@ -1030,6 +1030,8 @@ namespace ClassicGames
                 double sl = Math.Sqrt((aim.X - r.BHand.X) * (aim.X - r.BHand.X) + (aim.Y - r.BHand.Y) * (aim.Y - r.BHand.Y));
                 TeddyStick(dc, r.BHand, sa, sl);
             }
+            // Paul's axe handle rests upright behind his far shoulder unless he's swinging it (Test 003 round 2)
+            if (d.Id == "paul" && !(f.St == BS.Attack && f.Mv != null)) PaulHandleIdle(dc, r);
             // back arm and leg
             if (d.Id == "juniper") { dc.DrawRoundedRectangle(Gfx.B(0xFF94A3B8), Outline(2.5), new Rect(r.Neck.X - r.BodyW * 1.15, r.Hip.Y + r.TorsoLen * 0.15, r.BodyW * 0.6, r.TorsoLen * 0.8), 6, 6); }
             Limb(dc, Shoulder(r), r.BElbow, r.BHand, Gfx.Mix(sleeve, 0xFF000000, 0.25), Gfx.Mix(sleeve, 0xFF000000, 0.25), r.ArmW, st.ArmTaper, st.Bulge, st);
@@ -1096,9 +1098,7 @@ namespace ClassicGames
                     TeddyJacket(dc, d, cx, a.Y, len, w);
                     break;
                 case "ben":
-                    dc.DrawRoundedRectangle(Gfx.B(d.Second), null, new Rect(cx - w * 0.05, a.Y + len * 0.15, w * 0.42, len * 0.75), 4, 4);
-                    dc.DrawLine(Gfx.P(0xFFFFFFFF, 4), new Point(cx + w * 0.2, top), new Point(cx + w * 0.2, top - len * 0.2));
-                    for (int i = 0; i < 4; i++) dc.DrawEllipse(Gfx.B(0xFF7C4A2D), null, new Point(cx + w * 0.16, a.Y + len * (0.3 + i * 0.15)), 1.8, 1.8);
+                    BenCoat(dc, d, cx, a.Y, len, w);
                     break;
                 case "knight":
                     dc.DrawRoundedRectangle(Gfx.B(0xFF94A3B8), Outline(1.5), new Rect(cx - w * 0.42, a.Y + len * 0.35, w * 0.84, len * 0.55), 8, 8);
@@ -1108,9 +1108,7 @@ namespace ClassicGames
                     break;
                 case "pecos": PecosTorso(dc, cx, a.Y, len, w, t); break;
                 case "paul":
-                    for (int i = 1; i < 4; i++) dc.DrawLine(Gfx.P(0x90180000, 3), new Point(cx - w / 2 + 3, a.Y + len * i / 4), new Point(cx + w / 2 - 3, a.Y + len * i / 4));
-                    for (int i = 1; i < 3; i++) dc.DrawLine(Gfx.P(0x90180000, 3), new Point(cx - w / 2 + w * i / 3, a.Y + 2), new Point(cx - w / 2 + w * i / 3, top - 2));
-                    dc.DrawRectangle(Gfx.B(0xFF451A03), null, new Rect(cx - w / 2 + 2, a.Y + len * 0.05, w - 4, len * 0.1));
+                    PaulShirt(dc, d, cx, a.Y, len, w);
                     break;
             }
             dc.Pop();
@@ -1163,13 +1161,10 @@ namespace ClassicGames
                     TeddyFace(dc, h, R, d, hurt);
                     break;
                 case "ben":
-                    dc.DrawEllipse(Gfx.B(0xFFE5E7EB), Outline(2), new Point(h.X - R * 0.45, h.Y - R * 0.1), R * 0.62, R * 0.95);
+                    BenHairBack(dc, h, R, d);
                     Skull(dc, h, R, d.Skin, st);
-                    dc.DrawEllipse(Gfx.B(0xFFE5E7EB), null, new Point(h.X - R * 0.7, h.Y + R * 0.05), R * 0.35, R * 0.7);
                     FaceEyes(dc, h, R, hurt, st);
-                    dc.DrawRectangle(null, Gfx.P(0xFF57534E, 1.4), new Rect(h.X + R * 0.12, h.Y + R * 0.0, R * 0.32, R * 0.22));
-                    dc.DrawRectangle(null, Gfx.P(0xFF57534E, 1.4), new Rect(h.X + R * 0.56, h.Y + R * 0.0, R * 0.32, R * 0.22));
-                    Smile(dc, h, R, hurt);
+                    BenFace(dc, h, R, d, hurt);
                     break;
                 case "knight":
                     dc.DrawRoundedRectangle(BrawlView.Sphere(d.Main), Outline(2.5), new Rect(h.X - R, h.Y - R * 1.0, R * 2, R * 2.1), R * 0.7, R * 0.7);
@@ -1180,18 +1175,8 @@ namespace ClassicGames
                     break;
                 case "paul":
                     Skull(dc, h, R, d.Skin, st);
-                    {
-                        // a big scruffy beard: up the cheek, then ragged points along the bottom
-                        var beard = new List<Point> { new Point(h.X - R * 0.62, h.Y - R * 0.12), new Point(h.X + R * 0.25, h.Y - R * 0.38), new Point(h.X + R * 1.02, h.Y - R * 0.3) };
-                        for (int i = 0; i <= 6; i++) { double k = i / 6.0; beard.Add(new Point(h.X + R * (1.0 - k * 1.7), h.Y - R * (1.05 + (i % 2 == 0 ? 0.32 : 0.08) - k * 0.1))); }
-                        Poly(dc, Gfx.B(0xFF5B2E0E), Outline(2), beard.ToArray());
-                        dc.DrawLine(Gfx.P(0xFF3B1D08, 1.6), new Point(h.X + R * 0.2, h.Y - R * 0.55), new Point(h.X + R * 0.6, h.Y - R * 0.6));   // the mouth
-                    }
                     FaceEyes(dc, h, R, hurt, st);
-                    dc.DrawEllipse(Gfx.B(0x60F87171), null, new Point(h.X + R * 0.7, h.Y - R * 0.05), R * 0.18, R * 0.12);
-                    dc.DrawGeometry(Gfx.B(0xFFB91C1C), Outline(2), Cap(new Point(h.X, h.Y + R * 0.42), R * 0.98, 0, 180));
-                    dc.DrawRectangle(Gfx.B(0xFFFFFFFF), Outline(1.5), new Rect(h.X - R * 1.0, h.Y + R * 0.3, R * 2.0, R * 0.24));
-                    dc.DrawEllipse(Gfx.B(0xFFFFFFFF), Outline(1.5), new Point(h.X - R * 0.2, h.Y + R * 1.42), R * 0.22, R * 0.22);
+                    PaulFace(dc, h, R, d, hurt);
                     break;
                 case "specimen":
                     {
@@ -1303,7 +1288,9 @@ namespace ClassicGames
                     if (!behind && attacking) TeddyStick(dc, Off(hnd, ang, -6), ang, H * 0.42 + 6);
                     break;
                 case "ben":
-                    if (!behind) { Point e = Off(hnd, ang, H * 0.36); dc.DrawLine(Outline(6.5), Off(hnd, ang, -4), e); dc.DrawLine(Gfx.P(0xFF3F2A14, 3.5), Off(hnd, ang, -4), e); dc.DrawEllipse(Gfx.B(0xFFD4AF37), null, e, 3.5, 3.5); }
+                    // swinging: along his arm as before; otherwise upright beside him, the key at the top (Test 003 round 2)
+                    if (attacking) { if (!behind) BenCane(dc, Off(hnd, ang, -4), ang, H * 0.36 + 4); }
+                    else if (behind) BenCaneIdle(dc, r);
                     break;
                 case "knight":
                     if (!behind)
@@ -1316,14 +1303,8 @@ namespace ClassicGames
                     }
                     break;
                 case "paul":
-                    if (!behind)
-                    {
-                        Point e = Off(hnd, ang, H * 0.42);
-                        dc.DrawLine(Outline(18), Off(hnd, ang, -10), e);
-                        dc.DrawLine(Gfx.P(0xFF92400E, 13), Off(hnd, ang, -10), e);
-                        dc.DrawEllipse(Gfx.B(0xFFD97706), Outline(2), e, 7, 7);
-                        dc.DrawEllipse(null, Gfx.P(0xFF92400E, 1.5), e, 3.5, 3.5);
-                    }
+                    // swinging: in his hands as before (an axe handle, no head); otherwise behind his shoulder (DressPerson)
+                    if (!behind && attacking) PaulHandle(dc, Off(hnd, ang, -10), ang, H * 0.42 + 10);
                     break;
                 case "trooper":
                     if (!behind && attacking && (f.Mv.Anim == "aim"))

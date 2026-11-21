@@ -278,6 +278,7 @@ namespace ClassicGames
             finally { try { Directory.Delete(dir, true); } catch (Exception) { } }
 
             SnapScene("SelectColours", 1, "SelectColours");
+            SnapScene("SelectColours", 2, "SelectSeats");
             SnapScene("LadderColours", 1, "LadderColours");
             SnapScene("LadderUnlock", 1, "LadderUnlock");
             for (int c = 1; c <= 3; c++) SnapScene("Colours", c, "Colours-" + c);

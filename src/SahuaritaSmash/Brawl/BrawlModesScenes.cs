@@ -34,6 +34,12 @@ namespace ClassicGames
                     return "menu " + Menu;
                 case "SelectColours":
                     Menu = Screen.Select; Who[0] = 1; Who[1] = 2; Who[2] = 0; Who[3] = 0; Pick[0] = bloom; Pick[1] = bloom; Colour[0] = 2; Sel = 0;
+                    if (level == 2)
+                    {
+                        // four different kinds of seat, and colours with one still locked (Test 003 round 2's review)
+                        Who[0] = 1; Who[1] = 2; Level[1] = 2; Who[2] = 0; Who[3] = 2; Level[3] = 3;
+                        Pick[0] = gila; Colour[0] = 1; Pick[1] = Math.Max(0, BrawlData.FighterIndex("ben")); Pick[3] = Math.Max(0, BrawlData.FighterIndex("paul")); Sel = 1;
+                    }
                     for (int i = 0; i < 30; i++) Update(1.0 / 60);
                     return "menu " + Menu;
                 case "LadderColours":

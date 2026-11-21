@@ -131,24 +131,32 @@ namespace ClassicGames
         }
 
         /// <summary>A row of colour chips (the fighter's head in each colour): tap one to choose it. Returns the y below.</summary>
-        double DrawColourChips(DrawingContext dc, double x, double y, int fighter, int current, Action<int> set)
+        double DrawColourChips(DrawingContext dc, double x, double y, int fighter, int current, Action<int> set, bool labels = true, double gap = 12)
         {
             if (fighter < 0 || fighter >= BrawlData.Fighters.Count) return y;
             BFighterDef d = BrawlData.Fighters[fighter];
-            Gfx.Text(dc, "Colour", x, y - 28, 17, 0xFF93C5FD, 0, Gfx.UiBold);
-            double s = BigButton, gap = 12;
+            if (labels) Gfx.Text(dc, "Colour", x, y - 28, 17, 0xFF93C5FD, 0, Gfx.UiBold);
+            double s = BigButton;
             for (int c = 0; c < BrawlUnlocks.Colours; c++)
             {
                 var r = new Rect(x + c * (s + gap), y, s, s);
                 bool has = HasColour(fighter, c), sel = has && c == current;
                 bool lit = Hovered(r);
-                dc.DrawRoundedRectangle(Gfx.B(sel ? 0xFF243B6B : has ? 0xE0172036 : 0xC00C0F16), Gfx.P(sel ? 0xFFFDE047 : lit ? 0xFF60A5FA : 0xFF2C3A55, sel ? 3 : 1.5), r, 14, 14);
+                // the menu kit's chip (Test 003 round 2): an ink outline; chosen = a thick gold ring outside and a tick;
+                // locked = darkened, with the padlock
+                dc.DrawRoundedRectangle(Gfx.B(sel ? 0xFF243B6B : has ? (lit ? 0xFF22304F : 0xE0172036) : 0xE00A0C12), Gfx.P(0xFF161616, 3), r, 14, 14);
+                if (sel) dc.DrawRoundedRectangle(null, Gfx.P(0xFFFDC93A, 4.5), new Rect(r.X - 5, r.Y - 5, s + 10, s + 10), 18, 18);
                 if (has)
                 {
                     dc.DrawEllipse(Gfx.B(Gfx.Alpha(BrawlColours.MainOf(d, c), 0.3)), null, new Point(r.X + s / 2, r.Y + s / 2), s * 0.4, s * 0.4);
                     View.Portrait(dc, BrawlColours.Def(d, c), r.X + s / 2, r.Y + s / 2, s * 0.72, T + c * 0.4, true, BS.Idle);
                 }
                 else DrawLock(dc, r.X + s / 2, r.Y + s / 2, BrawlColours.MainOf(d, c));
+                if (sel)
+                {
+                    dc.DrawEllipse(Gfx.B(0xFFFDC93A), Gfx.P(0xFF161616, 2), new Point(r.Right - 8, r.Y + 8), 12, 12);
+                    Gfx.Text(dc, "\u2713", r.Right - 8, r.Y - 3, 15, 0xFF161616, 0.5, Gfx.UiBold);
+                }
                 int cc = c;
                 AddHit(r, "Colour " + (c + 1) + (has ? "" : " (locked)"), false, null, () =>
                 {
@@ -156,11 +164,18 @@ namespace ClassicGames
                     else { Toast(HowToUnlock(d, cc)); Audio.Ui("back"); }
                 });
             }
+            if (labels) Gfx.Text(dc, ChipHint(fighter, current), x, y + s + 8, 14, 0xFFB8BFCC, 0, Gfx.Ui);
+            return y + s + 30;
+        }
+
+        /// <summary>The chosen colour's name, and how to get more if some are still locked.</summary>
+        string ChipHint(int fighter, int current)
+        {
+            BFighterDef d = BrawlData.Fighters[fighter];
             string under = BrawlColours.Name(d, UsableColour(fighter, current));
             int next = -1;
             for (int c = 1; c < BrawlUnlocks.Colours; c++) if (!HasColour(fighter, c)) { next = c; break; }
-            Gfx.Text(dc, under + (next > 0 ? "  \u00B7  " + (next == 1 ? "climb the ladder for more" : "climb it on Hard for one more") : ""), x, y + s + 8, 14, 0xFFB8BFCC, 0, Gfx.Ui);
-            return y + s + 30;
+            return under + (next > 0 ? "  \u00B7  " + (next == 1 ? "climb the ladder for more" : "climb it on Hard for one more") : "");
         }
 
         static void DrawLock(DrawingContext dc, double cx, double cy, uint tint)
@@ -199,8 +214,10 @@ namespace ClassicGames
             if (Sel < 8) colourSeat = Sel / 2;
             int seat = colourSeat;
             if (Pick[seat] < 0 || Who[seat] == 0) return;
-            Gfx.Text(dc, "Player " + (seat + 1) + ": " + BrawlData.Fighters[Pick[seat]].Name, 130, 532, 17, BrawlView.SlotColors[seat], 0, Gfx.UiBold);
-            DrawColourChips(dc, 40, 560, Pick[seat], UsableColour(Pick[seat], Colour[seat]), c => Colour[seat] = c);
+            // Test 003 round 2: the chips 80 x 80, 20 apart, at (32, 560); the label under them
+            DrawColourChips(dc, 32, 560, Pick[seat], UsableColour(Pick[seat], Colour[seat]), c => Colour[seat] = c, false, 20);
+            Gfx.Text(dc, "COLOUR \u2014 P" + (seat + 1) + ": " + BrawlData.Fighters[Pick[seat]].Name.ToUpperInvariant(), 32, 646, 20, SeatColour[seat], 0, Gfx.UiBold);
+            Gfx.Text(dc, ChipHint(Pick[seat], Colour[seat]), 32, 670, 15, 0xFFB8BFCC, 0, Gfx.Ui);
         }
 
         void DrawLadderColours(DrawingContext dc)
