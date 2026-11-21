@@ -5,6 +5,17 @@ release notes (### Added / ### Fixed become New / Fixed in SauceStore).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-21
+
+### Added
+- On the title screen, Left and Right now jump between the two columns of buttons (Up and Down work as before).
+
+### Changed
+- A new title screen: a bolder logo, big buttons in two columns, and the whole cast standing in two rows beside them.
+- Teddy has a new look: a green safari jacket, a bigger friendlier face with round glasses, a big moustache and grin,
+  and his big stick rests on his shoulder until he swings it. His old tan look is now his unlockable "Khaki" colour.
+- The Back button is bigger, so it's easy to tap on a phone.
+
 ## [0.4.3] - 2026-11-20
 
 ### Changed
